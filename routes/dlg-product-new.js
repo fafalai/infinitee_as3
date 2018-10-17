@@ -70,7 +70,8 @@ function doDlgProductNew(productcategoryid, productid)
     {
       if (!_.isEmpty(product))
       {
-        //console.log(product);
+        // console.log("dlg-product-new, modify");
+        // console.log(product);
         $('#fldNewProductCode').textbox('setValue', product.code);
         $('#fldNewProductName').textbox('setValue', product.name);
         $('#fldNewProductBarcode').textbox('setValue', product.barcode);
@@ -162,7 +163,16 @@ function doDlgProductNew(productcategoryid, productid)
 
   function doSaved(ev, args)
   {
-    $('#dlgProductNew').dialog('close');
+    console.log(args.data.rc);
+    if(args.data.rc == 0 )
+    {
+      doShowSuccess("Save Product " + args.data.msg);
+    }
+    else
+    {
+      doShowError(args.data.msg);
+    }
+    //$('#dlgProductNew').dialog('close');
   }
 
   function doListAccounts(ev, args)
@@ -242,7 +252,7 @@ function doDlgProductNew(productcategoryid, productid)
   {
     var data = [];
 
-    console.log("do list prices");
+    // console.log("do list prices");
     // console.log(args.data.rs);
     // console.log(args);
     args.data.rs.forEach
@@ -267,7 +277,7 @@ function doDlgProductNew(productcategoryid, productid)
       }
     );
 
-    console.log(data);
+    // console.log(data);
 
     $('#divNewProductPricesG').datagrid('loadData', data);
 
@@ -455,7 +465,8 @@ function doDlgProductNew(productcategoryid, productid)
 
   $('#divEvents').on('checkproductcode', doCheckCode);
   $('#divEvents').on('newproduct', doSaved);
-  $('#divEvents').on('updateproduct', doSaved);
+  $('#divEvents').on('saveproduct', doSaved);
+  // $('#divEvents').on('updateproduct', doSaved);
   $('#divEvents').on('listaccounts', doListAccounts);
   $('#divEvents').on('listtaxcodes', doListTaxCodes);
   $('#divEvents').on('loadproduct', doLoad);
@@ -714,11 +725,11 @@ function doDlgProductNew(productcategoryid, productid)
               }
             }],
             onSelect(record){
-              console.log(record);
+              // console.log(record);
               selectedDiscountCodeIndex = record.id;
               
               var price1 = $('#fldNewProductPrice1').numberbox('getValue');
-              console.log(price1);
+              // console.log(price1);
               if(!_.isUndefined(price1) && !_.isBlank(price1))
               {
                 var price2 = price1 * (1-record.level_2);
@@ -769,7 +780,7 @@ function doDlgProductNew(productcategoryid, productid)
             onSelect(record){
               selectedListPriceCodeIndex = record.id;
               var costprice = $('#fldNewProductCostPrice').numberbox('getValue');
-              console.log('cost price ' + costprice);
+              // console.log('cost price ' + costprice);
               if(!_.isUndefined(costprice) && !_.isBlank(costprice) && costprice != 0.0000)
               {
                 $('#fldNewProductPrice1').numberbox('setValue',costprice * record.parameter);
@@ -862,7 +873,15 @@ function doDlgProductNew(productcategoryid, productid)
             {
               parser: function(e)
               {
-                return _.evil(e);
+                return e;
+                // console.log(e);
+                // console.log(_.isUNB(e));
+                // if (_.isUNB(e))
+                // {
+                  
+                // }
+                //   return '';
+                // return mexp.eval(e).toString();
               },
               formatter: function(e)
               {
@@ -870,10 +889,15 @@ function doDlgProductNew(productcategoryid, productid)
               },
               filter: function(e)
               {
-                if ('01234567890.*-+/()'.indexOf(e.key) != -1)
+                if ('01234567890.*-+/() '.indexOf(e.key) != -1)
+                {
                   return true;
-            
-                return false;
+                }
+                else
+                {
+                  return false;
+                }
+      
               }
             },
             {

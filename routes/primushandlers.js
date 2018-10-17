@@ -1384,6 +1384,8 @@ function doPrimus()
                   assetaccountid: doNiceId(p.assetaccountid),
                   uom: doNiceString(p.uom).toUpperCase(),
                   uomsize: _.formatnumber(p.uomsize, 4),
+                  saleuom: doNiceString(p.sale_uom).toUpperCase(),
+                  saleuomsize: _.formatnumber(p.sale_uomsize, 4),
                   buildtemplateid: doNiceId(p.buildtemplateid),
                   minstock: _.formatnumber(p.minstockqty, 4),
                   stockwarn: _.formatnumber(p.stockqtywarnthreshold, 4),

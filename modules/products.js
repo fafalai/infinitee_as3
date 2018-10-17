@@ -151,7 +151,7 @@ function doNewProduct(tx, world)
 
       tx.query
       (
-        'insert into products (customers_id,productcategories_id,code,name,altcode,barcode,costprice,costgst,uom,uomsize,clients_id,isactive,buytaxcodes_id,selltaxcodes_id,costofgoodsaccounts_id,incomeaccounts_id,assetaccounts_id,buildtemplateheaders_id,minstockqty,stockqtywarnthreshold,width,length,height,weight,price1,price2,price3,price4,price5,price6,price7,price8,price9,price10,price11,price12,attrib1,attrib2,attrib3,attrib4,attrib5,productsalias_id,locations1_id,locations2_id,userscreated_id) values ($1,$2,$3,$4,$5,$6,$7,calctaxcomponent($8,$9,$10),$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47) returning id,datecreated',
+        'insert into products (customers_id,productcategories_id,code,name,altcode,barcode,costprice,costgst,uom,uomsize,clients_id,isactive,buytaxcodes_id,selltaxcodes_id,costofgoodsaccounts_id,incomeaccounts_id,assetaccounts_id,buildtemplateheaders_id,minstockqty,stockqtywarnthreshold,width,length,height,weight,price1,price2,price3,price4,price5,price6,price7,price8,price9,price10,price11,price12,attrib1,attrib2,attrib3,attrib4,attrib5,productsalias_id,locations1_id,locations2_id,userscreated_id,discountcode_id, listcode_id, sale_uom, sale_uomsize, price13, price14, price15) values ($1,$2,$3,$4,$5,$6,$7,calctaxcomponent($8,$9,$10),$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52,$53,$54) returning id',
         [
           world.cn.custid,
           __.sanitiseAsBigInt(world.productcategoryid),
@@ -205,18 +205,50 @@ function doNewProduct(tx, world)
           //
           __.sanitiseAsBigInt(world.productaliasid),
           __.sanitiseAsBigInt(world.location1id),
-          __.sanitiseAsBigInt(world.location2id),
+          __.sanitiseAsBigInt(world.location2id), 
           //
-          world.cn.userid
+          world.cn.userid, //47
+
+          //new added columns 
+          __.sanitiseAsBigInt(world.discountcodeid), //48
+          __.sanitiseAsBigInt(world.listpricecodeid), //49
+          __.sanitiseAsString(world.saleuom, 50), //50
+          __.formatuomsize(world.saleuomsize), //51
+          __.sanitiseAsPrice(world.price13, 4), //52
+          __.sanitiseAsPrice(world.price14, 4), //53
+          __.sanitiseAsPrice(world.price15, 4), //54
         ],
         function(err, result)
         {
           if (!err)
           {
             var productid = result.rows[0].id;
-            var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
+            tx.query
+            (
+              'select p1.datecreated,u1.name usercreated from products p1 left join users u1 on (p1.userscreated_id=u1.id) where p1.customers_id=$1 and p1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(productid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                {
+                  var p = result.rows[0];
 
-            resolve({productid: productid, datecreated: datecreated, usercreated: world.cn.uname});
+                  resolve
+                  (
+                    {
+                      productid: productid,
+                      datecreated: global.moment(p.datecreated).format('YYYY-MM-DD HH:mm:ss'),
+                      usercreated: p.usercreated
+                    }
+                  );
+                }
+                else
+                  reject({message: global.text_unablenewproduct});
+              }
+            );
           }
           else
             reject(err);
@@ -247,6 +279,8 @@ function doSaveProduct(tx, world)
         'costgst=calctaxcomponent($5,$6,$7),' +
         'uom=$8,' +
         'uomsize=$9,' +
+        'sale_uom=$53,' +
+        'sale_uomsize=$54,' +
         'clients_id=$10,' +
         'isactive=$11,' +
         'buytaxcodes_id=$12,' +
@@ -273,26 +307,28 @@ function doSaveProduct(tx, world)
         'price10=$33,' +
         'price11=$34,' +
         'price12=$35,' +
-        'attrib1=$36,' +
-        'attrib2=$37,' +
-        'attrib3=$38,' +
-        'attrib4=$39,' +
-        'attrib5=$40,' +
-        'barcode=$41,' +
-        'productsalias_id=$42,' +
-        'locations1_id=$43,' +
-        'locations2_id=$44,' +
+        'price13=$36,' +
+        'price14=$37,' +
+        'price15=$38,' +
+        'attrib1=$39,' +
+        'attrib2=$40,' +
+        'attrib3=$41,' +
+        'attrib4=$42,' +
+        'attrib5=$43,' +
+        'barcode=$44,' +
+        'productsalias_id=$45,' +
+        'locations1_id=$46,' +
+        'locations2_id=$47,' +
+        'discountcode_id=$48,' +
+        'listcode_id=$49,' +
         'datemodified=now(),' +
-        'usersmodified_id=$45 ' +
+        'usersmodified_id=$50 ' +
         'where ' +
-        'customers_id=$46 ' +
+        'customers_id=$51 ' +
         'and ' +
-        'id=$47 ' +
+        'id=$52 ' +
         'and ' +
-        'dateexpired is null ' +
-        'returning ' +
-        'datemodified,' +
-        'productcategories_id',
+        'dateexpired is null',
         [
           __.sanitiseAsString(world.code, 50),
           __.sanitiseAsString(world.name, 50),
@@ -333,32 +369,52 @@ function doSaveProduct(tx, world)
           __.sanitiseAsPrice(world.price9, 4),
           __.sanitiseAsPrice(world.price10, 4),
           __.sanitiseAsPrice(world.price11, 4),
-          __.sanitiseAsPrice(world.price12, 4),
+          __.sanitiseAsPrice(world.price12, 4),//35
+          __.sanitiseAsPrice(world.price13, 4),//36
+          __.sanitiseAsPrice(world.price14, 4),//37
+          __.sanitiseAsPrice(world.price15, 4),//38
           //
-          __.sanitiseAsString(world.attrib1, 50),
-          __.sanitiseAsString(world.attrib2, 50),
-          __.sanitiseAsString(world.attrib3, 50),
-          __.sanitiseAsString(world.attrib4, 50),
-          __.sanitiseAsString(world.attrib5, 50),
+          __.sanitiseAsString(world.attrib1, 50), //39
+          __.sanitiseAsString(world.attrib2, 50), //40
+          __.sanitiseAsString(world.attrib3, 50), //41
+          __.sanitiseAsString(world.attrib4, 50), //42
+          __.sanitiseAsString(world.attrib5, 50), //43
           //
-          __.sanitiseAsString(world.barcode, 50),
+          __.sanitiseAsString(world.barcode, 50), //44
           //
-          __.sanitiseAsBigInt(world.productaliasid),
-          __.sanitiseAsBigInt(world.location1id),
-          __.sanitiseAsBigInt(world.location2id),
+          __.sanitiseAsBigInt(world.productaliasid), //45
+          __.sanitiseAsBigInt(world.location1id), //46
+          __.sanitiseAsBigInt(world.location2id), //47
           //
-          world.cn.userid,
-          world.cn.custid,
-          world.productid
+          __.sanitiseAsBigInt(world.discountcodeid), //48
+          __.sanitiseAsBigInt(world.listcodeid), //49
+          //
+          world.cn.userid, //50
+          world.cn.custid, //51
+          world.productid, //52
+
+          __.sanitiseAsString(world.saleuom, 50), //53
+          __.formatuomsize(world.saleuomsize), //54
         ],
         function(err, result)
         {
           if (!err)
           {
-            var productcategoryid = result.rows[0].productcategories_id;
-            var datemodified = global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss');
-
-            resolve({productcategoryid: productcategoryid, datemodified: datemodified, usermodified: world.cn.uname});
+            tx.query
+            (
+              'select p1.productcategories_id productcategoryid,p1.datemodified,u1.name from products p1 left join users u1 on (p1.usersmodified_id=u1.id) where p1.customers_id=$1 and p1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(world.productid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                  resolve({productcategoryid: result.rows[0].productcategoryid, datemodified: global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss'), usermodified: result.rows[0].name});
+                else
+                  reject(err);
+              }
+            );
           }
           else
             reject(err);
@@ -4134,6 +4190,8 @@ function LoadProduct(world)
           'p1.costgst,' +
           'p1.uom,' +
           'p1.uomsize,' +
+          'p1.sale_uom,' +
+          'p1.sale_uomsize,' +
           'p1.buildtemplateheaders_id buildtemplateid,' +
           'p1.minstockqty minqty,' +
           'p1.stockqtywarnthreshold warnqty,' +
@@ -4153,11 +4211,16 @@ function LoadProduct(world)
           'p1.price10,' +
           'p1.price11,' +
           'p1.price12,' +
+          'p1.price13,' +
+          'p1.price14,' +
+          'p1.price15,' +
           'p1.attrib1,' +
           'p1.attrib2,' +
           'p1.attrib3,' +
           'p1.attrib4,' +
           'p1.attrib5,' +
+          'p1.discountcode_id,' +
+          'p1.listcode_id,' +
           'p1.datecreated,' +
           'p1.datemodified,' +
           'pc1.code productcategorycode,' +
@@ -4231,7 +4294,6 @@ function LoadProduct(world)
       }
       else
       {
-        done();
         global.log.error({loadproduct: true}, global.text_nodbconnection);
         world.spark.emit(global.eventerror, {rc: global.errcode_dbunavail, msg: global.text_nodbconnection, pdata: world.pdata});
       }
