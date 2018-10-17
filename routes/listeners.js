@@ -37,6 +37,9 @@ function doWidgetListeners()
   doEmailsTabWidgets();
   doMaintenanceTabWidgets();
 
+  doDiscountCodeTabWidgets();
+  doListPriceCodeTabWidgets();
+
   $('#salestabs').tabs
   (
     {

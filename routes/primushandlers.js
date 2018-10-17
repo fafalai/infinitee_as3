@@ -1398,6 +1398,7 @@ function doPrimus()
                   attrib5: doNiceString(p.attrib5),
                   isactive: p.isactive,
                   clientid: doNiceId(p.clientid),
+                  discountcodeid: doNiceId(p.discountcodeid),
                   productaliasid: doNiceId(p.productaliasid),
                   date: doNiceDateModifiedOrCreated(p.datemodified, p.datecreated),
                   by: doNiceModifiedBy(p.datemodified, p.usermodified, p.usercreated)
@@ -1496,6 +1497,112 @@ function doPrimus()
     doAddPrimusListener('expireproductpricing');
     doAddPrimusListener('getproductprices');
     doAddPrimusListener('getprice');
+
+    //Product Discountcode requests
+    doAddPrimusListener
+    (
+      'listdiscountcode',
+      function(eventname, data)
+      {
+        //console.log("doAddPrimusListenr, listdiscountcode");
+        //console.log(data);
+        doUpdateInitTasksProgress();
+
+        if (!_.isUndefined(data.rs) && !_.isNull(data.rs))
+        {
+          cache_discountcode = [];
+
+          data.rs.forEach
+          (
+            function(p)
+           {
+               //console.log(p);
+               cache_discountcode.push
+               (
+                   {
+                   id: doNiceId(p.id),
+                   full_name:p.full_name,
+                   short_name:p.short_name,
+                   level_1: p.level_1,
+                   level_2: p.level_2,
+                   level_3: p.level_3,
+                   level_4: p.level_4,
+                   level_5: p.level_5,
+                   level_6: p.level_6,
+                   level_7: p.level_7,
+                   level_8: p.level_8,
+                   level_9: p.level_9,
+                   level_10: p.level_10,
+                   level_11: p.level_11,
+                   level_12: p.level_12,
+                   level_13: p.level_13,
+                   level_14: p.level_14,
+                   level_15: p.level_15,
+                   date: doNiceDateModifiedOrCreated(p.datemodified, p.datecreated),
+                   by: doNiceModifiedBy(p.datemodified,p.usermodified, p.usercreated)
+                   }
+               );
+           }
+          );
+
+          // console.log("primus.on, listdiscountcode, cache_discountcode");
+          // console.log(cache_discountcode);
+
+          $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
+        }
+        // $('#divEvents').trigger('listdiscountcode',{data: data, pdata: $.extend(data.pdata, {})});
+      }
+    );
+
+    doAddPrimusListener('newdiscountcode');
+
+    doAddPrimusListener('savediscountcode');
+
+    doAddPrimusListener('expirediscountcode');
+
+    //Product ListPriceCode requests
+    doAddPrimusListener
+    (
+      'listlistpricecode',
+      function(eventname,data)
+      {
+        doUpdateInitTasksProgress();
+
+        if (!_.isUndefined(data.rs) && !_.isNull(data.rs))
+        {
+          console.log("I am here");
+          cache_listpricecode = [];
+
+          data.rs.forEach
+          (
+            function(p)
+           {
+               cache_listpricecode.push
+               (
+                {
+                  id: doNiceId(p.id),
+                  full_name:p.full_name,
+                  short_name:p.short_name,
+                  parameter: p.parameter,
+                  date: doNiceDateModifiedOrCreated(p.datemodified, p.datecreated),
+                  by: doNiceModifiedBy(p.datemodified,p.usermodified, p.usercreated)
+                }
+               );
+           }
+          );
+          // console.log("primus.on, eventname, cache_listpricecode");
+          // console.log(cache_listpricecode);
+          $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
+        }
+        // $('#divEvents').trigger('listdiscountcode',{data: data, pdata: $.extend(data.pdata, {})});
+      }
+    );
+
+    doAddPrimusListener('newlistpricecode');
+
+    doAddPrimusListener('savelistpricecode');
+
+    doAddPrimusListener('expirelistpricecode');
 
     // Build template requests
     doAddPrimusListener('newbuildtemplate');
