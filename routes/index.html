@@ -140,6 +140,9 @@
 
   <script type="text/javascript" src="dlg-rep-pos-salestotals.js"></script>
 
+  <script type="text/javascript" src="tab-discountcode.js"></script>
+  <script type="text/javascript" src="tab-listpricecode.js"></script>
+
   <!-- ************************************************************************************************************************************************************************** -->
   <!-- Provectus specific dialogs... -->
   <script type="text/javascript" src="dlg-pv-depositadd.js"></script>
@@ -2873,12 +2876,29 @@
               <td><input type="text" id="fldNewProductCostPrice" class="easyui-numberbox" data-options="precision: 4"></td>
             </tr>
             <tr>
-              <td>UOM:</td>
+              <td>Purchased UOM:</td>
               <td><input type="text" id="fldNewProductUOM" class="easyui-textbox"></td>
             </tr>
             <tr>
-              <td>UOM Size:</td>
+              <td>Purchased UOM Size:</td>
               <td><input type="text" id="fldNewProductUOMSize" class="easyui-numberbox" data-options="precision: 2"></td>
+            </tr>
+            <tr>
+              <td>Sale UOM:</td>
+              <td><input type="text" id="fldNewProductSalesUOM" class="easyui-textbox"> <input type="checkbox" name="" id="check_SametoPurchased"> Same as Purchased</td>
+             
+            </tr>
+            <tr>
+              <td>Sale UOM Size:</td>
+              <td><input type="text" id="fldNewProductSaleUOMSize" class="easyui-numberbox" data-options="precision: 2"></td>
+            </tr>
+            <tr>
+              <td>Discount Code:</td>
+              <td><input id="cbNewProductDiscountCode" style="width: 300px;"></td>
+            </tr>
+            <tr>
+              <td>List Price Code:</td>
+              <td><input id="cbNewProductListPriceCode" style="width: 300px;"></td>
             </tr>
             <tr>
               <td>Client:</td>
@@ -3976,6 +3996,13 @@
 
               <div title="Builds" data-options="iconCls: 'icon-tools'">
                 <table id="divBuildsG" data-options="fit: true"></table>
+              </div>
+
+              <div title="Discount Code" data-options="iconCls: 'icon-discount'">
+                <div id="divDiscountCode" data-options="fit: true"></div>
+              </div>
+              <div title="List Price Code" data-options="iconCls: 'icon-listprice'">
+                <div id="divListPriceCodeG" data-options="fit: true"></div>
               </div>
 
               <!--

@@ -351,6 +351,8 @@ var cache_users = [];
 var cache_statusalerts = [];
 var cache_exchangerates = [];
 var cache_timesheets = [];
+var cache_discountcode = [];
+var cache_listpricecode = [];
 // Cached lists for dialogs...
 var cache_productsbycategory = [];
 var cache_suppliernotes = [];

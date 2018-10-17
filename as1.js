@@ -42,6 +42,7 @@ global.fs = require('fs');
 global.path = require('path');
 global.xlwriter = require('xlsx-template');
 global.xlreader = require('node-xlsx');
+global.exceljs = require('exceljs');
 global.oxr = require('open-exchange-rates');
 global.fx = require('money');
 global.diceware = require('diceware-password-generator');
@@ -142,6 +143,8 @@ global.text_unablenewbuildttemplate = "Unable to add new build template...";
 global.text_unablenewbuildtemplatedetail = "Unable to add new product to build template...";
 global.text_unablenewbuildheader = "Unable to build inventory...";
 global.text_unableneworder = "Unable to add new order...";
+global.text_unablenewlistpricecode = "Unable to add new list price code...";
+global.text_unablenewdiscountcode = "Unable to add new discount code...";
 global.text_unablesavenotes = "Unable to save notes...";
 global.text_unablegetuserauthdetails = "Unable to get user auth details...";
 global.text_unablegetuseruuid = "Unable to get user\' uuid...";
@@ -3045,6 +3048,18 @@ function main()
       addListener('saveproductpricing',                   'saveproductpricing',                   global.modproducts.SaveProductPricing,                 ['*priceid', '*productid', '*price', 'clientid', 'minqty', 'maxqty', 'price1', 'price2', 'price3', 'price4', 'price5']);
       addListener('expireproductpricing',                 'expireproductpricing',                 global.modproducts.ExpireProductPricing,               ['*priceid']);
 
+      //Product discountcode requests
+      addListener('listdiscountcode',                     'listdiscountcode',                     global.modproducts.ListDiscountCode,                    []);
+      addListener('newdiscountcode',                      'newdiscountcode',                      global.modproducts.NewDiscountCode,                     []);
+      addListener('savediscountcode',                     'savediscountcode',                     global.modproducts.SaveDiscountCode,                    ['*discountcodeid', 'fullname', 'shortname', 'level1', 'level2', 'level3', 'level4', 'level5', 'level6', 'level7', 'level8','level9','level10','level11','level12','level13','level14','level15']);
+      addListener('expirediscountcode',                   'expirediscountcode',                   global.modproducts.ExpireDiscountCode,                  ['*discountcodeid']);
+
+      //Product listpricecode requests
+      addListener('listlistpricecode',                    'listlistpricecode',                    global.modproducts.ListListPriceCode,                    []);
+      addListener('newlistpricecode',                      'newlistpricecode',                    global.modproducts.NewListPriceCode,                     []);
+      addListener('savelistpricecode',                     'savelistpricecode',                   global.modproducts.SaveListPriceCode,                    ['*listpricecodeid', 'fullname', 'shortname', 'parameter']);
+      addListener('expirelistpricecode',                   'expirelistpricecode',                 global.modproducts.ExpireListPriceCode,                  ['*listpricecodeid']);
+
       // Build template requests
       addListener('listbuildtemplates',                   'listbuildtemplates',                   global.modproducts.ListBuildTemplates,                 []);
       addListener('listbuildtemplateroots',               'listbuildtemplateroots',               global.modproducts.ListBuildTemplateRoots,             []);
@@ -3086,7 +3101,7 @@ function main()
 
       // Product pricing requests
       addListener('getproductprices',                     'getproductprices',                     global.modproducts.GetProductPrices,                   ['*productid']);
-      addListener('getprice',                             'getprice',                             global.modproducts.GetPrice,                           ['*productid', 'clientid', 'qty']);
+      addListener('getprice',                             'getprice',                             global.modproducts.GetPrice,                           ['*productid', 'clientid', 'qty','pricelevel','discountcode']);
 
       // Printing requests
       addListener('printinvoices',                        'printinvoices',                        global.modprinting.PrintInvoices,                      ['*invoices']);
