@@ -1,3 +1,4 @@
+var selectedClientPriceLevel = 0;
 var selectedOrderIdAttachmentId = null;
 
 function doDlgOrderNew(isquote, orderid)
@@ -452,7 +453,7 @@ function doDlgOrderNew(isquote, orderid)
           {
             var qty = $(ed.target).numberbox('getValue');
 
-            doServerDataMessage('getprice', {clientid: clientid, productid: record.id, qty: qty}, {type: 'refresh', rowindex: rowindex});
+            doServerDataMessage('getprice', {clientid: clientid, productid: record.id, qty: qty,pricelevel:selectedClientPriceLevel}, {type: 'refresh', rowindex: rowindex});
           }
         );
       }
@@ -694,7 +695,7 @@ function doDlgOrderNew(isquote, orderid)
                     $(edqty.target).numberbox('setValue', args.data.price.minqty);
                 }
 
-                $(edprice.target).numberbox('setValue', args.data.price.unitprice);
+                $(edprice.target).numberbox('setValue', args.data.price.price);
                 $(edtc.target).combobox('setValue', args.data.price.taxcodeid);
               }
             );
@@ -706,6 +707,16 @@ function doDlgOrderNew(isquote, orderid)
 
   function doLoadClient(ev, args)
   {
+    if(!_.isNull(args.data.client.pricelevel))
+    {
+      selectedClientPriceLevel = args.data.client.pricelevel
+    }
+    else
+    {
+      selectedClientPriceLevel = 0;
+    }
+    console.log("price level: " + selectedClientPriceLevel);
+
     switch (args.pdata.type)
     {
       case 'refresh':

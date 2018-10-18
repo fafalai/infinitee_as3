@@ -224,7 +224,7 @@ function doNewClient(tx, world)
     {
       tx.query
       (
-        'insert into clients (customers_id,clients_id,code,name,url1,email1,contact1,phone1,address1,address2,address3,address4,city,state,postcode,country,contact2,phone2,shipaddress1,shipaddress2,shipaddress3,shipaddress4,shipcity,shipstate,shippostcode,shipcountry,contact3,contact4,mobile3,mobile4,phone3,fax3,bankname,bankbsb,bankaccountno,bankaccountname,dayscredit,linelimit,orderlimit,creditlimit,ordertemplates_id,quotetemplates_id,invoicetemplates_id,labeltemplates_id,isactive,acn,abn,hscode,custcode1,custcode2,issupplier,isclient,userscreated_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48,$49,$50,$51,$52,$53) returning id,datecreated',
+        'insert into clients (customers_id,clients_id,code,name,url1,email1,phone1,fax1,contact1,address1,address2,address3,address4,city,state,postcode,country,contact2,shipaddress1,shipaddress2,shipaddress3,shipaddress4,shipcity,shipstate,shippostcode,shipcountry,bankname,bankbsb,bankaccountno,bankaccountname,dayscredit,linelimit,orderlimit,creditlimit,ordertemplates_id,quotetemplates_id,invoicetemplates_id,labeltemplates_id,isactive,acn,abn,hscode,custcode1,custcode2,issupplier,isclient,userscreated_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48) returning id',
         [
           world.cn.custid,
           __.sanitiseAsBigInt(world.parentid),
@@ -233,9 +233,10 @@ function doNewClient(tx, world)
 
           __.sanitiseAsString(world.url1, 100),
           __.sanitiseAsString(world.email1, 100),
+          __.sanitiseAsString(world.phone1, 20),
+          __.sanitiseAsString(world.fax1, 20),
 
           __.sanitiseAsString(world.contact1, 50),
-          __.sanitiseAsString(world.phone1, 20),
           __.sanitiseAsString(world.address1, 50),
           __.sanitiseAsString(world.address2, 50),
           __.sanitiseAsString(world.address3, 50),
@@ -246,7 +247,6 @@ function doNewClient(tx, world)
           __.sanitiseAsString(world.country, 50),
 
           __.sanitiseAsString(world.contact2, 50),
-          __.sanitiseAsString(world.phone2, 20),
           __.sanitiseAsString(world.shiptoaddress1, 50),
           __.sanitiseAsString(world.shiptoaddress2, 50),
           __.sanitiseAsString(world.shiptoaddress3, 50),
@@ -255,13 +255,6 @@ function doNewClient(tx, world)
           __.sanitiseAsString(world.shiptostate, 50),
           __.sanitiseAsString(world.shiptopostcode, 50),
           __.sanitiseAsString(world.shiptocountry, 50),
-
-          __.sanitiseAsString(world.contact3, 50),
-          __.sanitiseAsString(world.contact4, 50),
-          __.sanitiseAsString(world.mobile3, 20),
-          __.sanitiseAsString(world.mobile4, 20),
-          __.sanitiseAsString(world.phone3, 20),
-          __.sanitiseAsString(world.fax3, 20),
 
           __.sanitiseAsString(world.bankname, 50),
           __.sanitiseAsString(world.bankbsb, 50),
@@ -288,16 +281,55 @@ function doNewClient(tx, world)
           __.sanitiseAsBool(world.issupplier),
           __.sanitiseAsBool(world.isclient),
 
-          world.cn.userid
+          world.cn.userid,
+          world.pricelevel
         ],
         function(err, result)
         {
           if (!err)
           {
             var clientid = result.rows[0].id;
-            var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({clientid: clientid, datecreated: datecreated, usercreated: world.cn.uname});
+            new_clientNote_list.forEach((e) => {
+              tx.query('insert into clientnotes (customers_id,clients_id,userscreated_id,notes) values ($1,$2,$3,$4)',
+              [
+                e.custid,
+                __.sanitiseAsBigInt(clientid),
+                e.userid,
+                __.escapeHTML(e.notes)
+              ], 
+              (err,result) => {
+                if(err)
+                  reject(err);
+              });
+            });
+
+            tx.query
+            (
+              'select c1.datecreated,u1.name usercreated from clients c1 left join users u1 on (c1.userscreated_id=u1.id) where c1.customers_id=$1 and c1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(clientid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                {
+                  var c = result.rows[0];
+
+                  resolve
+                  (
+                    {
+                      clientid: clientid,
+                      datecreated: global.moment(c.datecreated).format('YYYY-MM-DD HH:mm:ss'),
+                      usercreated: c.usercreated
+                    }
+                  );
+                }
+                else
+                  reject(err);
+              }
+            );
           }
           else
             reject(err);
@@ -310,6 +342,7 @@ function doNewClient(tx, world)
 
 function doSaveClient(tx, world)
 {
+  global.ConsoleLog('do save client, updating');
   var promise = new global.rsvp.Promise
   (
     function(resolve, reject)
@@ -322,22 +355,20 @@ function doSaveClient(tx, world)
         'clients_id=$1,' +
         'name=$2,' +
         'code=$3,' +
-        'url1=$4,' +
-        'email1=$5,' +
-
-        'contact1=$6,' +
-        'phone1=$7,' +
-        'address1=$8,' +
-        'address2=$9,' +
-        'address3=$10,' +
-        'address4=$11,' +
-        'city=$12,' +
-        'state=$13,' +
-        'postcode=$14,' +
-        'country=$15,' +
-
-        'contact2=$16,' +
-        'phone2=$17,' +
+        'email1=$4,' +
+        'url1=$5,' +
+        'phone1=$6,' +
+        'fax1=$7,' +
+        'contact1=$8,' +
+        'address1=$9,' +
+        'address2=$10,' +
+        'address3=$11,' +
+        'address4=$12,' +
+        'city=$13,' +
+        'state=$14,' +
+        'postcode=$15,' +
+        'country=$16,' +
+        'contact2=$17,' +
         'shipaddress1=$18,' +
         'shipaddress2=$19,' +
         'shipaddress3=$20,' +
@@ -346,52 +377,43 @@ function doSaveClient(tx, world)
         'shipstate=$23,' +
         'shippostcode=$24,' +
         'shipcountry=$25,' +
-
-        'contact3=$26,' +
-        'contact4=$27,' +
-        'mobile3=$28,' +
-        'mobile4=$29,' +
-        'phone3=$30,' +
-        'fax3=$31,' +
-
-        'bankname=$32,' +
-        'bankbsb=$33,' +
-        'bankaccountno=$34,' +
-        'bankaccountname=$35,' +
-        'dayscredit=$36,' +
-        'linelimit=$37,' +
-        'orderlimit=$38,' +
-        'creditlimit=$39,' +
-        'invoicetemplates_id=$40,' +
-        'ordertemplates_id=$41,' +
-        'quotetemplates_id=$42,' +
-        'labeltemplates_id=$43,' +
-        'isactive=$44,' +
-        'issupplier=$45,' +
-        'acn=$46,' +
-        'abn=$47,' +
-        'hscode=$48,' +
-        'custcode1=$49,' +
-        'custcode2=$50,' +
+        'bankname=$26,' +
+        'bankbsb=$27,' +
+        'bankaccountno=$28,' +
+        'bankaccountname=$29,' +
+        'dayscredit=$30,' +
+        'linelimit=$31,' +
+        'orderlimit=$32,' +
+        'creditlimit=$33,' +
+        'invoicetemplates_id=$34,' +
+        'ordertemplates_id=$35,' +
+        'quotetemplates_id=$36,' +
+        'labeltemplates_id=$37,' +
+        'isactive=$38,' +
+        'issupplier=$39,' +
+        'acn=$40,' +
+        'abn=$41,' +
+        'hscode=$42,' +
+        'custcode1=$43,' +
+        'custcode2=$44,' +
+        'pricelevel=$48,' +
         'datemodified=now(),' +
-        'usersmodified_id=$51 ' +
+        'usersmodified_id=$45 ' +
         'where ' +
-        'customers_id=$52 ' +
+        'customers_id=$46 ' +
         'and ' +
-        'id=$53 ' +
+        'id=$47 ' +
         'and ' +
-        'dateexpired is null ' +
-        'returning ' +
-        'datemodified',
+        'dateexpired is null',
         [
           __.sanitiseAsBigInt(world.parentid),
           __.sanitiseAsString(world.name),
           __.sanitiseAsString(world.code),
-          __.sanitiseAsString(world.url1),
           __.sanitiseAsString(world.email1),
-
-          __.sanitiseAsString(world.contact1),
+          __.sanitiseAsString(world.url1),
           __.sanitiseAsString(world.phone1),
+          __.sanitiseAsString(world.fax1),
+          __.sanitiseAsString(world.contact1),
           __.sanitiseAsString(world.address1),
           __.sanitiseAsString(world.address2),
           __.sanitiseAsString(world.address3),
@@ -400,9 +422,7 @@ function doSaveClient(tx, world)
           __.sanitiseAsString(world.state),
           __.sanitiseAsString(world.postcode),
           __.sanitiseAsString(world.country),
-
           __.sanitiseAsString(world.contact2),
-          __.sanitiseAsString(world.phone2),
           __.sanitiseAsString(world.shiptoaddress1),
           __.sanitiseAsString(world.shiptoaddress2),
           __.sanitiseAsString(world.shiptoaddress3),
@@ -411,14 +431,6 @@ function doSaveClient(tx, world)
           __.sanitiseAsString(world.shiptostate),
           __.sanitiseAsString(world.shiptopostcode),
           __.sanitiseAsString(world.shiptocountry),
-
-          __.sanitiseAsString(world.contact3),
-          __.sanitiseAsString(world.contact4),
-          __.sanitiseAsString(world.mobile3),
-          __.sanitiseAsString(world.mobile4),
-          __.sanitiseAsString(world.phone3),
-          __.sanitiseAsString(world.fax3),
-
           __.sanitiseAsString(world.bankname),
           __.sanitiseAsString(world.bankbsb),
           __.sanitiseAsString(world.bankaccountno),
@@ -440,15 +452,28 @@ function doSaveClient(tx, world)
           __.sanitiseAsString(world.custcode2),
           world.cn.userid,
           world.cn.custid,
-          __.sanitiseAsBigInt(world.clientid)
+          __.sanitiseAsBigInt(world.clientid),
+          __.sanitiseAsBigInt(world.pricelevel)
         ],
         function(err, result)
         {
           if (!err)
           {
-            var datemodified = global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss');
-
-            resolve({datemodified: datemodified, usermodified: world.cn.uname});
+            tx.query
+            (
+              'select c1.datemodified,u1.name from clients c1 left join users u1 on (c1.usersmodified_id=u1.id) where c1.customers_id=$1 and c1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(world.clientid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                  resolve({datemodified: global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss'), usermodified: result.rows[0].name});
+                else
+                  reject(err);
+              }
+            );
           }
           else
             reject(err);
@@ -753,9 +778,9 @@ function LoadClient(world)
     'c1.name,' +
     'c1.url1,' +
     'c1.email1,' +
+    'c1.phone1,' +
     'c1.fax1,' +
     'c1.contact1,' +
-    'c1.phone1,' +
     'c1.address1,' +
     'c1.address2,' +
     'c1.address3,' +
@@ -765,7 +790,6 @@ function LoadClient(world)
     'c1.postcode,' +
     'c1.country,' +
     'c1.contact2,' +
-    'c1.phone2,' +
     'c1.shipaddress1,' +
     'c1.shipaddress2,' +
     'c1.shipaddress3,' +
@@ -774,12 +798,6 @@ function LoadClient(world)
     'c1.shipstate,' +
     'c1.shippostcode,' +
     'c1.shipcountry,' +
-    'c1.contact3,' +
-    'c1.contact4,' +
-    'c1.mobile3,' +
-    'c1.mobile4,' +
-    'c1.phone3,' +
-    'c1.fax3,' +
     'c1.bankname,' +
     'c1.bankbsb,' +
     'c1.bankaccountno,' +
@@ -799,6 +817,7 @@ function LoadClient(world)
     'c1.hscode,' +
     'c1.custcode1,' +
     'c1.custcode2,' +
+    'c1.pricelevel,' +
     'c1.datecreated,' +
     'c1.datemodified,' +
     'c2.id parentid,' +
