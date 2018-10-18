@@ -951,7 +951,8 @@ _.mixin
       if (_.isUNB(d) || (d == 'Invalid date'))
         return '';
 
-      return new moment(d, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD');
+      // return new moment(d, 'YYYY-MM-DD hh:mm:ss').format('YYYY-MM-DD');
+      return new moment(d).format('YYYY-MM-DD');
     }
   }
 );

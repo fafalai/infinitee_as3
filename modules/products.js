@@ -42,6 +42,10 @@ function doGetTaxForProductPrice(tx, custid, productid, price)
 
 function selectPrice(world, prices)
 {
+  // global.ConsoleLog("selectPrice");
+  // global.ConsoleLog(prices[0]);
+  // global.ConsoleLog("the product discount code is: " + prices[0].discountcode_id);
+  // global.ConsoleLog("the client price level is " + world.pricelevel);
   var result =
   {
     price: 0.0,
@@ -49,58 +53,232 @@ function selectPrice(world, prices)
     maxqty: null
   };
   var clientid = world.clientid;
+  global.ConsoleLog("the selected client id is " + clientid);
   var qty = (__.isUndefined(world.qty) || (world.qty == 0.0)) ? null : __.toBigNum(world.qty);
+  //global.ConsoleLog(qty);
+  global.ConsoleLog(prices.length);
 
-  // Prices array should be sorted by cliet, then minqty then maxqty,,,
-  for (var ndx = 0; ndx < prices.length; ndx++)
+
+  var matchidPrices = prices.filter(val => {
+        return val.clientid == clientid;
+      });
+  global.ConsoleLog(matchidPrices.length); 
+
+  var nullPrices = prices.filter(val => {
+    return val.clientid == null;
+  });
+  global.ConsoleLog(nullPrices.length); 
+
+  if(__.isNull(world.discountcode))
   {
-    var p = prices[ndx];
-
-    // If entry is specific to client but we haven't specified one, then skip this entry entirely...
-    if (!__.isNull(p.clientid) && __.isNull(clientid))
-      continue;
-
-    // If entry is specific to client and we've specified one, then if not the same skip this entry entirely...
-    if (!__.isNull(p.clientid) && !__.isNull(clientid) && (p.clientid != clientid))
-      continue;
-
-    // Qty supplied, so we need to do a range check ...
-    if (!__.isNull(qty))
+    global.ConsoleLog("product does not have a discount code, use the traditonal way to select the price, match client id, or default, match qty, and not expired");
+    if(matchidPrices.length > 0)
     {
-      // Entry has no min or max qty, we'll accept this but continue searching (for better entries with range specific match)
-      if (__.isNull(p.minqty) && __.isNull(p.maxqty))
-      {
-        result = p;
-        continue;
-      }
+      global.ConsoleLog("there are matches from the selected arrary, either match with client id, or client id is null because don't select");
+      prices = matchidPrices;
 
-      // Entry has min qty...
-      if (!__.isNull(p.minqty))
+      for (var ndx = 0; ndx<prices.length;ndx++)
       {
-        result = p;
-
-        // If qty is less than entry's minimum, we use this entry's min and we're done, else we continue, check for max boundary
-        if (qty.lessThanOrEqualTo(p.minqty))
-          break;
-      }
-
-      // Entry has max qty we must match...
-      if (!__.isNull(p.maxqty))
-      {
-        if (qty.lessThanOrEqualTo(p.maxqty))
+        global.ConsoleLog("Loop " + ndx);
+        var p = prices[ndx];
+        if(__.isNull(p.minqty) && __.isNull(p.maxqty))
         {
+          global.ConsoleLog("this entry does not have minqty and maxqty, doesn't care what qty use enters, use it and break the loop");
           result = p;
           break;
         }
+        else
+        {
+          if(!__.isNull(qty))
+          {
+            if(!__.isNull(p.minqty))
+            {
+              global.ConsoleLog("this entry has the min qty");
+              result = p;
+    
+              if(qty.lessThanOrEqualTo(p.minqty))
+              {
+                global.ConsoleLog("qty is less than entry's minimum, we use this entry's min and we're done");
+                break;
+              }
+              else if (__.isNull(p.maxqty) || qty.lessThanOrEqualTo(p.maxqty))
+              {
+                global.ConsoleLog("ebtered qty is less than entry's max or the maxqty is null,used the price, break the loop");
+                break;
+              }
+            }
+    
+            if(!__.isNull(p.maxqty))
+            {
+              global.ConsoleLog("this entry has the max qty");
+              if(qty.lessThanOrEqualTo(p.maxqty))
+              {
+                result = p;
+                break;
+              }
+            }
+          }
+          else
+          {
+            global.ConsoleLog("no enter the qty, so use the first available one");
+            result = p;
+            break;
+          }
+        }
+        
+        
+      }
+
+    }
+    else if (nullPrices.length > 0)
+    {
+      global.ConsoleLog("there are no matches from the selected arrary based on the selected client id, so need to use the default list, where the client id is null");
+      prices = nullPrices;
+      for (var ndx = 0; ndx<prices.length;ndx++)
+      {
+        var p = prices[ndx];
+        if(__.isNull(p.minqty) && __.isNull(p.maxqty))
+        {
+          global.ConsoleLog("this entry does not have minqty and maxqty, doesn't care what qty use enters, use it and break the loop");
+          result = p;
+          break;
+        }
+        else
+        {
+          if(!__.isNull(qty))
+          {
+    
+            // if(__.isNull(p.minqty) && __.isNull(p.maxqty))
+            // {
+            //   global.ConsoleLog("this entry no minqty and maxqty, use it and break the loop");
+            //   result = p;
+            //   break;
+            // }
+            //else
+            //{
+              if(!__.isNull(p.minqty))
+              {
+                global.ConsoleLog("this entry has the min qty");
+                result = p;
+      
+                if(qty.lessThanOrEqualTo(p.minqty))
+                {
+                  global.ConsoleLog("qty is less than or equal to entry's minimum, we use this entry's min and we're done");
+                  break;
+                }
+                else if (__.isNull(p.maxqty))
+                {
+                  global.ConsoleLog("this entry does not have the maxqty, it is null, and entered qty is greater than the minqty, break the loop");
+                  break;
+                }
+              }
+      
+              if(!__.isNull(p.maxqty))
+              {
+                global.ConsoleLog("this entry has the max qty");
+                if(qty.lessThanOrEqualTo(p.maxqty))
+                {
+                  global.ConsoleLog("entered qty is less than entry's max or the maxqty is null,used the price, break the loop");
+                  result = p;
+                  break;
+                }
+              }
+          // }
+          }
+          else
+          {
+            global.ConsoleLog("no enter the qty, so use the first available one, which is the one with the least minqty");
+            result = p;
+            break;
+          }
+        }
+        
+        
       }
     }
-    else
-    {
-      // Accept first available entry as we match anything...
-      result = p;
-      break;
-    }
   }
+  else
+  {
+    global.ConsoleLog("product have discount code, need to use the price level match client's, ignore the speicifc enteries");
+    // global.ConsoleLog(prices[0]);
+    var selectedprice = prices[0];
+    global.ConsoleLog(selectedprice);
+    var uselevel = 'price' + world.pricelevel;
+    global.ConsoleLog(uselevel);
+    var useprice = selectedprice[uselevel];
+    global.ConsoleLog(useprice);
+    result.price = useprice;
+    result.discountcode_id = prices[0].discountcode_id;
+    result.minqty = prices[0].minqty;
+    result.maxqty = prices[0].maxqty;
+    result.selltaxcodes_id = prices[0].selltaxcodes_id;
+    // selectedprice = selectedprice.slice(0,23);
+    // global.ConsoleLog(selectedprice);
+
+    // result.price = useprice;
+  
+    //result = selectedprice;
+
+  }
+  // var result =
+  // {
+  //   price: 0.0,
+  //   minqty: null,
+  //   maxqty: null
+  // };
+  // var clientid = world.clientid;
+  // var qty = (__.isUndefined(world.qty) || (world.qty == 0.0)) ? null : __.toBigNum(world.qty);
+
+  // // Prices array should be sorted by cliet, then minqty then maxqty,,,
+  // for (var ndx = 0; ndx < prices.length; ndx++)
+  // {
+  //   var p = prices[ndx];
+
+  //   // If entry is specific to client but we haven't specified one, then skip this entry entirely...
+  //   if (!__.isNull(p.clientid) && __.isNull(clientid))
+  //     continue;
+
+  //   // If entry is specific to client and we've specified one, then if not the same skip this entry entirely...
+  //   if (!__.isNull(p.clientid) && !__.isNull(clientid) && (p.clientid != clientid))
+  //     continue;
+
+  //   // Qty supplied, so we need to do a range check ...
+  //   if (!__.isNull(qty))
+  //   {
+  //     // Entry has no min or max qty, we'll accept this but continue searching (for better entries with range specific match)
+  //     if (__.isNull(p.minqty) && __.isNull(p.maxqty))
+  //     {
+  //       result = p;
+  //       continue;
+  //     }
+
+  //     // Entry has min qty...
+  //     if (!__.isNull(p.minqty))
+  //     {
+  //       result = p;
+
+  //       // If qty is less than entry's minimum, we use this entry's min and we're done, else we continue, check for max boundary
+  //       if (qty.lessThanOrEqualTo(p.minqty))
+  //         break;
+  //     }
+
+  //     // Entry has max qty we must match...
+  //     if (!__.isNull(p.maxqty))
+  //     {
+  //       if (qty.lessThanOrEqualTo(p.maxqty))
+  //       {
+  //         result = p;
+  //         break;
+  //       }
+  //     }
+  //   }
+  //   else
+  //   {
+  //     // Accept first available entry as we match anything...
+  //     result = p;
+  //     break;
+  //   }
+  // }
 
   return result;
 }
@@ -1160,20 +1338,44 @@ function doNewProductPricing(tx, world)
     {
       tx.query
       (
-        'insert into pricing (customers_id,products_id,taxcodes_id,userscreated_id) select $1,id,selltaxcodes_id,$2 from products where id=$3 returning id,datecreated',
+        'insert into pricing (customers_id,products_id,userscreated_id) values ($1,$2,$3) returning id',
         [
           world.cn.custid,
-          world.cn.userid,
-          __.sanitiseAsBigInt(world.productid)
+          __.sanitiseAsBigInt(world.productid),
+          world.cn.userid
         ],
         function(err, result)
         {
           if (!err)
           {
             var priceid = result.rows[0].id;
-            var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({priceid: priceid, datecreated: datecreated, usercreated: world.cn.uname});
+            tx.query
+            (
+              'select p1.datecreated,u1.name usercreated from pricing p1 left join users u1 on (p1.userscreated_id=u1.id) where p1.customers_id=$1 and p1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(priceid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                {
+                  var p = result.rows[0];
+
+                  resolve
+                  (
+                    {
+                      priceid: priceid,
+                      datecreated: global.moment(p.datecreated).format('YYYY-MM-DD HH:mm:ss'),
+                      usercreated: p.usercreated
+                    }
+                  );
+                }
+                else
+                  reject({message: global.text_unablenewproductprice});
+              }
+            );
           }
           else
             reject(err);
@@ -1190,9 +1392,14 @@ function doSaveProductPricing(tx, world)
   (
     function(resolve, reject)
     {
+      // global.ConsoleLog("world.datefrom");
+      // global.ConsoleLog(world.datefrom);
+      // global.ConsoleLog(typeof world.datefrom);
+      // global.ConsoleLog(__.sanitiseAsDate(world.datefrom));
+      // global.ConsoleLog(typeof __.sanitiseAsDate(world.datefrom));
       tx.query
       (
-        'update pricing set clients_id=$1,minqty=$2,maxqty=$3,price=$4,price1=$5,price2=$6,price3=$7,price4=$8,price5=$9,datemodified=now(),usersmodified_id=$10 where customers_id=$11 and id=$12 and dateexpired is null returning products_id,datemodified',
+        "update pricing set clients_id=$1,minqty=$2,maxqty=$3,price=$4,price1=$5,price2=$6,price3=$7,price4=$8,price5=$9,datemodified=now(),usersmodified_id=$10,datefrom = TO_TIMESTAMP($13,'YYYY-MM-DD HH24:MI:SS')::timestamp without time zone,dateto=TO_TIMESTAMP($14,'YYYY-MM-DD HH24:MI:SS')::timestamp without time zone where customers_id=$11 and id=$12 and dateexpired is null",
         [
           __.sanitiseAsBigInt(world.clientid),
           __.sanitiseAsPrice(world.minqty, 4),
@@ -1205,19 +1412,36 @@ function doSaveProductPricing(tx, world)
           __.sanitiseAsPrice(world.price5, 4),
           world.cn.userid,
           world.cn.custid,
-          __.sanitiseAsBigInt(world.priceid)
+          __.sanitiseAsBigInt(world.priceid),
+          __.sanitiseAsDate(world.datefrom),
+          __.sanitiseAsDate(world.dateto)
         ],
         function(err, result)
         {
           if (!err)
           {
-            var productid = result.rows[0].products_id;
-            var datemodified = global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss');
-
-            resolve({productid: productid, datemodified: datemodified, usermodified: world.cn.uname});
+            tx.query
+            (
+              'select p1.products_id productid,p1.datemodified,u1.name from pricing p1 left join users u1 on (p1.usersmodified_id=u1.id) where p1.customers_id=$1 and p1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(world.priceid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                  resolve({productid: result.rows[0].productid, datemodified: global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss'), usermodified: result.rows[0].name});
+                else
+                  reject(err);
+              }
+            );
           }
           else
+          {
+            global.ConsoleLog(err);
             reject(err);
+          }
+            
         }
       );
     }
@@ -1290,7 +1514,7 @@ function doExpireProductPricing(tx, world)
     {
       tx.query
       (
-        'update pricing set dateexpired=now(),usersexpired_id=$1 where customers_id=$2 and id=$3 and dateexpired is null returning products_id,dateexpired',
+        'update pricing set dateexpired=now(),usersexpired_id=$1 where customers_id=$2 and id=$3 and dateexpired is null',
         [
           world.cn.userid,
           world.cn.custid,
@@ -1300,10 +1524,21 @@ function doExpireProductPricing(tx, world)
         {
           if (!err)
           {
-            var productid = result.rows[0].products_id;
-            var dateexpired = global.moment(result.rows[0].dateexpired).format('YYYY-MM-DD HH:mm:ss');
-
-            resolve({productid: productid, dateexpired: dateexpired, userexpired: world.cn.uname});
+            tx.query
+            (
+              'select p1.products_id productid,p1.dateexpired,u1.name from pricing p1 left join users u1 on (p1.usersexpired_id=u1.id) where p1.customers_id=$1 and p1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(world.priceid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                  resolve({productid: result.rows[0].productid, dateexpired: global.moment(result.rows[0].dateexpired).format('YYYY-MM-DD HH:mm:ss'), userexpired: result.rows[0].name});
+                else
+                  reject(err);
+              }
+            );
           }
           else
             reject(err);
@@ -5166,7 +5401,6 @@ function NewProductPricing(world)
       }
       else
       {
-        done();
         global.log.error({newproductpricing: true}, global.text_nodbconnection);
         world.spark.emit(global.eventerror, {rc: global.errcode_dbunavail, msg: global.text_nodbconnection, pdata: world.pdata});
       }
@@ -7595,8 +7829,11 @@ function GetPrice(world)
           'p1.clients_id clientid,' +
           'p1.price,' +
           'p1.gst,' +
+          'p1.datefrom,' +
+          'p1.dateto,' + 
           'p2.costprice,' +
           'p2.costgst,' +
+          'p2.selltaxcodes_id,' +
           'p2.price1,' +
           'p2.price2,' +
           'p2.price3,' +
@@ -7609,8 +7846,11 @@ function GetPrice(world)
           'p2.price10,' +
           'p2.price11,' +
           'p2.price12,' +
+          'p2.price13,' +
+          'p2.price14,' +
+          'p2.price15,' +
           'p2.uomsize,' +
-          'tc1.id taxcodeid,' +
+          'p2.discountcode_id,' +
           'case when (p2.uomsize=0.0) then 0.0 else (p1.price / p2.uomsize) end unitprice,' +
           'case when (p2.uomsize=0.0) then 0.0 else (p1.gst / p2.uomsize) end unitgst,' +
           'case when (p2.uomsize=0.0) then 0.0 else (p1.price1 / p2.uomsize) end unitprice1,' +
@@ -7626,14 +7866,23 @@ function GetPrice(world)
           'case when p1.minqty=0.0000 then null else p1.minqty end,' +
           'case when p1.maxqty=0.0000 then null else p1.maxqty end ' +
           'from ' +
-          'products p2 left join pricing p1 on (p2.id=p1.products_id) ' +
-          '            left join taxcodes tc1 on (p2.selltaxcodes_id=tc1.id) ' +
+          'products p2 left join pricing p1 on (p2.id=p1.products_id)' +
           'where ' +
-          'p2.customers_id=$1 ' +
+          '(p2.customers_id=$1 ' +
           'and ' +
           'p2.id=$2 ' +
           'and ' +
-          'p1.dateexpired is null ' +
+          ' p1.dateto > (NOW() :: TIMESTAMP)' + 
+          'and ' +
+          'p1.dateexpired is null )' +
+          'OR ' + 
+          '(p1.customers_id=$1 ' + 
+          'and ' +
+          'p2.id=$2 ' + 
+          'and ' +
+          'p1.dateto is null ' + 
+          'and ' +
+          'p1.dateexpired is null )' + 
           'order by ' +
           'p1.clients_id desc,' +
           'p1.minqty,' +
@@ -7649,7 +7898,11 @@ function GetPrice(world)
 
             if (!err)
             {
+              // global.ConsoleLog(world.discountcode);
+              // global.ConsoleLog(world.pricelevel);
               var price = selectPrice(world, result.rows);
+              global.ConsoleLog(price);
+              global.ConsoleLog("the event name is " + world.eventname);
 
               world.spark.emit(world.eventname, {rc: global.errcode_none, msg: global.text_success, fguid: world.fguid, price: price, pdata: world.pdata});
             }

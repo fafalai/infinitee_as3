@@ -1025,29 +1025,28 @@ function doDlgProductNew(productcategoryid, productid)
                 {title: 'Max Qty',   field: 'maxqty',   width: 100, align: 'right', resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 0}}, formatter: function(value, row, index) {return _.niceformatqty(value);}, align: 'right'},
                 {title: 'Price',     field: 'price',    width: 100, align: 'right', resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 2}}, formatter: function(value, row, index) {return _.niceformatnumber(value);}, align: 'right'},
                 {title: 'Date From', field: 'datefrom', width: 160, align: 'right', resizable: true, 
-                 editor: 
-                {
-                  type: 'datebox',   
-                  options: 
-                  {
-                    onSelect:function(date)
+                 editor:{
+                    type: 'datebox',   
+                    options: 
                     {
-                      var selectedDate = date;
-                      // console.log("selected date: " + selectedDate);
-                      // console.log(selectedRowIndex)
-                      var ed = $('#divNewProductPricesG').datagrid('getEditor', {index: selectedRowIndex, field: 'dateto'});
-                      //console.log(ed);
-                      $(ed.target).datebox('calendar').calendar({
-                        validator:function(date)
-                        {
-                          if( moment(date).isSameOrAfter(selectedDate))
+                      onSelect:function(date)
+                      {
+                        var selectedDate = date;
+                        // console.log("selected date: " + selectedDate);
+                        // console.log(selectedRowIndex)
+                        var ed = $('#divNewProductPricesG').datagrid('getEditor', {index: selectedRowIndex, field: 'dateto'});
+                        //console.log(ed);
+                        $(ed.target).datebox('calendar').calendar({
+                          validator:function(date)
                           {
-                            return true;
+                            if( moment(date).isSameOrAfter(selectedDate))
+                            {
+                              return true;
+                            }
                           }
+                        });
                         }
-                      });
                       }
-                    }
                   },  
                   align: 'right'
                 },
