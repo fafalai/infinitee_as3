@@ -2104,6 +2104,7 @@ function LoadOrder(world)
 
 function NewOrder(world)
 {
+  global.ConsoleLog("new order");
   var msg = '[' + world.eventname + '] ';
   //
   global.pg.connect
