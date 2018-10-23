@@ -150,6 +150,7 @@ function doDlgPOrderNew(porderid)
     doDlgProductSelect
     (
       supplierid,
+      '',
       true,
       true,
       function(productid, productname, qty, price)

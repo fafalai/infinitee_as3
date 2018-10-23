@@ -28,17 +28,17 @@ function doGetTaxForProductPrice(tx, custid, productid, price)
               ],
               function(err, result)
               {
-                if (!err)
+                if (!err && typeof result.rows[0] != "undefined")
                 {
-                  console.log(result.rows[0]);
-                  if(typeof result.rows[0] == "undefined")
-                  {
-                    reject(err);
-                  }
-                  else
-                  {
+                  // console.log(result.rows[0]);
+                  // if(typeof result.rows[0] == "undefined")
+                  // {
+                  //   reject(err);
+                  // }
+                  // else
+                  // {
                     resolve({tax: result.rows[0].tax});
-                  }
+                  //}
 
                 }
                 else
@@ -250,6 +250,7 @@ function selectPrice(world, prices)
     var useprice = selectedprice[uselevel];
     global.ConsoleLog(useprice);
     result.price = useprice;
+    result.costprice = prices[0].costprice;
     result.discountcode_id = prices[0].discountcode_id;
     result.minqty = prices[0].minqty;
     result.maxqty = prices[0].maxqty;

@@ -166,7 +166,7 @@ function doDlgProductNew(productcategoryid, productid)
     console.log(args.data.rc);
     if(args.data.rc == 0 )
     {
-      doShowSuccess("Save Product " + args.data.msg);
+      //doShowSuccess("Save Product " + args.data.msg);
     }
     else
     {
