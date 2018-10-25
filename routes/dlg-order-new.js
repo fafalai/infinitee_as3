@@ -1,4 +1,5 @@
 var selectedClientPriceLevel = 0;
+var selectedProductDiscountCode = 0;
 var selectedOrderIdAttachmentId = null;
 
 function doDlgOrderNew(isquote, orderid)
@@ -436,6 +437,7 @@ function doDlgOrderNew(isquote, orderid)
 
   function doProductChanged(record)
   {
+    //console.log(record);
     doGridGetSelectedRowData
     (
       'divOrderNewProductsG',
@@ -452,8 +454,8 @@ function doDlgOrderNew(isquote, orderid)
           function(ed)
           {
             var qty = $(ed.target).numberbox('getValue');
-
-            doServerDataMessage('getprice', {clientid: clientid, productid: record.id, qty: qty,pricelevel:selectedClientPriceLevel}, {type: 'refresh', rowindex: rowindex});
+            
+            doServerDataMessage('getprice', {clientid: clientid, productid: record.id, qty: qty,pricelevel:selectedClientPriceLevel,discountcode:record.discountcodeid}, {type: 'refresh', rowindex: rowindex});
           }
         );
       }
@@ -478,8 +480,10 @@ function doDlgOrderNew(isquote, orderid)
           function(ed)
           {
             var productid = $(ed.target).combobox('getValue');
-
-            doServerDataMessage('getprice', {clientid: clientid, productid: productid, qty: newqty}, {type: 'refresh', rowindex: rowindex});
+            //console.log(productid);
+            var selectedproduct = doGetObjFromIdInObjArray(cache_products,productid);
+            //console.log(selectedproduct);
+            doServerDataMessage('getprice', {clientid: clientid, productid: productid, qty: newqty,pricelevel:selectedClientPriceLevel,discountcode:selectedproduct.discountcodeid}, {type: 'refresh', rowindex: rowindex});
           }
         );
       }
@@ -696,7 +700,7 @@ function doDlgOrderNew(isquote, orderid)
                 }
 
                 $(edprice.target).numberbox('setValue', args.data.price.price);
-                $(edtc.target).combobox('setValue', args.data.price.taxcodeid);
+                $(edtc.target).combobox('setValue', args.data.price.selltaxcodes_id);
               }
             );
           }
@@ -1501,6 +1505,7 @@ function doDlgOrderNew(isquote, orderid)
             {
               if (isnew)
               {
+                console.log("new order");
                 doServerDataMessage
                 (
                   'neworder',

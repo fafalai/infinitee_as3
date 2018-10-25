@@ -262,14 +262,14 @@ function doNewPOrderSupplier(tx, world)
                 function(err, results)
                 {
                   if (!err)
-                    resolve({porderid: porderid, porderno: world.porderno, datecreated: datemodified, usercreated: world.cn.uname});
+                    resolve({porderid: porderid, porderno: world.porderno, datecreated: datecreated, usercreated: world.cn.uname});
                   else
                     reject(err);
                 }
               );
             }
             else
-              resolve({porderid: porderid, porderno: world.porderno, datecreated: datemodified, usercreated: world.cn.uname});
+              resolve({porderid: porderid, porderno: world.porderno, datecreated: datecreated, usercreated: world.cn.uname});
           }
           else
             reject(err);

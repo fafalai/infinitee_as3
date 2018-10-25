@@ -2,6 +2,7 @@
 // Internal functions
 function doGetTaxForProductPrice(tx, custid, productid, price)
 {
+  global.ConsoleLog("doGetTaxForProductPrice");
   var promise = new global.rsvp.Promise
   (
     function(resolve, reject)
@@ -25,7 +26,19 @@ function doGetTaxForProductPrice(tx, custid, productid, price)
               function(err, result)
               {
                 if (!err)
-                  resolve({tax: result.rows[0].tax});
+                {
+                    if(result.rows.length > 0)
+                    {
+                      global.ConsoleLog("this product has tax code, and can calcualte the tax");
+                      resolve({tax: result.rows[0].tax});
+                    }
+                    else
+                    {
+                      global.ConsoleLog("this product doesn't have a tax code, so the tax be 0");
+                      resolve({tax: 0});
+
+                    }
+                }
                 else
                   reject(err);
               }
@@ -43,9 +56,9 @@ function doGetTaxForProductPrice(tx, custid, productid, price)
 function selectPrice(world, prices)
 {
   // global.ConsoleLog("selectPrice");
-  // global.ConsoleLog(prices[0]);
-  // global.ConsoleLog("the product discount code is: " + prices[0].discountcode_id);
-  // global.ConsoleLog("the client price level is " + world.pricelevel);
+  global.ConsoleLog(prices);
+  global.ConsoleLog("the product discount code is: " + world.discountcode);
+  global.ConsoleLog("the client price level is " + world.pricelevel);
   var result =
   {
     price: 0.0,
@@ -55,14 +68,14 @@ function selectPrice(world, prices)
   var clientid = world.clientid;
   global.ConsoleLog("the selected client id is " + clientid);
   var qty = (__.isUndefined(world.qty) || (world.qty == 0.0)) ? null : __.toBigNum(world.qty);
-  //global.ConsoleLog(qty);
+  global.ConsoleLog("entered qty is " + qty);
   global.ConsoleLog(prices.length);
 
 
-  var matchidPrices = prices.filter(val => {
+  var matchedPrices = prices.filter(val => {
         return val.clientid == clientid;
       });
-  global.ConsoleLog(matchidPrices.length); 
+  global.ConsoleLog(matchedPrices.length); 
 
   var nullPrices = prices.filter(val => {
     return val.clientid == null;
@@ -72,90 +85,33 @@ function selectPrice(world, prices)
   if(__.isNull(world.discountcode))
   {
     global.ConsoleLog("product does not have a discount code, use the traditonal way to select the price, match client id, or default, match qty, and not expired");
-    if(matchidPrices.length > 0)
+
+    if(matchedPrices.length > 0)
     {
       global.ConsoleLog("there are matches from the selected arrary, either match with client id, or client id is null because don't select");
-      prices = matchidPrices;
+      prices = matchedPrices;
 
-      for (var ndx = 0; ndx<prices.length;ndx++)
+      if(prices.length == 1)
       {
-        global.ConsoleLog("Loop " + ndx);
-        var p = prices[ndx];
-        if(__.isNull(p.minqty) && __.isNull(p.maxqty))
+        global.ConsoleLog("only have one matched price, no need to compare with anything, use it right away");
+        result = prices[0];
+      }
+      else
+      {
+        for (var ndx = 0; ndx<prices.length;ndx++)
         {
-          global.ConsoleLog("this entry does not have minqty and maxqty, doesn't care what qty use enters, use it and break the loop");
-          result = p;
-          break;
-        }
-        else
-        {
-          if(!__.isNull(qty))
+          global.ConsoleLog("Loop " + ndx);
+          var p = prices[ndx];
+          if(__.isNull(p.minqty) && __.isNull(p.maxqty))
           {
-            if(!__.isNull(p.minqty))
-            {
-              global.ConsoleLog("this entry has the min qty");
-              result = p;
-    
-              if(qty.lessThanOrEqualTo(p.minqty))
-              {
-                global.ConsoleLog("qty is less than entry's minimum, we use this entry's min and we're done");
-                break;
-              }
-              else if (__.isNull(p.maxqty) || qty.lessThanOrEqualTo(p.maxqty))
-              {
-                global.ConsoleLog("ebtered qty is less than entry's max or the maxqty is null,used the price, break the loop");
-                break;
-              }
-            }
-    
-            if(!__.isNull(p.maxqty))
-            {
-              global.ConsoleLog("this entry has the max qty");
-              if(qty.lessThanOrEqualTo(p.maxqty))
-              {
-                result = p;
-                break;
-              }
-            }
-          }
-          else
-          {
-            global.ConsoleLog("no enter the qty, so use the first available one");
+            global.ConsoleLog("this entry does not have minqty and maxqty, doesn't care what qty use enters, use it and break the loop");
             result = p;
             break;
           }
-        }
-        
-        
-      }
-
-    }
-    else if (nullPrices.length > 0)
-    {
-      global.ConsoleLog("there are no matches from the selected arrary based on the selected client id, so need to use the default list, where the client id is null");
-      prices = nullPrices;
-      for (var ndx = 0; ndx<prices.length;ndx++)
-      {
-        var p = prices[ndx];
-        if(__.isNull(p.minqty) && __.isNull(p.maxqty))
-        {
-          global.ConsoleLog("this entry does not have minqty and maxqty, doesn't care what qty use enters, use it and break the loop");
-          result = p;
-          break;
-        }
-        else
-        {
-          if(!__.isNull(qty))
+          else
           {
-    
-            // if(__.isNull(p.minqty) && __.isNull(p.maxqty))
-            // {
-            //   global.ConsoleLog("this entry no minqty and maxqty, use it and break the loop");
-            //   result = p;
-            //   break;
-            // }
-            //else
-            //{
+            if(!__.isNull(qty))
+            {
               if(!__.isNull(p.minqty))
               {
                 global.ConsoleLog("this entry has the min qty");
@@ -163,12 +119,12 @@ function selectPrice(world, prices)
       
                 if(qty.lessThanOrEqualTo(p.minqty))
                 {
-                  global.ConsoleLog("qty is less than or equal to entry's minimum, we use this entry's min and we're done");
+                  global.ConsoleLog("entered qty is less than entry's minimum, we use this entry's min and we're done");
                   break;
                 }
-                else if (__.isNull(p.maxqty))
+                else if (__.isNull(p.maxqty) || qty.lessThanOrEqualTo(p.maxqty))
                 {
-                  global.ConsoleLog("this entry does not have the maxqty, it is null, and entered qty is greater than the minqty, break the loop");
+                  global.ConsoleLog("entered qty is less than entry's max or the maxqty is null,used the price, break the loop");
                   break;
                 }
               }
@@ -176,38 +132,123 @@ function selectPrice(world, prices)
               if(!__.isNull(p.maxqty))
               {
                 global.ConsoleLog("this entry has the max qty");
+                result = p;
                 if(qty.lessThanOrEqualTo(p.maxqty))
                 {
-                  global.ConsoleLog("entered qty is less than entry's max or the maxqty is null,used the price, break the loop");
-                  result = p;
+                  global.ConsoleLog("entered qty is less than entry's max, use the price, break the loop");
                   break;
                 }
               }
-          // }
+            }
+            else
+            {
+              global.ConsoleLog("no enter the qty, so use the first available one");
+              result = p;
+              break;
+            }
           }
-          else
+          
+          
+        }
+      }
+
+    }
+    else if (nullPrices.length > 0)
+    {
+      global.ConsoleLog("there are no matches from the selected arrary based on the selected client id, so need to use the default list, where the client id is null");
+      prices = nullPrices;
+      if(prices.length == 1)
+      {
+        global.ConsoleLog("only have one matched price, no need to compare with anything, use it right away");
+        result = prices[0];
+      }
+      else
+      {
+        for (var ndx = 0; ndx<prices.length;ndx++)
+        {
+          var p = prices[ndx];
+          if(__.isNull(p.minqty) && __.isNull(p.maxqty))
           {
-            global.ConsoleLog("no enter the qty, so use the first available one, which is the one with the least minqty");
+            global.ConsoleLog("this entry does not have minqty and maxqty, doesn't care what qty use enters, use it and break the loop");
             result = p;
             break;
           }
+          else
+          {
+            if(!__.isNull(qty))
+            {
+      
+              // if(__.isNull(p.minqty) && __.isNull(p.maxqty))
+              // {
+              //   global.ConsoleLog("this entry no minqty and maxqty, use it and break the loop");
+              //   result = p;
+              //   break;
+              // }
+              //else
+              //{
+                if(!__.isNull(p.minqty))
+                {
+                  global.ConsoleLog("this entry has the min qty");
+                  result = p;
+        
+                  if(qty.lessThanOrEqualTo(p.minqty))
+                  {
+                    global.ConsoleLog("qty is less than or equal to entry's minimum, we use this entry's min and we're done");
+                    break;
+                  }
+                  else if (__.isNull(p.maxqty))
+                  {
+                    global.ConsoleLog("this entry does not have the maxqty, it is null, and entered qty is greater than the minqty, break the loop");
+                    break;
+                  }
+                }
+        
+                if(!__.isNull(p.maxqty))
+                {
+                  global.ConsoleLog("this entry has the max qty");
+                  if(qty.lessThanOrEqualTo(p.maxqty))
+                  {
+                    global.ConsoleLog("entered qty is less than entry's max or the maxqty is null,used the price, break the loop");
+                    result = p;
+                    break;
+                  }
+                  else
+                  {
+                    global.ConsoleLog("entered qty is larger than entry's max,used the default price, break the loop");
+                  }
+                }
+            // }
+            }
+            else
+            {
+              global.ConsoleLog("no enter the qty, so use the first available one, which is the one with the least minqty");
+              result = p;
+              break;
+            }
+          }
+          
+          
         }
-        
-        
       }
+
     }
   }
   else
   {
     global.ConsoleLog("product have discount code, need to use the price level match client's, ignore the speicifc enteries");
-    // global.ConsoleLog(prices[0]);
+    global.ConsoleLog(prices[0]);
     var selectedprice = prices[0];
     global.ConsoleLog(selectedprice);
+    if(world.pricelevel == 0)
+    {
+      world.pricelevel = 1;
+    }
     var uselevel = 'price' + world.pricelevel;
     global.ConsoleLog(uselevel);
     var useprice = selectedprice[uselevel];
     global.ConsoleLog(useprice);
     result.price = useprice;
+    result.costprice = prices[0].costprice;
     result.discountcode_id = prices[0].discountcode_id;
     result.minqty = prices[0].minqty;
     result.maxqty = prices[0].maxqty;
@@ -326,6 +367,74 @@ function doNewProduct(tx, world)
     {
       var buytaxcodeid = __.isUNB(world.buytaxcodeid) ? __.sanitiseAsBigInt(world.custconfig.productbuytaxcodeid) : __.sanitiseAsBigInt(world.buytaxcodeid);
       var selltaxcodeid = __.isUNB(world.selltaxcodeid) ? __.sanitiseAsBigInt(world.custconfig.productselltaxcodeid) : __.sanitiseAsBigInt(world.selltaxcodeid);
+      var parameter = [
+        world.cn.custid,
+        __.sanitiseAsBigInt(world.productcategoryid),
+        __.sanitiseAsString(world.code, 50),
+        __.sanitiseAsString(world.name, 50),
+        __.sanitiseAsString(world.altcode, 50),
+        __.sanitiseAsString(world.barcode, 50),
+        __.notNullNumeric(world.costprice, 4),
+        //
+        world.cn.custid,
+        __.notNullNumeric(world.costprice, 4),
+        buytaxcodeid,
+        //
+        __.sanitiseAsString(world.uom, 50),
+        __.formatuomsize(world.uomsize),
+        __.sanitiseAsBigInt(world.clientid),
+        __.sanitiseAsBool(world.isactive),
+        buytaxcodeid,
+        selltaxcodeid,
+        __.sanitiseAsBigInt(world.costofgoodsaccountid),
+        __.sanitiseAsBigInt(world.incomeaccountid),
+        __.sanitiseAsBigInt(world.assetaccountid),
+        //
+        __.sanitiseAsBigInt(world.buildtemplateid),
+        __.sanitiseAsPrice(world.minqty, 4),
+        __.sanitiseAsPrice(world.warnqty, 4),
+        //
+        __.sanitiseAsPrice(world.width, 4),
+        __.sanitiseAsPrice(world.length, 4),
+        __.sanitiseAsPrice(world.height, 4),
+        __.sanitiseAsPrice(world.weight, 4),
+        //
+        __.sanitiseAsPrice(world.price1, 4),
+        __.sanitiseAsPrice(world.price2, 4),
+        __.sanitiseAsPrice(world.price3, 4),
+        __.sanitiseAsPrice(world.price4, 4),
+        __.sanitiseAsPrice(world.price5, 4),
+        __.sanitiseAsPrice(world.price6, 4),
+        __.sanitiseAsPrice(world.price7, 4),
+        __.sanitiseAsPrice(world.price8, 4),
+        __.sanitiseAsPrice(world.price9, 4),
+        __.sanitiseAsPrice(world.price10, 4),
+        __.sanitiseAsPrice(world.price11, 4),
+        __.sanitiseAsPrice(world.price12, 4),
+        //
+        __.sanitiseAsString(world.attrib1, 50),
+        __.sanitiseAsString(world.attrib2, 50),
+        __.sanitiseAsString(world.attrib3, 50),
+        __.sanitiseAsString(world.attrib4, 50),
+        __.sanitiseAsString(world.attrib5, 50),
+        //
+        __.sanitiseAsBigInt(world.productaliasid),
+        __.sanitiseAsBigInt(world.location1id),
+        __.sanitiseAsBigInt(world.location2id), 
+        //
+        world.cn.userid, //47
+
+        //new added columns 
+        __.sanitiseAsBigInt(world.discountcodeid), //48
+        __.sanitiseAsBigInt(world.listpricecodeid), //49
+        __.sanitiseAsString(world.saleuom, 50), //50
+        __.formatuomsize(world.saleuomsize), //51
+        __.sanitiseAsPrice(world.price13, 4), //52
+        __.sanitiseAsPrice(world.price14, 4), //53
+        __.sanitiseAsPrice(world.price15, 4), //54
+      ];
+      // global.ConsoleLog("All the required parameters: ");
+      // global.ConsoleLog(parameter);
 
       tx.query
       (
@@ -401,6 +510,8 @@ function doNewProduct(tx, world)
           if (!err)
           {
             var productid = result.rows[0].id;
+            // global.ConsoleLog("the new product id: ");
+            // global.ConsoleLog(productid);
             tx.query
             (
               'select p1.datecreated,u1.name usercreated from products p1 left join users u1 on (p1.userscreated_id=u1.id) where p1.customers_id=$1 and p1.id=$2',
@@ -413,6 +524,7 @@ function doNewProduct(tx, world)
                 if (!err)
                 {
                   var p = result.rows[0];
+                  // global.ConsoleLog(p);
 
                   resolve
                   (
@@ -1451,11 +1563,13 @@ function doSaveProductPricing(tx, world)
 
 function doAddPrices(tx, world)
 {
+  global.ConsoleLog("in the doAddPrices functions");
   var promise = new global.rsvp.Promise
   (
     function(resolve, reject)
     {
       var calls = [];
+      global.ConsoleLog(world.prices);
 
       world.prices.forEach
       (
@@ -4178,6 +4292,7 @@ function ListProducts(world)
           'p1.productsalias_id productaliasid,' +
           'p1.locations1_id location1id,' +
           'p1.locations2_id location2id,' +
+          'p1.discountcode_id discountcodeid,' +
           'p1.clients_id clientid,' +
           't1.name buytaxcode,' +
           't2.name selltaxcode,' +
@@ -4560,8 +4675,11 @@ function NewProduct(world)
               (
                 function(result)
                 {
+                  global.ConsoleLog("back from doNewProduct, in NewProduct function");
+                  global.ConsoleLog(result);
                   product = result;
                   world.productid = result.productid;
+
                   return doAddPrices(tx, world);
                 }
               ).then
@@ -7822,6 +7940,71 @@ function GetPrice(world)
       if (!err)
       {
         // Order with client pricing first...
+        var selectedquery = 'select ' +
+        'p1.id,' +
+        'p1.clients_id clientid,' +
+        'p1.price,' +
+        'p1.gst,' +
+        'p1.datefrom,' +
+        'p1.dateto,' + 
+        'p2.costprice,' +
+        'p2.costgst,' +
+        'p2.selltaxcodes_id,' +
+        'p2.price1,' +
+        'p2.price2,' +
+        'p2.price3,' +
+        'p2.price4,' +
+        'p2.price5,' +
+        'p2.price6,' +
+        'p2.price7,' +
+        'p2.price8,' +
+        'p2.price9,' +
+        'p2.price10,' +
+        'p2.price11,' +
+        'p2.price12,' +
+        'p2.price13,' +
+        'p2.price14,' +
+        'p2.price15,' +
+        'p2.uomsize,' +
+        'p2.discountcode_id,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price / p2.uomsize) end unitprice,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst / p2.uomsize) end unitgst,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price1 / p2.uomsize) end unitprice1,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst1 / p2.uomsize) end unitgst1,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price2 / p2.uomsize) end unitprice2,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst2 / p2.uomsize) end unitgst2,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price3 / p2.uomsize) end unitprice3,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst3 / p2.uomsize) end unitgst3,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price4 / p2.uomsize) end unitprice4,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst4 / p2.uomsize) end unitgst4,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price5 / p2.uomsize) end unitprice5,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst5 / p2.uomsize) end unitgst5,' +
+        'case when p1.minqty=0.0000 then null else p1.minqty end,' +
+        'case when p1.maxqty=0.0000 then null else p1.maxqty end ' +
+        'from ' +
+        'products p2 left join pricing p1 on (p2.id=p1.products_id)' +
+        'where ' +
+        '(p2.customers_id=$1 ' +
+        'and ' +
+        'p2.id=$2 ' +
+        'and ' +
+        ' p1.dateto > (NOW() :: TIMESTAMP)' + 
+        'and ' +
+        'p1.dateexpired is null )' +
+        'OR ' + 
+        '(p1.customers_id=$1 ' + 
+        'and ' +
+        'p2.id=$2 ' + 
+        'and ' +
+        'p1.dateto is null ' + 
+        'and ' +
+        'p1.dateexpired is null )' + 
+        'order by ' +
+        'p1.clients_id desc,' +
+        'p1.minqty,' +
+        'p1.maxqty,' +
+        'p1.price';
+        global.ConsoleLog(selectedquery);
         client.query
         (
           'select ' +

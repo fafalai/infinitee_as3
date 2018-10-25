@@ -1363,6 +1363,10 @@ function doPrimus()
           (
             function(p)
             {
+              // console.log("list products, cache_product");
+              // console.log(p.discountcodeid);
+              // console.log(_.isUNB(p.discountcodeid));
+              // console.log(typeof p.discountcodeid);
               cache_products.push
               (
                 {
@@ -1408,6 +1412,11 @@ function doPrimus()
               );
             }
           );
+          console.log("list products");
+          console.log("products original number " + cache_products.length);
+          cache_products = removeDuplicates(cache_products,'id');
+          console.log("after number " + cache_products.length);
+          //console.log(cache_products[2]);
 
           $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
         }
@@ -1470,6 +1479,11 @@ function doPrimus()
             }
           );
 
+          console.log("the original productsbycateogyory " + cache_productsbycategory.length);
+          cache_productsbycategory = removeDuplicates(cache_productsbycategory,'id');
+          console.log("after remove the number: " + cache_productsbycategory.length);
+          // console.log(cache_productsbycategory[3]);
+          $('#divEvents').trigger('listproductsbycategory', {data: data, pdata: $.extend(data.pdata, {})});
           $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
         }
       }

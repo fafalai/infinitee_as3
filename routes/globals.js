@@ -2662,3 +2662,38 @@ function doServerMessage(msg, pdata)
 {
   primus.emit(msg, {fguid: fguid, uuid: uuid, session: session, pdata: $.extend(pdata, {})});
 }
+
+//Trials
+/**
+ * https://gist.github.com/lmfresneda/9158e06a93a819a78b30cc175573a8d3
+ * Remove duplicates from an array of objects in javascript
+ * @param arr - Array of objects
+ * @param prop - Property of each object to compare
+ * @returns {Array}
+ */
+function removeDuplicates( arr, prop ) {
+  //console.log("I am in");
+  //console.log(prop);
+  var obj = {}; //key-object pair, use the id as the key, pair with the array[i], next time, same id appear, but already has one, so pass to next id. 
+  for ( var i = 0, len = arr.length; i < len; i++ )
+  {
+    //console.log(obj[arr[i][prop]]);
+    if(!obj[arr[i][prop]]) 
+    {
+      obj[arr[i][prop]] = arr[i];
+      //console.log(obj[arr[i][prop]]);
+    }
+    else
+    {
+      //console.log(obj[arr[i][prop]]);
+    }
+  }
+  var newArr = [];
+  //console.log(obj);
+  for ( var key in obj ) 
+  {
+    newArr.push(obj[key]);
+  }
+  //console.log(newArr);
+  return newArr;
+}
