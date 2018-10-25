@@ -3061,8 +3061,8 @@ function SearchQuotes(world)
   global.modhelpers.doBuildSearchWhereClause
   (
     [world.cn.custid],
-    ['o1.quoteno', 'o1.pono', 'o1.name', 'o1.shipto_postcode', 'o1.shipto_city', 'o1.shipto_country', 'o1.shipto_state', 'o1.activeversion'],
-    [world.quoteno, world.pono, world.name, world.shippostcode, world.shipcity, world.shipcountry, world.shipstate, world.version],
+    ['o1.quoteno', 'o1.pono', 'o1.name', 'o1.shipto_postcode', 'o1.shipto_city', 'o1.shipto_country', 'o1.shipto_state', '#o1.activeversion','#g2.status'],
+    [world.quoteno, world.pono, world.name, world.shippostcode, world.shipcity, world.shipcountry, world.shipstate, world.version,world.status],
     'o1.datecreated',
     world.datefrom,
     world.dateto,
@@ -3135,9 +3135,9 @@ function SearchQuotes(world)
         '          left join users u1 on (o1.userscreated_id=u1.id) ' +
         '          left join users u2 on (o1.usersmodified_id=u2.id) ' +
         '          left join getlatestorderstatus($1,o1.id) g2 on (1=1) ' +
-        '          left join getorderattachmentthumbnail($2,o1.id) oad1 on (1=1) ' +
+        '          left join getorderattachmentthumbnail($1,o1.id) oad1 on (1=1) ' +
         'where ' +
-        'o1.customers_id=$3 ' +
+        'o1.customers_id=$1 ' +
         'and ' +
         clauses +
         'o1.dateexpired is null ' +
