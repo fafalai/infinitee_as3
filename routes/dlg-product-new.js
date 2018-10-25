@@ -166,13 +166,13 @@ function doDlgProductNew(productcategoryid, productid)
     console.log(args.data.rc);
     if(args.data.rc == 0 )
     {
-      //doShowSuccess("Save Product " + args.data.msg);
+      doShowSuccess("Save Product " + args.data.msg);
     }
     else
     {
       doShowError(args.data.msg);
     }
-    //$('#dlgProductNew').dialog('close');
+    $('#dlgProductNew').dialog('close');
   }
 
   function doListAccounts(ev, args)
@@ -1141,8 +1141,12 @@ function doDlgProductNew(productcategoryid, productid)
           {
             var code = $('#fldNewProductCode').textbox('getValue');
             var name = $('#fldNewProductName').textbox('getValue');
+            var selltaxcodeid = $('#cbNewProductSellTaxCode').combobox('getValue');
+            console.log("selected sell tax code:");
+            console.log(selltaxcodeid);
 
-            if (!_.isBlank(code) && !_.isBlank(name))
+
+            if (!_.isBlank(code) && !_.isBlank(name) && !_.isBlank(selltaxcodeid))
             {
               var barcode = $('#fldNewProductBarcode').textbox('getValue');
               var altcode = $('#fldNewProductAltcode').textbox('getValue');
@@ -1157,7 +1161,7 @@ function doDlgProductNew(productcategoryid, productid)
               var isactive = doSwitchButtonChecked('cbNewProductActive');
 
               var buytaxcodeid = $('#cbNewProductBuyTaxCode').combobox('getValue');
-              var selltaxcodeid = $('#cbNewProductSellTaxCode').combobox('getValue');
+              // var selltaxcodeid = $('#cbNewProductSellTaxCode').combobox('getValue');
               var costofgoodsaccountid = doGetComboTreeSelectedId('cbNewProductSalesAccount');
               var incomeaccountid = doGetComboTreeSelectedId('cbNewProductIncomeAccount');
               var assetaccountid = doGetComboTreeSelectedId('cbNewProductAssetAccount');
@@ -1203,6 +1207,22 @@ function doDlgProductNew(productcategoryid, productid)
 
               if (isnew)
               {
+                doPricingSave();
+                 var prices = $('#divNewProductPricesG').datagrid('getData');
+                 // Remove blanks entries...
+                if (prices.rows.length)
+                {
+                  prices.rows.forEach
+                  (
+                    function(p, index)
+                    {
+                      if (_.isUNB(p.price))
+                        prices.rows.splice(index, 1);
+                    }
+                  )
+                }
+                console.log(prices.rows);
+
                 doServerDataMessage
                 (
                   'newproduct',
@@ -1254,6 +1274,7 @@ function doDlgProductNew(productcategoryid, productid)
                     attrib3: attrib3,
                     attrib4: attrib4,
                     attrib5: attrib5,
+                    prices: prices.rows,
                     discountcodeid:discountcode,
                     listpricecodeid:listpricecode
                   },
@@ -1262,6 +1283,7 @@ function doDlgProductNew(productcategoryid, productid)
               }
               else
               {
+                doPricingSave();
                 doServerDataMessage
                 (
                   'saveproduct',
@@ -1322,7 +1344,7 @@ function doDlgProductNew(productcategoryid, productid)
               }
             }
             else
-              doMandatoryTextbox('Need at least a product code and name', 'fldNewProductCode');
+              doMandatoryTextbox('Need at least a product code, name and the sell tax code', 'fldNewProductCode');
           }
         },
         {

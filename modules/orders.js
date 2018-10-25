@@ -3061,7 +3061,7 @@ function SearchQuotes(world)
   global.modhelpers.doBuildSearchWhereClause
   (
     [world.cn.custid],
-    ['o1.quoteno', 'o1.pono', 'o1.name', 'o1.shipto_postcode', 'o1.shipto_city', 'o1.shipto_country', 'o1.shipto_state', '#o1.activeversion'],
+    ['o1.quoteno', 'o1.pono', 'o1.name', 'o1.shipto_postcode', 'o1.shipto_city', 'o1.shipto_country', 'o1.shipto_state', 'o1.activeversion'],
     [world.quoteno, world.pono, world.name, world.shippostcode, world.shipcity, world.shipcountry, world.shipstate, world.version],
     'o1.datecreated',
     world.datefrom,
@@ -3071,6 +3071,15 @@ function SearchQuotes(world)
     world.maxhistory,
     function(binds, bindno, clauses)
     {
+      global.ConsoleLog("back to the orders.js, searchquotes");
+      global.ConsoleLog("binds: ");
+      global.ConsoleLog(binds);
+      global.ConsoleLog("bindno: ");
+      global.ConsoleLog(bindno);
+      global.ConsoleLog("clauses: ");
+      global.ConsoleLog(clauses);
+
+
       global.modhelpers.doSimpleQuery
       (
         world,

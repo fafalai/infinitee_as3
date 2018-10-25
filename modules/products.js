@@ -3,9 +3,6 @@
 function doGetTaxForProductPrice(tx, custid, productid, price)
 {
   global.ConsoleLog("doGetTaxForProductPrice");
-  global.ConsoleLog(custid);
-  global.ConsoleLog(productid);
-  global.ConsoleLog(price);
   var promise = new global.rsvp.Promise
   (
     function(resolve, reject)
@@ -28,18 +25,19 @@ function doGetTaxForProductPrice(tx, custid, productid, price)
               ],
               function(err, result)
               {
-                if (!err && typeof result.rows[0] != "undefined")
+                if (!err)
                 {
-                  // console.log(result.rows[0]);
-                  // if(typeof result.rows[0] == "undefined")
-                  // {
-                  //   reject(err);
-                  // }
-                  // else
-                  // {
-                    resolve({tax: result.rows[0].tax});
-                  //}
+                    if(result.rows.length > 0)
+                    {
+                      global.ConsoleLog("this product has tax code, and can calcualte the tax");
+                      resolve({tax: result.rows[0].tax});
+                    }
+                    else
+                    {
+                      global.ConsoleLog("this product doesn't have a tax code, so the tax be 0");
+                      resolve({tax: 0});
 
+                    }
                 }
                 else
                   reject(err);
@@ -238,7 +236,7 @@ function selectPrice(world, prices)
   else
   {
     global.ConsoleLog("product have discount code, need to use the price level match client's, ignore the speicifc enteries");
-    // global.ConsoleLog(prices[0]);
+    global.ConsoleLog(prices[0]);
     var selectedprice = prices[0];
     global.ConsoleLog(selectedprice);
     if(world.pricelevel == 0)
@@ -369,6 +367,74 @@ function doNewProduct(tx, world)
     {
       var buytaxcodeid = __.isUNB(world.buytaxcodeid) ? __.sanitiseAsBigInt(world.custconfig.productbuytaxcodeid) : __.sanitiseAsBigInt(world.buytaxcodeid);
       var selltaxcodeid = __.isUNB(world.selltaxcodeid) ? __.sanitiseAsBigInt(world.custconfig.productselltaxcodeid) : __.sanitiseAsBigInt(world.selltaxcodeid);
+      var parameter = [
+        world.cn.custid,
+        __.sanitiseAsBigInt(world.productcategoryid),
+        __.sanitiseAsString(world.code, 50),
+        __.sanitiseAsString(world.name, 50),
+        __.sanitiseAsString(world.altcode, 50),
+        __.sanitiseAsString(world.barcode, 50),
+        __.notNullNumeric(world.costprice, 4),
+        //
+        world.cn.custid,
+        __.notNullNumeric(world.costprice, 4),
+        buytaxcodeid,
+        //
+        __.sanitiseAsString(world.uom, 50),
+        __.formatuomsize(world.uomsize),
+        __.sanitiseAsBigInt(world.clientid),
+        __.sanitiseAsBool(world.isactive),
+        buytaxcodeid,
+        selltaxcodeid,
+        __.sanitiseAsBigInt(world.costofgoodsaccountid),
+        __.sanitiseAsBigInt(world.incomeaccountid),
+        __.sanitiseAsBigInt(world.assetaccountid),
+        //
+        __.sanitiseAsBigInt(world.buildtemplateid),
+        __.sanitiseAsPrice(world.minqty, 4),
+        __.sanitiseAsPrice(world.warnqty, 4),
+        //
+        __.sanitiseAsPrice(world.width, 4),
+        __.sanitiseAsPrice(world.length, 4),
+        __.sanitiseAsPrice(world.height, 4),
+        __.sanitiseAsPrice(world.weight, 4),
+        //
+        __.sanitiseAsPrice(world.price1, 4),
+        __.sanitiseAsPrice(world.price2, 4),
+        __.sanitiseAsPrice(world.price3, 4),
+        __.sanitiseAsPrice(world.price4, 4),
+        __.sanitiseAsPrice(world.price5, 4),
+        __.sanitiseAsPrice(world.price6, 4),
+        __.sanitiseAsPrice(world.price7, 4),
+        __.sanitiseAsPrice(world.price8, 4),
+        __.sanitiseAsPrice(world.price9, 4),
+        __.sanitiseAsPrice(world.price10, 4),
+        __.sanitiseAsPrice(world.price11, 4),
+        __.sanitiseAsPrice(world.price12, 4),
+        //
+        __.sanitiseAsString(world.attrib1, 50),
+        __.sanitiseAsString(world.attrib2, 50),
+        __.sanitiseAsString(world.attrib3, 50),
+        __.sanitiseAsString(world.attrib4, 50),
+        __.sanitiseAsString(world.attrib5, 50),
+        //
+        __.sanitiseAsBigInt(world.productaliasid),
+        __.sanitiseAsBigInt(world.location1id),
+        __.sanitiseAsBigInt(world.location2id), 
+        //
+        world.cn.userid, //47
+
+        //new added columns 
+        __.sanitiseAsBigInt(world.discountcodeid), //48
+        __.sanitiseAsBigInt(world.listpricecodeid), //49
+        __.sanitiseAsString(world.saleuom, 50), //50
+        __.formatuomsize(world.saleuomsize), //51
+        __.sanitiseAsPrice(world.price13, 4), //52
+        __.sanitiseAsPrice(world.price14, 4), //53
+        __.sanitiseAsPrice(world.price15, 4), //54
+      ];
+      // global.ConsoleLog("All the required parameters: ");
+      // global.ConsoleLog(parameter);
 
       tx.query
       (
@@ -444,6 +510,8 @@ function doNewProduct(tx, world)
           if (!err)
           {
             var productid = result.rows[0].id;
+            // global.ConsoleLog("the new product id: ");
+            // global.ConsoleLog(productid);
             tx.query
             (
               'select p1.datecreated,u1.name usercreated from products p1 left join users u1 on (p1.userscreated_id=u1.id) where p1.customers_id=$1 and p1.id=$2',
@@ -456,6 +524,7 @@ function doNewProduct(tx, world)
                 if (!err)
                 {
                   var p = result.rows[0];
+                  // global.ConsoleLog(p);
 
                   resolve
                   (
@@ -1494,11 +1563,13 @@ function doSaveProductPricing(tx, world)
 
 function doAddPrices(tx, world)
 {
+  global.ConsoleLog("in the doAddPrices functions");
   var promise = new global.rsvp.Promise
   (
     function(resolve, reject)
     {
       var calls = [];
+      global.ConsoleLog(world.prices);
 
       world.prices.forEach
       (
@@ -4604,8 +4675,11 @@ function NewProduct(world)
               (
                 function(result)
                 {
+                  global.ConsoleLog("back from doNewProduct, in NewProduct function");
+                  global.ConsoleLog(result);
                   product = result;
                   world.productid = result.productid;
+
                   return doAddPrices(tx, world);
                 }
               ).then
@@ -7866,6 +7940,71 @@ function GetPrice(world)
       if (!err)
       {
         // Order with client pricing first...
+        var selectedquery = 'select ' +
+        'p1.id,' +
+        'p1.clients_id clientid,' +
+        'p1.price,' +
+        'p1.gst,' +
+        'p1.datefrom,' +
+        'p1.dateto,' + 
+        'p2.costprice,' +
+        'p2.costgst,' +
+        'p2.selltaxcodes_id,' +
+        'p2.price1,' +
+        'p2.price2,' +
+        'p2.price3,' +
+        'p2.price4,' +
+        'p2.price5,' +
+        'p2.price6,' +
+        'p2.price7,' +
+        'p2.price8,' +
+        'p2.price9,' +
+        'p2.price10,' +
+        'p2.price11,' +
+        'p2.price12,' +
+        'p2.price13,' +
+        'p2.price14,' +
+        'p2.price15,' +
+        'p2.uomsize,' +
+        'p2.discountcode_id,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price / p2.uomsize) end unitprice,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst / p2.uomsize) end unitgst,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price1 / p2.uomsize) end unitprice1,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst1 / p2.uomsize) end unitgst1,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price2 / p2.uomsize) end unitprice2,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst2 / p2.uomsize) end unitgst2,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price3 / p2.uomsize) end unitprice3,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst3 / p2.uomsize) end unitgst3,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price4 / p2.uomsize) end unitprice4,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst4 / p2.uomsize) end unitgst4,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.price5 / p2.uomsize) end unitprice5,' +
+        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst5 / p2.uomsize) end unitgst5,' +
+        'case when p1.minqty=0.0000 then null else p1.minqty end,' +
+        'case when p1.maxqty=0.0000 then null else p1.maxqty end ' +
+        'from ' +
+        'products p2 left join pricing p1 on (p2.id=p1.products_id)' +
+        'where ' +
+        '(p2.customers_id=$1 ' +
+        'and ' +
+        'p2.id=$2 ' +
+        'and ' +
+        ' p1.dateto > (NOW() :: TIMESTAMP)' + 
+        'and ' +
+        'p1.dateexpired is null )' +
+        'OR ' + 
+        '(p1.customers_id=$1 ' + 
+        'and ' +
+        'p2.id=$2 ' + 
+        'and ' +
+        'p1.dateto is null ' + 
+        'and ' +
+        'p1.dateexpired is null )' + 
+        'order by ' +
+        'p1.clients_id desc,' +
+        'p1.minqty,' +
+        'p1.maxqty,' +
+        'p1.price';
+        global.ConsoleLog(selectedquery);
         client.query
         (
           'select ' +
