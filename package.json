@@ -18,6 +18,7 @@
     "dtrace-provider": "^0.8.6",
     "ekg": "^0.0.1",
     "elementtree": "^0.1.6",
+    "exceljs": "^1.6.2",
     "express": "^4.16.2",
     "geolib": "^2.0.14",
     "hat": "^0.0.3",
