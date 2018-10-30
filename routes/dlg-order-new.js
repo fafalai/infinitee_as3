@@ -84,7 +84,11 @@ function doDlgOrderNew(isquote, orderid)
       {
         var notes = nicEditors.findEditor(editorId).getContent();
 
-        doServerDataMessage('saveordernote', {ordernoteid: row.id, notes: notes}, {type: 'refresh'});
+        if (orderid == null)
+          doServerDataMessage('saveordernote_neworder', { ordernoteid: row.id, notes: notes }, { type: 'refresh' });
+        else
+          doServerDataMessage('saveordernote', { ordernoteid: row.id, notes: notes }, { type: 'refresh' });
+        
 
         editorPanel.removeInstance(editorId);
         originalContents = null;
@@ -136,6 +140,27 @@ function doDlgOrderNew(isquote, orderid)
   {
     if (orderid == args.data.orderid)
       doServerDataMessage('listordernotes', {orderid: orderid}, {ordernoteid: args.data.ordernoteid, type: 'refresh'});
+  }
+
+  //Empty local array
+  function doCleanOrderNoteLocally() {
+    doServerMessage('cleanOrdernoteLocally', { type: 'refresh' });
+  }
+
+  function doEditorList_newOrder(ev, args) {
+    var data = [];
+    args.data.note_List.forEach((n) => {
+      data.push(
+        {
+          id: n.note_id,
+          notes: doNiceString(n.ordernote),
+          date: doNiceDateModifiedOrCreated(n.datecreated),
+          by: n.usercreated
+        }
+      );
+    });
+
+    $('#divNewOrderNotesG').datagrid('loadData', data);
   }
 
   function doEditorList(ev, args)
@@ -295,6 +320,9 @@ function doDlgOrderNew(isquote, orderid)
     $('#fldNewOrderStatusesCarrier').textbox('clear');
     $('#fldNewOrderStatusesComment').textbox('clear');
     $('#fldNewOrderStatusesBatchno').textbox('clear');
+
+    $("#check_OrderSametoShip").prop('checked', false);
+    $("#check_OrderSametoInvoice").prop('checked', false);
 
     if (isnew)
     {
@@ -727,6 +755,24 @@ function doDlgOrderNew(isquote, orderid)
       {
         $('#fldNewOrderOrderName').textbox('setValue', args.data.client.name);
         $('#btnOrderNewAdd').linkbutton('enable');
+
+        //Trigger shipping address combotree
+        let shiptree = $('#cbNewOrderShiptoAddress').combotree('tree');
+        let shipnode = shiptree.tree('find',args.data.client.id);
+        if(shipnode){
+          shiptree.tree('select',shipnode.target);
+          $(shipnode.target).trigger('click');
+        }
+
+        //Trigger invoice address combotree
+        let invoicetree = $('#cbNewOrderInvoiceAddress').combotree('tree');
+        let invoicenode = invoicetree.tree('find',args.data.client.id);
+        if(invoicenode){
+          invoicetree.tree('select',invoicenode.target);
+          $(invoicenode.target).trigger('click');
+        }
+        
+        break;
         // Fall through...
       }
       case 'invoiceto':
@@ -954,6 +1000,7 @@ function doDlgOrderNew(isquote, orderid)
       doStatusClear();
   }
 
+  $('#divEvents').on('listordernote_newOrder', doEditorList);
   $('#divEvents').on('newordernote', doEditorSaved);
   $('#divEvents').on('saveordernote', doEditorSaved);
   $('#divEvents').on('ordernotecreated', doEditorSaved);
@@ -989,12 +1036,30 @@ function doDlgOrderNew(isquote, orderid)
   $('#divEvents').on('orderattachmentspopup', doAttachmentEventsHandler);
   $('#divEvents').on('orderstatuspopup', doStatusEventsHandler);
 
+  $('#check_OrderSametoShip').change(() => {
+    if ($("#check_OrderSametoShip").prop('checked')) {
+      $('#fldNewOrderAddress1').textbox('setValue', $('#fldNewOrderShiptoAddress1').textbox('getValue'));
+      $('#fldNewOrderAddress2').textbox('setValue', $('#fldNewOrderShiptoAddress2').textbox('getValue'));
+      $('#fldNewOrderAddress3').textbox('setValue', $('#fldNewOrderShiptoAddress3').textbox('getValue'));
+      $('#fldNewOrderAddress4').textbox('setValue', $('#fldNewOrderShiptoAddress4').textbox('getValue'));
+    }
+  });
+  $('#check_OrderSametoInvoice').change(() => {
+    if ($("#check_OrderSametoInvoice").prop('checked')) {
+      $('#fldNewOrderShiptoAddress1').textbox('setValue', $('#fldNewOrderAddress1').textbox('getValue'));
+      $('#fldNewOrderShiptoAddress2').textbox('setValue', $('#fldNewOrderAddress2').textbox('getValue'));
+      $('#fldNewOrderShiptoAddress3').textbox('setValue', $('#fldNewOrderAddress3').textbox('getValue'));
+      $('#fldNewOrderShiptoAddress4').textbox('setValue', $('#fldNewOrderAddress4').textbox('getValue'));
+    }
+  });
+
   $('#dlgOrderNew').dialog
   (
     {
       title: title,
       onClose: function()
       {
+        $('#divEvents').off('listordernote_newOrder', doEditorList);
         $('#divEvents').off('newordernote', doEditorSaved);
         $('#divEvents').off('saveordernote', doEditorSaved);
         $('#divEvents').off('ordernotecreated', doEditorSaved);
@@ -1417,10 +1482,16 @@ function doDlgOrderNew(isquote, orderid)
           }
         );
 
-        if (isnew)
+        if (isnew){
           $('#btnOrderNewAdd').linkbutton({text: 'Add'});
-        else
+          $('#newordertabs').tabs('disableTab','Attachments');
+          $('#btnOrderNewVersion').linkbutton('disable');
+        }
+        else{
+          $('#btnOrderNewVersion').linkbutton('enable');
           $('#btnOrderNewAdd').linkbutton({text: 'Save'});
+          $('#newordertabs').tabs('enableTab','Attachments');
+        }
 
         if (!_.isNull(orderid))
         {
