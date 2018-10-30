@@ -986,7 +986,8 @@ function doDlgOrderNew(isquote, orderid)
     else if (args == 'clear')
       doStatusClear();
   }
-
+  
+  $('#divEvents').on('saveordernote_neworder', doEditorList);
   $('#divEvents').on('newordernote_neworder', doEditorList);
   $('#divEvents').on('newordernote', doEditorSaved);
   $('#divEvents').on('saveordernote', doEditorSaved);
@@ -1049,6 +1050,7 @@ function doDlgOrderNew(isquote, orderid)
         if (isnew)
           doCleanOrderNoteLocally();
 
+        $('#divEvents').off('saveordernote_neworder', doEditorList);
         $('#divEvents').off('newordernote_neworder', doEditorList);
         $('#divEvents').off('newordernote', doEditorSaved);
         $('#divEvents').off('saveordernote', doEditorSaved);

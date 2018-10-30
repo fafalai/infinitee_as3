@@ -3209,8 +3209,10 @@ function NewOrderNote_NewOrder(world) {
     custid: world.cn.custid,
     notes: "",
     datecreated: global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+    datemodified: '',
     userid: world.cn.userid,
-    usercreated: world.cn.uname
+    usercreated: world.cn.uname,
+    usermodified: ''
   });
 
   world.spark.emit(world.eventname, { rc: global.errcode_none, rs: newOrderNote_List, msg: global.text_success, pdata: world.pdata });
@@ -3220,6 +3222,17 @@ function NewOrderNote_NewOrder(world) {
 function CleanOrderNote_Array(){
   newOrderNote_List = [];
   ordernote_id = 1;
+}
+
+function SaveOrderNote_NewOrder(world) {
+  let index = world.ordernoteid - 1;
+
+  newOrderNote_List[index].notes = world.notes;
+  newOrderNote_List[index].datemodified = global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+  newOrderNote_List[index].userid = world.cn.userid;
+  newOrderNote_List[index].usermodified = world.cn.uname;
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, rs: newOrderNote_List, pdata: world.pdata });
 }
 
 function NewOrderNote(world)
@@ -4135,6 +4148,7 @@ module.exports.SearchOrderNote = SearchOrderNote;
 
 module.exports.NewOrderNote_NewOrder = NewOrderNote_NewOrder;
 module.exports.CleanOrderNote_Array = CleanOrderNote_Array;
+module.exports.SaveOrderNote_NewOrder = SaveOrderNote_NewOrder;
 
 module.exports.ListOrderStatuses = ListOrderStatuses;
 module.exports.NewOrderStatus = NewOrderStatus;

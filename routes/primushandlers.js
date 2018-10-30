@@ -2012,6 +2012,7 @@ function doPrimus()
     doAddPrimusListener('searchordernote');
 
     doAddPrimusListener('newordernote_neworder');
+    doAddPrimusListener('saveordernote_neworder');
 
     // Order status requests
     doAddPrimusListener('listorderstatuses');
