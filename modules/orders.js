@@ -1008,14 +1008,30 @@ function doNewOrder(tx, world)
                 function(err, results)
                 {
                   if (!err)
-                    resolve({orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname});
+                  {
+                    if (newOrderNote_List.length > 0) {
+                      doNewOrderNode_NewOrder(tx, world, orderid)
+                        .then(resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname }))
+                        .catch(reject(err))
+                    }
+                    else
+                      resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
+                  }
                   else
                     reject(err);
                 }
               );
             }
-            else
-              resolve({orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname});
+            else{
+              if (newOrderNote_List.length > 0) {
+                doNewOrderNode_NewOrder(tx, world, orderid)
+                  .then(resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname }))
+                  .catch(reject(err))
+              }
+              else {
+                resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
+              }
+            }
           }
           else
             reject(err);
@@ -1358,6 +1374,32 @@ function doNewOrderDetail(tx, custid, userid, orderid, version, productid, qty, 
     }
   );
   return promise;
+}
+
+function doNewOrderNode_NewOrder(tx, world, orderid) {
+  return new global.rsvp.Promise(
+    (resolve, reject) => {
+      tx.query(
+        'insert into ordernotes (customers_id,orders_id,userscreated_id,notes) values ($1,$2,$3,$4) returning id,datecreated',
+        [
+          world.cn.custid,
+          __.sanitiseAsBigInt(orderid),
+          world.cn.userid,
+          newOrderNote_List.notes
+        ],
+        (err, result) => {
+          if (!err) {
+            var ordernoteid = result.rows[0].id;
+            var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
+
+            resolve({ ordernoteid: ordernoteid, datecreated: datecreated, usercreated: world.cn.uname });
+          } else {
+            reject(err);
+          }
+        }
+      )
+    }
+  )
 }
 
 function doNewOrderNote(tx, world)
@@ -3158,6 +3200,28 @@ function SearchQuotes(world)
   );
 }
 
+//Only run on backend, do not save into database
+let newOrderNote_List = [];
+let ordernote_id = 1;
+function NewOrderNote_NewOrder(world) {
+  newOrderNote_List.push({
+    id: ordernote_id,
+    custid: world.cn.custid,
+    notes: "",
+    datecreated: global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+    userid: world.cn.userid,
+    usercreated: world.cn.uname
+  });
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, rs: newOrderNote_List, msg: global.text_success, pdata: world.pdata });
+  ordernote_id++;
+}
+
+function CleanOrderNote_Array(){
+  newOrderNote_List = [];
+  ordernote_id = 1;
+}
+
 function NewOrderNote(world)
 {
   global.modhelpers.doSimpleFunc1Tx
@@ -4068,6 +4132,9 @@ module.exports.NewOrderNote = NewOrderNote;
 module.exports.SaveOrderNote = SaveOrderNote;
 module.exports.ExpireOrderNote = ExpireOrderNote;
 module.exports.SearchOrderNote = SearchOrderNote;
+
+module.exports.NewOrderNote_NewOrder = NewOrderNote_NewOrder;
+module.exports.CleanOrderNote_Array = CleanOrderNote_Array;
 
 module.exports.ListOrderStatuses = ListOrderStatuses;
 module.exports.NewOrderStatus = NewOrderStatus;

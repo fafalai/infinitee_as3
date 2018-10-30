@@ -1,4 +1,5 @@
 var selectedClientIdAttachmentId = null;
+let attachment_parentid = null;
 
 function doDlgClientNew(parentid, clientid)
 {
@@ -17,7 +18,10 @@ function doDlgClientNew(parentid, clientid)
   // Notes editor methods...
   function doEditorNew()
   {
-    doServerDataMessage('newclientnote', {clientid: clientid}, {type: 'refresh'});
+    if (isnew)
+      doServerMessage('newclientnote_newclient', { type: 'refresh' });
+    else
+      doServerDataMessage('newclientnote', { clientid: clientid }, { type: 'refresh' });
   }
 
   function doEditorClear()
@@ -73,7 +77,11 @@ function doDlgClientNew(parentid, clientid)
       {
         var notes = nicEditors.findEditor(editorId).getContent();
 
-        doServerDataMessage('saveclientnote', {clientnoteid: row.id, notes: notes}, {type: 'refresh'});
+        if (isnew) {
+          doServerDataMessage('saveclientnote_newclient', { clientnoteid: row.id, notes: notes }, { type: 'refresh' });
+        } else {
+          doServerDataMessage('saveclientnote', { clientnoteid: row.id, notes: notes }, { type: 'refresh' });
+        }
 
         editorPanel.removeInstance(editorId);
         originalContents = null;
@@ -127,6 +135,10 @@ function doDlgClientNew(parentid, clientid)
       doServerDataMessage('listclientnotes', {clientid: clientid}, {clientnoteid: args.data.clientnoteid, type: 'refresh'});
   }
 
+  function doCleanClientNoteLocally(){
+    doServerMessage('cleanclientnotelocally',{type: 'refresh'});
+  }
+
   function doEditorLoad(ev, args)
   {
     var data = [];
@@ -162,6 +174,24 @@ function doDlgClientNew(parentid, clientid)
         $('#divNewClientNotesG').datagrid('selectRecord', n.id);
       }
     );
+  }
+
+  function doNewFolder(){
+    let row = $('#divClientAttachmentsG').treegrid('getSelected');
+    attachment_parentid = !row || row.mimetype!=='Folder' ? null : row.id;
+    
+    doServerDataMessage('newfolderclientattachment',{clientid: clientid, parentid: attachment_parentid}, {type: 'refresh'});
+    doAttachmentClear();
+  }
+  
+  function doUploadFile(){
+    $('#tbClientAttachments_uploadFile').click();
+    
+    let row = $('#divClientAttachmentsG').treegrid('getSelected');
+    
+    attachment_parentid = !row || row.mimetype!=='Folder' ? null : row.id;
+
+    doAttachmentClear();
   }
 
   // Attachments methods
@@ -285,6 +315,9 @@ function doDlgClientNew(parentid, clientid)
   function doReset()
   {
     $('#cbNewClientParent').combotree('setValue', parentid);
+
+    $("#check_ClientSametoShip").prop('checked', false);
+    $("#check_ClientSametoInvoice").prop('checked', false);
 
     if (isnew)
     {
@@ -494,8 +527,15 @@ function doDlgClientNew(parentid, clientid)
       doAttachmentRemove();
     else if (args == 'download')
       doAttachmentDownload();
+    else if (args == 'newFolder')
+      doNewFolder();
+    else if (args == 'uploadFile')
+      doUploadFile();
   }
 
+  $('#divEvents').on('saveclientnote_newclient', doEditorLoad);
+  $('#divEvents').on('newclientnote_newclient', doEditorLoad);
+  $('#divEvents').on('listnewclientnote', doEditorLoad);
   $('#divEvents').on('newclientnote', doEditorSaved);
   $('#divEvents').on('saveclientnote', doEditorSaved);
   $('#divEvents').on('expireclientnote', doEditorSaved);
@@ -523,11 +563,34 @@ function doDlgClientNew(parentid, clientid)
   $('#divEvents').on('clientnotespopup', doEditorEventsHandler);
   $('#divEvents').on('clientattachmentspopup', doAttachmentEventsHandler);
 
+  $('#check_ClientSametoShip').change(() => {
+    if ($("#check_ClientSametoShip").prop('checked')) {
+      $('#fldNewClientAddress1').textbox('setValue', $('#fldNewClientShippingAddress1').textbox('getValue'));
+      $('#fldNewClientAddress2').textbox('setValue', $('#fldNewClientShippingAddress2').textbox('getValue'));
+      $('#fldNewClientAddress3').textbox('setValue', $('#fldNewClientShippingAddress3').textbox('getValue'));
+      $('#fldNewClientAddress4').textbox('setValue', $('#fldNewClientShippingAddress4').textbox('getValue'));
+    }
+  });
+  $('#check_ClientSametoInvoice').change(() => {
+    if ($("#check_ClientSametoInvoice").prop('checked')) {
+      $('#fldNewClientShippingAddress1').textbox('setValue', $('#fldNewClientAddress1').textbox('getValue'));
+      $('#fldNewClientShippingAddress2').textbox('setValue', $('#fldNewClientAddress2').textbox('getValue'));
+      $('#fldNewClientShippingAddress3').textbox('setValue', $('#fldNewClientAddress3').textbox('getValue'));
+      $('#fldNewClientShippingAddress4').textbox('setValue', $('#fldNewClientAddress4').textbox('getValue'));
+    }
+  });
+
   $('#dlgClientNew').dialog
   (
     {
       onClose: function()
       {
+        if(isnew)
+          doCleanClientNoteLocally();
+
+        $('#divEvents').off('saveclientnote_newclient', doEditorLoad);
+        $('#divEvents').off('newclientnote_newclient', doEditorLoad);
+        $('#divEvents').off('listnewclientnote', doEditorLoad);
         $('#divEvents').off('newclientnote', doEditorSaved);
         $('#divEvents').off('saveclientnote', doEditorSaved);
         $('#divEvents').off('clientnotecreated', doEditorSaved);
@@ -815,10 +878,17 @@ function doDlgClientNew(parentid, clientid)
           }
         );
 
+        
         if (isnew)
+        {
           $('#btnClientNewAdd').linkbutton({text: 'Add'});
+          $('#newclienttabs').tabs('disableTab','Attachments');
+        }
         else
+        {
           $('#btnClientNewAdd').linkbutton({text: 'Save'});
+          $('#newclienttabs').tabs('enableTab','Attachments');
+        }
 
         if (!_.isUndefined(clientid) && !_.isNull(clientid))
         {

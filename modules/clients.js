@@ -1093,6 +1093,41 @@ function ListClientNotes(world)
   );
 }
 
+//Only run on backend, do not save into database
+let newClientNote_List = [];
+let clientnote_id = 1;
+function NewClientNote_NewClient(world) {
+  newClientNote_List.push({
+    id: clientnote_id,
+    custid: world.cn.custid,
+    notes: "",
+    datecreated: global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+    datemodified: '',
+    userid: world.cn.userid,
+    usercreated: world.cn.uname,
+    usermodified: ''
+  });
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, rs: newClientNote_List, msg: global.text_success, pdata: world.pdata });
+  clientnote_id++;
+}
+
+function CleanClientNote_Array(){
+  newClientNote_List = [];
+  clientnote_id = 1;
+}
+
+function SaveClientNote_NewClient(world) {
+  let index = world.clientnoteid - 1;
+
+  newClientNote_List[index].notes = world.notes;
+  newClientNote_List[index].datemodified = global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+  newClientNote_List[index].userid = world.cn.userid;
+  newClientNote_List[index].usermodified = world.cn.uname;
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, rs: newClientNote_List, pdata: world.pdata });
+}
+
 function NewClientNote(world)
 {
   global.modhelpers.doSimpleFunc1Tx
@@ -1391,6 +1426,10 @@ module.exports.NewClientNote = NewClientNote;
 module.exports.SaveClientNote = SaveClientNote;
 module.exports.ExpireClientNote = ExpireClientNote;
 module.exports.SearchClientNote = SearchClientNote;
+
+module.exports.NewClientNote_NewClient = NewClientNote_NewClient;
+module.exports.CleanClientNote_Array = CleanClientNote_Array;
+module.exports.SaveClientNote_NewClient = SaveClientNote_NewClient;
 
 module.exports.ListClientAttachments = ListClientAttachments;
 module.exports.SaveClientAttachment = SaveClientAttachment;

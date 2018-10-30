@@ -28,7 +28,10 @@ function doDlgOrderNew(isquote, orderid)
   // Notes editor methods...
   function doEditorNew()
   {
-    doServerDataMessage('newordernote', {orderid: orderid}, {type: 'refresh'});
+    if (isnew)
+      doServerMessage('newordernote_neworder', { type: 'refresh' });
+    else
+      doServerDataMessage('newordernote', { orderid: orderid }, { type: 'refresh' });
   }
 
   function doEditorClear()
@@ -144,23 +147,7 @@ function doDlgOrderNew(isquote, orderid)
 
   //Empty local array
   function doCleanOrderNoteLocally() {
-    doServerMessage('cleanOrdernoteLocally', { type: 'refresh' });
-  }
-
-  function doEditorList_newOrder(ev, args) {
-    var data = [];
-    args.data.note_List.forEach((n) => {
-      data.push(
-        {
-          id: n.note_id,
-          notes: doNiceString(n.ordernote),
-          date: doNiceDateModifiedOrCreated(n.datecreated),
-          by: n.usercreated
-        }
-      );
-    });
-
-    $('#divNewOrderNotesG').datagrid('loadData', data);
+    doServerMessage('cleanordernotelocally', { type: 'refresh' });
   }
 
   function doEditorList(ev, args)
@@ -970,7 +957,7 @@ function doDlgOrderNew(isquote, orderid)
       doEditorCancel();
     else if (args == 'save')
       doEditorSave();
-      else if (args == 'remove')
+    else if (args == 'remove')
       doEditorRemove();
     else if (args == 'search')
       doEditorSearch();
@@ -1000,7 +987,7 @@ function doDlgOrderNew(isquote, orderid)
       doStatusClear();
   }
 
-  $('#divEvents').on('listordernote_newOrder', doEditorList);
+  $('#divEvents').on('newordernote_neworder', doEditorList);
   $('#divEvents').on('newordernote', doEditorSaved);
   $('#divEvents').on('saveordernote', doEditorSaved);
   $('#divEvents').on('ordernotecreated', doEditorSaved);
@@ -1059,7 +1046,10 @@ function doDlgOrderNew(isquote, orderid)
       title: title,
       onClose: function()
       {
-        $('#divEvents').off('listordernote_newOrder', doEditorList);
+        if (isnew)
+          doCleanOrderNoteLocally();
+
+        $('#divEvents').off('newordernote_neworder', doEditorList);
         $('#divEvents').off('newordernote', doEditorSaved);
         $('#divEvents').off('saveordernote', doEditorSaved);
         $('#divEvents').off('ordernotecreated', doEditorSaved);
