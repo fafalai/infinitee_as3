@@ -1008,14 +1008,15 @@ function doNewOrder(tx, world)
                 function(err, results)
                 {
                   if (!err)
-                    resolve({orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname});
+                    resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
                   else
                     reject(err);
                 }
               );
             }
-            else
-              resolve({orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname});
+            else{
+              resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
+            }
           }
           else
             reject(err);
@@ -1359,6 +1360,85 @@ function doNewOrderDetail(tx, custid, userid, orderid, version, productid, qty, 
   );
   return promise;
 }
+
+function doNewOrderNode_NewOrder(tx, world) {
+  return new global.rsvp.Promise(
+    (resolve, reject) => {
+      if (newOrderNote_List.length > 0) {
+        let tasks = [];
+        newOrderNote_List.forEach(note => {
+          tasks.push(
+            (callback) => {
+              return new global.rsvp.Promise(
+                (resolve, reject) => {
+                  tx.query(
+                    'insert into ordernotes (customers_id,orders_id,userscreated_id,notes,datecreated) values ($1,$2,$3,$4,$5) returning id,datecreated',
+                    [
+                      world.cn.custid,
+                      __.sanitiseAsBigInt(world.orderid),
+                      world.cn.userid,
+                      note.notes,
+                      note.datecreated
+                    ],
+                    (err, result) => {
+                      if (!err) {
+                        var ordernoteid = result.rows[0].id;
+                        var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
+
+                        callback(null, {});
+                        // resolve({ ordernoteid: ordernoteid, datecreated: datecreated, usercreated: world.cn.uname });
+                      } else {
+                        callback(err);
+                      }
+                    }
+                  )
+                }
+              )
+            }
+          );
+        });
+
+        global.async.series(tasks,
+          (err, results) => {
+            if (err)
+              reject(err);
+            else
+              resolve({});
+            // resolve(results);
+          }
+        );
+      }
+      else
+        resolve();
+    }
+  )
+}
+  // return new global.rsvp.Promise(
+  //   (resolve, reject) => {
+  //     tx.query(
+  //       'insert into ordernotes (customers_id,orders_id,userscreated_id,notes,datecreated,datemodified,usersmodified_id) values ($1,$2,$3,$4,$5,$6,$7) returning id,datecreated',
+  //       [
+  //         world.cn.custid,
+  //         __.sanitiseAsBigInt(world.orderid),
+  //         world.cn.userid,
+  //         note.notes,
+  //         note.datecreated,
+  //         note.datemodified,
+  //         world.cn.userid
+  //       ],
+  //       (err, result) => {
+  //         if (!err) {
+  //           var ordernoteid = result.rows[0].id;
+  //           var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
+
+  //           resolve({ ordernoteid: ordernoteid, datecreated: datecreated, usercreated: world.cn.uname });
+  //         } else {
+  //           reject(err);
+  //         }
+  //       }
+  //     )
+  //   }
+  // )
 
 function doNewOrderNote(tx, world)
 {
@@ -2104,7 +2184,7 @@ function LoadOrder(world)
 
 function NewOrder(world)
 {
-  global.ConsoleLog("new order");
+  // global.ConsoleLog("new order");
   var msg = '[' + world.eventname + '] ';
   //
   global.pg.connect
@@ -2145,9 +2225,27 @@ function NewOrder(world)
                 {
                   order = result;
                   world.orderid = result.orderid;
-                  //
-                  return doUpdateOrderTotals(tx, world);
+                  (result) => {
+                    return doUpdateOrderTotals(tx, world);
+                  }
                 }
+              ).then
+              (
+                (result) => {
+                  return doNewOrderNode_NewOrder(tx, world);
+                }
+                  //   global.async.series(
+                  //     tasks,
+                  //     (err, results) => {
+                  //       if (!err)
+                  //         // resolve();
+                  //       else
+                  //         reject(err);
+                  //     }
+                  //   )
+                  // } else {
+                  //   // resolve();
+                  // }
               ).then
               (
                 function(result)
@@ -3158,6 +3256,41 @@ function SearchQuotes(world)
   );
 }
 
+//Only run on backend, do not save into database
+let newOrderNote_List = [];
+let ordernote_id = 1;
+function NewOrderNote_NewOrder(world) {
+  newOrderNote_List.push({
+    id: ordernote_id,
+    custid: world.cn.custid,
+    notes: "",
+    datecreated: global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+    datemodified: '',
+    userid: world.cn.userid,
+    usercreated: world.cn.uname,
+    usermodified: ''
+  });
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, rs: newOrderNote_List, msg: global.text_success, pdata: world.pdata });
+  ordernote_id++;
+}
+
+function CleanOrderNote_Array(){
+  newOrderNote_List = [];
+  ordernote_id = 1;
+}
+
+function SaveOrderNote_NewOrder(world) {
+  let index = world.ordernoteid - 1;
+
+  newOrderNote_List[index].notes = world.notes;
+  newOrderNote_List[index].datemodified = global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+  newOrderNote_List[index].userid = world.cn.userid;
+  newOrderNote_List[index].usermodified = world.cn.uname;
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, rs: newOrderNote_List, pdata: world.pdata });
+}
+
 function NewOrderNote(world)
 {
   global.modhelpers.doSimpleFunc1Tx
@@ -4068,6 +4201,10 @@ module.exports.NewOrderNote = NewOrderNote;
 module.exports.SaveOrderNote = SaveOrderNote;
 module.exports.ExpireOrderNote = ExpireOrderNote;
 module.exports.SearchOrderNote = SearchOrderNote;
+
+module.exports.NewOrderNote_NewOrder = NewOrderNote_NewOrder;
+module.exports.CleanOrderNote_Array = CleanOrderNote_Array;
+module.exports.SaveOrderNote_NewOrder = SaveOrderNote_NewOrder;
 
 module.exports.ListOrderStatuses = ListOrderStatuses;
 module.exports.NewOrderStatus = NewOrderStatus;

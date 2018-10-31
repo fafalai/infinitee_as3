@@ -121,6 +121,7 @@
   <script type="text/javascript" src="dlg-journal-new.js"></script>
   <script type="text/javascript" src="dlg-alert-new.js"></script>
   <script type="text/javascript" src="dlg-pick-abn.js"></script>
+  <script type="text/javascript" src="dlg-permission-templates.js"></script>
 
   <script type="text/javascript" src="dz-client-attachments.js"></script>
   <script type="text/javascript" src="dz-supplier-attachments.js"></script>
@@ -165,6 +166,8 @@
   <script type="text/javascript" src="tab-product-categories.js"></script>
   <script type="text/javascript" src="tab-build-templates.js"></script>
   <script type="text/javascript" src="tab-product-templates.js"></script>
+  <script type="text/javascript" src="tab-permission-templates.js"></script>
+
   <script type="text/javascript" src="tab-timeclock.js"></script>
   <script type="text/javascript" src="tab-taxcodes.js"></script>
   <script type="text/javascript" src="tab-journals.js"></script>
@@ -610,6 +613,9 @@
   </div>
 
   <div id="divClientAttachmentsMenuPopup" class="easyui-menu" style="width: 120px; display: none;">
+    <div onclick="doContextMenu('clientattachmentspopup', 'newFolder')" data-options="iconCls: 'icon-add'">New Folder</div>
+    <div class="tbClientAttachments_uploadFile" onclick="doContextMenu('clientattachmentspopup', 'uploadFile')"
+      data-options="iconCls: 'icon-attachment'">Upload File</div>
     <div onclick="doContextMenu('clientattachmentspopup', 'edit')" data-options="iconCls: 'icon-edit'">Edit</div>
     <div onclick="doContextMenu('clientattachmentspopup', 'remove')" data-options="iconCls: 'icon-remove'">Remove</div>
     <div onclick="doContextMenu('clientattachmentspopup', 'download')" data-options="iconCls: 'icon-download'">Download</div>
@@ -1558,6 +1564,7 @@
             <tr>
               <td>Name:</td>
               <td><input type="text" id="fldNewClientName" class="easyui-textbox" style="width: 300px;"></td>
+              <td style="color:red">*</td>
             </tr>
             <tr>
               <td>Code:</td>
@@ -1619,6 +1626,7 @@
             <tr>
               <td>Address 1:</td>
               <td><input type="text" id="fldNewClientAddress1" class="easyui-textbox" style="width: 300px;"></td>
+              <td><input type="checkbox" id="check_ClientSametoShip"> Same as Shipping Address</td>
             </tr>
             <tr>
               <td>Address 2:</td>
@@ -1664,6 +1672,7 @@
             <tr>
               <td>Address 1:</td>
               <td><input type="text" id="fldNewClientShippingAddress1" class="easyui-textbox" style="width: 300px;"></td>
+              <td><input type="checkbox" id="check_ClientSametoInvoice"> Same as Invoice Address</td>
             </tr>
             <tr>
               <td>Address 2:</td>
@@ -2077,6 +2086,7 @@
             <tr>
               <td>Address 1:</td>
               <td><input type="text" id="fldNewOrderAddress1" class="easyui-textbox" style="width: 300px;"></td>
+              <td><input type="checkbox" id="check_OrderSametoShip"> Same as Shipping Address</td>
             </tr>
             <tr>
               <td>Address 2:</td>
@@ -2122,6 +2132,7 @@
             <tr>
               <td>Address 1:</td>
               <td><input type="text" id="fldNewOrderShiptoAddress1" class="easyui-textbox" style="width: 300px;"></td>
+              <td><input type="checkbox" id="check_OrderSametoInvoice"> Same as Invoice Address</td>
             </tr>
             <tr>
               <td>Address 2:</td>
@@ -2593,6 +2604,10 @@
             <tr>
               <td>Avatar:</td>
               <td><div id="cbNewUserAvatar" style="width: 200px;"></div></td>
+            </tr>
+            <tr>
+              <td>Permission:</td>
+              <td><input id="cbNewUserPermissionTemplate" class='easyui-combobox' style="width: 200px;"></td>
             </tr>
           </table>
         </div>
@@ -3572,6 +3587,17 @@
     </div>
   </div>
 
+  <div id="tbPermissionTemplates" style="height: auto; display: none">
+    <div style="margin-bottom: 5px">
+      <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'new')" class="easyui-linkbutton" iconCls="icon-add">New</a>
+      <!-- <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'clear')" class="easyui-linkbutton" iconCls="icon-clear">Clear</a> -->
+      <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'edit')" class="easyui-linkbutton" iconCls="icon-edit">Edit</a>
+      <!-- <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'cancel')" class="easyui-linkbutton" iconCls="icon-cancel">Cancel</a> -->
+      <!-- <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'save')" class="easyui-linkbutton" iconCls="icon-save">Save</a> -->
+      <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'remove')" class="easyui-linkbutton" iconCls="icon-remove">Remove</a>
+    </div>
+  </div>
+
   <div id="tbOrders" style="height: auto; display: none">
     <div style="margin-bottom: 5px">
       <a href="javascript:void(0)" id="tbOrdersNew"         onClick="doContextMenu('orderspopup', 'new')" class="easyui-linkbutton" iconCls="icon-add">New</a>
@@ -3712,12 +3738,16 @@
 
   <div id="tbClientAttachments" style="height: auto; display: none">
     <div style="margin-bottom: 5px">
+      <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'newFolder')" class="easyui-linkbutton"
+        iconCls="icon-add">New Folder</a>
+      <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'uploadFile')" class="easyui-linkbutton tbClientAttachments_uploadFile"
+        iconCls="icon-attachment">Upload File</a>
       <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'clear')" class="easyui-linkbutton" iconCls="icon-clear">Clear</a>
       <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'edit')" class="easyui-linkbutton" iconCls="icon-edit">Edit</a>
       <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'cancel')" class="easyui-linkbutton" iconCls="icon-cancel">Cancel</a>
       <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'save')" class="easyui-linkbutton" iconCls="icon-save">Save</a>
       <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'remove')" class="easyui-linkbutton" iconCls="icon-remove">Remove</a>
-      <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'download')" class="easyui-linkbutton" iconCls="icon-download">Download</a>
+      <!-- <a href="javascript:void(0)" onClick="doContextMenu('clientattachmentspopup', 'download')" class="easyui-linkbutton" iconCls="icon-download">Download</a> -->
     </div>
   </div>
 
@@ -3732,6 +3762,8 @@
       <a href="javascript:void(0)" onClick="doContextMenu('clientnotespopup', 'search')" class="easyui-linkbutton" iconCls="icon-search">Search</a>
     </div>
   </div>
+
+  
 
   <div id="tbSuppliers" style="height: auto; display: none">
     <div style="margin-bottom: 5px">
@@ -4106,6 +4138,10 @@
                 <div id="divPrintTemplatesG" data-options="fit: true"></div>
               </div>
 
+              <div title="Permission Templates" data-options="iconCls: 'icon-lock'">
+                <table id="divPermissionTemplates" data-options="fit: true"></table>
+              </div>
+              
               <div title="Emails" data-options="iconCls: 'icon-email'">
                 <div id="divEmailsG" data-options="fit: true"></div>
               </div>

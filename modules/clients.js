@@ -224,7 +224,7 @@ function doNewClient(tx, world)
     {
       tx.query
       (
-        'insert into clients (customers_id,clients_id,code,name,url1,email1,phone1,fax1,contact1,address1,address2,address3,address4,city,state,postcode,country,contact2,shipaddress1,shipaddress2,shipaddress3,shipaddress4,shipcity,shipstate,shippostcode,shipcountry,bankname,bankbsb,bankaccountno,bankaccountname,dayscredit,linelimit,orderlimit,creditlimit,ordertemplates_id,quotetemplates_id,invoicetemplates_id,labeltemplates_id,isactive,acn,abn,hscode,custcode1,custcode2,issupplier,isclient,userscreated_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48) returning id',
+        'insert into clients (customers_id,clients_id,code,name,url1,email1,phone1,fax1,contact1,address1,address2,address3,address4,city,state,postcode,country,contact2,shipaddress1,shipaddress2,shipaddress3,shipaddress4,shipcity,shipstate,shippostcode,shipcountry,bankname,bankbsb,bankaccountno,bankaccountname,dayscredit,linelimit,orderlimit,creditlimit,ordertemplates_id,quotetemplates_id,invoicetemplates_id,labeltemplates_id,isactive,acn,abn,hscode,custcode1,custcode2,issupplier,isclient,userscreated_id,pricelevel) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48) returning id',
         [
           world.cn.custid,
           __.sanitiseAsBigInt(world.parentid),
@@ -290,7 +290,7 @@ function doNewClient(tx, world)
           {
             var clientid = result.rows[0].id;
 
-            new_clientNote_list.forEach((e) => {
+            newClientNote_List.forEach((e) => {
               tx.query('insert into clientnotes (customers_id,clients_id,userscreated_id,notes) values ($1,$2,$3,$4)',
               [
                 e.custid,
@@ -1093,6 +1093,41 @@ function ListClientNotes(world)
   );
 }
 
+//Only run on backend, do not save into database
+let newClientNote_List = [];
+let clientnote_id = 1;
+function NewClientNote_NewClient(world) {
+  newClientNote_List.push({
+    id: clientnote_id,
+    custid: world.cn.custid,
+    notes: "",
+    datecreated: global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+    datemodified: '',
+    userid: world.cn.userid,
+    usercreated: world.cn.uname,
+    usermodified: ''
+  });
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, rs: newClientNote_List, msg: global.text_success, pdata: world.pdata });
+  clientnote_id++;
+}
+
+function CleanClientNote_Array(){
+  newClientNote_List = [];
+  clientnote_id = 1;
+}
+
+function SaveClientNote_NewClient(world) {
+  let index = world.clientnoteid - 1;
+
+  newClientNote_List[index].notes = world.notes;
+  newClientNote_List[index].datemodified = global.moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
+  newClientNote_List[index].userid = world.cn.userid;
+  newClientNote_List[index].usermodified = world.cn.uname;
+
+  world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, rs: newClientNote_List, pdata: world.pdata });
+}
+
 function NewClientNote(world)
 {
   global.modhelpers.doSimpleFunc1Tx
@@ -1391,6 +1426,10 @@ module.exports.NewClientNote = NewClientNote;
 module.exports.SaveClientNote = SaveClientNote;
 module.exports.ExpireClientNote = ExpireClientNote;
 module.exports.SearchClientNote = SearchClientNote;
+
+module.exports.NewClientNote_NewClient = NewClientNote_NewClient;
+module.exports.CleanClientNote_Array = CleanClientNote_Array;
+module.exports.SaveClientNote_NewClient = SaveClientNote_NewClient;
 
 module.exports.ListClientAttachments = ListClientAttachments;
 module.exports.SaveClientAttachment = SaveClientAttachment;

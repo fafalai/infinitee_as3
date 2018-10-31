@@ -776,6 +776,9 @@ function doPrimus()
     doAddPrimusListener('expireclientnote');
     doAddPrimusListener('searchclientnote');
 
+    doAddPrimusListener('newclientnote_newclient');
+    doAddPrimusListener('saveclientnote_newclient');
+
     // Client attachment requests
     doAddPrimusListener('listclientattachments');
     doAddPrimusListener('saveclientattachment');
@@ -2007,6 +2010,9 @@ function doPrimus()
     doAddPrimusListener('saveordernote');
     doAddPrimusListener('expireordernote');
     doAddPrimusListener('searchordernote');
+    
+    doAddPrimusListener('newordernote_neworder');
+    doAddPrimusListener('saveordernote_neworder');
 
     // Order status requests
     doAddPrimusListener('listorderstatuses');

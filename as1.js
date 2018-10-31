@@ -963,7 +963,7 @@ global.CreatePlainUUID = function()
 
 global.ConsoleLog = function(txt)
 {
-  if (global.config.env.debug)
+  if (global.config.env.debug){}
     console.log(txt);
 };
 
@@ -2955,6 +2955,10 @@ function main()
       addListener('saveclientnote',                       'saveclientnote',                       global.modclients.SaveClientNote,                      ['*clientnoteid', 'notes']);
       addListener('expireclientnote',                     'expireclientnote',                     global.modclients.ExpireClientNote,                    ['*clientnoteid']);
       addListener('searchclientnote',                     'searchclientnote',                     global.modclients.SearchClientNote,                    ['*clientid', '*words']);
+      
+      addListener('newclientnote_newclient',              'newclientnote_newclient',              global.modclients.NewClientNote_NewClient,             []);
+      addListener('cleanclientnotelocally',               'cleanclientnotelocally',               global.modclients.CleanClientNote_Array,               []);
+      addListener('saveclientnote_newclient',             'saveclientnote_newclient',             global.modclients.SaveClientNote_NewClient,            ['*clientnoteid', 'notes']);
 
       // Client attachment requests
       addListener('listclientattachments',                'listclientattachments',                global.modclients.ListClientAttachments,               ['*clientid']);
@@ -3144,9 +3148,13 @@ function main()
       addListener('listordernotes',                       'listordernotes',                       global.modorders.ListOrderNotes,                       ['*orderid']);
       addListener('newordernote',                         'newordernote',                         global.modorders.NewOrderNote,                         ['*orderid']);
       addListener('saveordernote',                        'saveordernote',                        global.modorders.SaveOrderNote,                        ['*ordernoteid', 'notes']);
-      addListener('expireorderote',                       'expireorderote',                       global.modorders.RemoveOrderNote,                      ['*ordernoteid']);
+      addListener('expireordernote',                      'expireordernote',                      global.modorders.ExpireOrderNote,                      ['*ordernoteid']);
       addListener('searchordernote',                      'searchordernote',                      global.modorders.SearchOrderNote,                      ['*orderid', '*words']);
 
+      addListener('newordernote_neworder',                'newordernote_neworder',                global.modorders.NewOrderNote_NewOrder,                []);
+      addListener('cleanordernotelocally',                'cleanordernotelocally',                global.modorders.CleanOrderNote_Array,                 []);
+      addListener('saveordernote_neworder',               'saveordernote_neworder',               global.modorders.SaveOrderNote_NewOrder,               ['*ordernoteid', 'notes']);
+      
       // Order status requests
       addListener('listorderstatuses',                    'listorderstatuses',                    global.modorders.ListOrderStatuses,                    ['*orderid']);
       addListener('neworderstatus',                       'neworderstatus',                       global.modorders.NewOrderStatus,                       ['*orderid', '*status', 'connote', 'carriername', 'comment', 'batchno']);
