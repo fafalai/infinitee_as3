@@ -963,7 +963,7 @@ global.CreatePlainUUID = function()
 
 global.ConsoleLog = function(txt)
 {
-  if (global.config.env.debug)
+  if (global.config.env.debug){}
     console.log(txt);
 };
 
@@ -3148,7 +3148,7 @@ function main()
       addListener('listordernotes',                       'listordernotes',                       global.modorders.ListOrderNotes,                       ['*orderid']);
       addListener('newordernote',                         'newordernote',                         global.modorders.NewOrderNote,                         ['*orderid']);
       addListener('saveordernote',                        'saveordernote',                        global.modorders.SaveOrderNote,                        ['*ordernoteid', 'notes']);
-      addListener('expireorderote',                       'expireorderote',                       global.modorders.RemoveOrderNote,                      ['*ordernoteid']);
+      addListener('expireordernote',                      'expireordernote',                      global.modorders.ExpireOrderNote,                      ['*ordernoteid']);
       addListener('searchordernote',                      'searchordernote',                      global.modorders.SearchOrderNote,                      ['*orderid', '*words']);
 
       addListener('newordernote_neworder',                'newordernote_neworder',                global.modorders.NewOrderNote_NewOrder,                []);

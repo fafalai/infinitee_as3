@@ -1008,29 +1008,14 @@ function doNewOrder(tx, world)
                 function(err, results)
                 {
                   if (!err)
-                  {
-                    if (newOrderNote_List.length > 0) {
-                      doNewOrderNode_NewOrder(tx, world, orderid)
-                        .then(resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname }))
-                        .catch(reject(err))
-                    }
-                    else
-                      resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
-                  }
+                    resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
                   else
                     reject(err);
                 }
               );
             }
             else{
-              if (newOrderNote_List.length > 0) {
-                doNewOrderNode_NewOrder(tx, world, orderid)
-                  .then(resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname }))
-                  .catch(reject(err))
-              }
-              else {
-                resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
-              }
+              resolve({ orderid: orderid, orderno: world.orderno, datecreated: datecreated, usercreated: world.cn.uname })
             }
           }
           else
@@ -1376,31 +1361,84 @@ function doNewOrderDetail(tx, custid, userid, orderid, version, productid, qty, 
   return promise;
 }
 
-function doNewOrderNode_NewOrder(tx, world, orderid) {
+function doNewOrderNode_NewOrder(tx, world) {
   return new global.rsvp.Promise(
     (resolve, reject) => {
-      tx.query(
-        'insert into ordernotes (customers_id,orders_id,userscreated_id,notes) values ($1,$2,$3,$4) returning id,datecreated',
-        [
-          world.cn.custid,
-          __.sanitiseAsBigInt(orderid),
-          world.cn.userid,
-          newOrderNote_List.notes
-        ],
-        (err, result) => {
-          if (!err) {
-            var ordernoteid = result.rows[0].id;
-            var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
+      if (newOrderNote_List.length > 0) {
+        let tasks = [];
+        newOrderNote_List.forEach(note => {
+          tasks.push(
+            (callback) => {
+              return new global.rsvp.Promise(
+                (resolve, reject) => {
+                  tx.query(
+                    'insert into ordernotes (customers_id,orders_id,userscreated_id,notes,datecreated) values ($1,$2,$3,$4,$5) returning id,datecreated',
+                    [
+                      world.cn.custid,
+                      __.sanitiseAsBigInt(world.orderid),
+                      world.cn.userid,
+                      note.notes,
+                      note.datecreated
+                    ],
+                    (err, result) => {
+                      if (!err) {
+                        var ordernoteid = result.rows[0].id;
+                        var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({ ordernoteid: ordernoteid, datecreated: datecreated, usercreated: world.cn.uname });
-          } else {
-            reject(err);
+                        callback(null, {});
+                        // resolve({ ordernoteid: ordernoteid, datecreated: datecreated, usercreated: world.cn.uname });
+                      } else {
+                        callback(err);
+                      }
+                    }
+                  )
+                }
+              )
+            }
+          );
+        });
+
+        global.async.series(tasks,
+          (err, results) => {
+            if (err)
+              reject(err);
+            else
+              resolve({});
+            // resolve(results);
           }
-        }
-      )
+        );
+      }
+      else
+        resolve();
     }
   )
 }
+  // return new global.rsvp.Promise(
+  //   (resolve, reject) => {
+  //     tx.query(
+  //       'insert into ordernotes (customers_id,orders_id,userscreated_id,notes,datecreated,datemodified,usersmodified_id) values ($1,$2,$3,$4,$5,$6,$7) returning id,datecreated',
+  //       [
+  //         world.cn.custid,
+  //         __.sanitiseAsBigInt(world.orderid),
+  //         world.cn.userid,
+  //         note.notes,
+  //         note.datecreated,
+  //         note.datemodified,
+  //         world.cn.userid
+  //       ],
+  //       (err, result) => {
+  //         if (!err) {
+  //           var ordernoteid = result.rows[0].id;
+  //           var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
+
+  //           resolve({ ordernoteid: ordernoteid, datecreated: datecreated, usercreated: world.cn.uname });
+  //         } else {
+  //           reject(err);
+  //         }
+  //       }
+  //     )
+  //   }
+  // )
 
 function doNewOrderNote(tx, world)
 {
@@ -2146,7 +2184,7 @@ function LoadOrder(world)
 
 function NewOrder(world)
 {
-  global.ConsoleLog("new order");
+  // global.ConsoleLog("new order");
   var msg = '[' + world.eventname + '] ';
   //
   global.pg.connect
@@ -2187,9 +2225,27 @@ function NewOrder(world)
                 {
                   order = result;
                   world.orderid = result.orderid;
-                  //
-                  return doUpdateOrderTotals(tx, world);
+                  (result) => {
+                    return doUpdateOrderTotals(tx, world);
+                  }
                 }
+              ).then
+              (
+                (result) => {
+                  return doNewOrderNode_NewOrder(tx, world);
+                }
+                  //   global.async.series(
+                  //     tasks,
+                  //     (err, results) => {
+                  //       if (!err)
+                  //         // resolve();
+                  //       else
+                  //         reject(err);
+                  //     }
+                  //   )
+                  // } else {
+                  //   // resolve();
+                  // }
               ).then
               (
                 function(result)

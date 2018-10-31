@@ -114,7 +114,7 @@ function doDlgOrderNew(isquote, orderid)
             function(result)
             {
               if (result)
-                doServerDataMessage('expireorderote', {ordernoteid: row.id}, {type: 'refresh'});
+                doServerDataMessage('expireordernote', {ordernoteid: row.id}, {type: 'refresh'});
             }
           );
         }
@@ -994,7 +994,8 @@ function doDlgOrderNew(isquote, orderid)
   $('#divEvents').on('ordernotecreated', doEditorSaved);
   $('#divEvents').on('ordernotesaved', doEditorSaved);
   $('#divEvents').on('listordernotes', doEditorList);
-
+  $('#divEvents').on('expireordernote', doEditorSaved);
+  
   $('#divEvents').on('listorderattachments', doAttachmentList);
   $('#divEvents').on('orderattachmentcreated', doAttachmentSaved);
   $('#divEvents').on('orderattachmentsaved', doAttachmentSaved);

@@ -2,28 +2,28 @@
 // Internal functions
 function doBuildSearchWhereClause(binds, colnames, values, datecolname, datefrom, dateto, idcolname, idlist, maxhistory, callback)
 {
-  global.ConsoleLog('doBuildSearchWhereClause');
-  global.ConsoleLog("Before: ");
-  global.ConsoleLog("binds: ");
-  global.ConsoleLog(binds);
-  global.ConsoleLog("colnames ");
-  global.ConsoleLog(colnames);
-  global.ConsoleLog("values ");
-  global.ConsoleLog(values);
-  global.ConsoleLog("datecolname ");
-  global.ConsoleLog(datecolname);
-  global.ConsoleLog("datefrom ");
-  global.ConsoleLog(datefrom);
-  global.ConsoleLog("datefrom ");
-  global.ConsoleLog(datefrom);
-  global.ConsoleLog("dateto ");
-  global.ConsoleLog(dateto);
-  global.ConsoleLog("idcolname ");
-  global.ConsoleLog(idcolname);
-  global.ConsoleLog("idlist ");
-  global.ConsoleLog(idlist);
-  global.ConsoleLog("maxhistory ");
-  global.ConsoleLog(maxhistory);
+  // global.ConsoleLog('doBuildSearchWhereClause');
+  // global.ConsoleLog("Before: ");
+  // global.ConsoleLog("binds: ");
+  // global.ConsoleLog(binds);
+  // global.ConsoleLog("colnames ");
+  // global.ConsoleLog(colnames);
+  // global.ConsoleLog("values ");
+  // global.ConsoleLog(values);
+  // global.ConsoleLog("datecolname ");
+  // global.ConsoleLog(datecolname);
+  // global.ConsoleLog("datefrom ");
+  // global.ConsoleLog(datefrom);
+  // global.ConsoleLog("datefrom ");
+  // global.ConsoleLog(datefrom);
+  // global.ConsoleLog("dateto ");
+  // global.ConsoleLog(dateto);
+  // global.ConsoleLog("idcolname ");
+  // global.ConsoleLog(idcolname);
+  // global.ConsoleLog("idlist ");
+  // global.ConsoleLog(idlist);
+  // global.ConsoleLog("maxhistory ");
+  // global.ConsoleLog(maxhistory);
   var maxhistory = __.isUN(maxhistory) ? global.config.defaults.defaultmaxhistory : maxhistory;
   var bindno = binds.length + 1;
   var clauses = '';
@@ -103,27 +103,27 @@ function doBuildSearchWhereClause(binds, colnames, values, datecolname, datefrom
   }
 
   binds.push(maxhistory);
-  global.ConsoleLog("After: ");
-  global.ConsoleLog("binds: ");
-  global.ConsoleLog(binds);
-  global.ConsoleLog("colnames ");
-  global.ConsoleLog(colnames);
-  global.ConsoleLog("values ");
-  global.ConsoleLog(values);
-  global.ConsoleLog("datecolname ");
-  global.ConsoleLog(datecolname);
-  global.ConsoleLog("datefrom ");
-  global.ConsoleLog(datefrom);
-  global.ConsoleLog("datefrom ");
-  global.ConsoleLog(datefrom);
-  global.ConsoleLog("dateto ");
-  global.ConsoleLog(dateto);
-  global.ConsoleLog("idcolname ");
-  global.ConsoleLog(idcolname);
-  global.ConsoleLog("idlist ");
-  global.ConsoleLog(idlist);
-  global.ConsoleLog("maxhistory ");
-  global.ConsoleLog(maxhistory);
+  // global.ConsoleLog("After: ");
+  // global.ConsoleLog("binds: ");
+  // global.ConsoleLog(binds);
+  // global.ConsoleLog("colnames ");
+  // global.ConsoleLog(colnames);
+  // global.ConsoleLog("values ");
+  // global.ConsoleLog(values);
+  // global.ConsoleLog("datecolname ");
+  // global.ConsoleLog(datecolname);
+  // global.ConsoleLog("datefrom ");
+  // global.ConsoleLog(datefrom);
+  // global.ConsoleLog("datefrom ");
+  // global.ConsoleLog(datefrom);
+  // global.ConsoleLog("dateto ");
+  // global.ConsoleLog(dateto);
+  // global.ConsoleLog("idcolname ");
+  // global.ConsoleLog(idcolname);
+  // global.ConsoleLog("idlist ");
+  // global.ConsoleLog(idlist);
+  // global.ConsoleLog("maxhistory ");
+  // global.ConsoleLog(maxhistory);
 
   callback(binds, bindno, clauses);
 }
@@ -253,8 +253,8 @@ function doSimpleQuery(world, sql, binds, callback)
 {
   var msg = '[' + world.eventname + '] ';
   var evname = [];
-  global.ConsoleLog("do Simple Query, helphers.js");
-  global.ConsoleLog(sql);
+  // global.ConsoleLog("do Simple Query, helphers.js");
+  // global.ConsoleLog(sql);
 
   evname[world.eventname] = true;
   //

@@ -2010,7 +2010,7 @@ function doPrimus()
     doAddPrimusListener('saveordernote');
     doAddPrimusListener('expireordernote');
     doAddPrimusListener('searchordernote');
-
+    
     doAddPrimusListener('newordernote_neworder');
     doAddPrimusListener('saveordernote_neworder');
 
