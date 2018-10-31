@@ -290,19 +290,19 @@ function doNewClient(tx, world)
           {
             var clientid = result.rows[0].id;
 
-            // new_clientNote_list.forEach((e) => {
-            //   tx.query('insert into clientnotes (customers_id,clients_id,userscreated_id,notes) values ($1,$2,$3,$4)',
-            //   [
-            //     e.custid,
-            //     __.sanitiseAsBigInt(clientid),
-            //     e.userid,
-            //     __.escapeHTML(e.notes)
-            //   ], 
-            //   (err,result) => {
-            //     if(err)
-            //       reject(err);
-            //   });
-            // });
+            newClientNote_List.forEach((e) => {
+              tx.query('insert into clientnotes (customers_id,clients_id,userscreated_id,notes) values ($1,$2,$3,$4)',
+              [
+                e.custid,
+                __.sanitiseAsBigInt(clientid),
+                e.userid,
+                __.escapeHTML(e.notes)
+              ], 
+              (err,result) => {
+                if(err)
+                  reject(err);
+              });
+            });
 
             tx.query
             (
