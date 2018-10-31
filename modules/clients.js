@@ -224,7 +224,7 @@ function doNewClient(tx, world)
     {
       tx.query
       (
-        'insert into clients (customers_id,clients_id,code,name,url1,email1,phone1,fax1,contact1,address1,address2,address3,address4,city,state,postcode,country,contact2,shipaddress1,shipaddress2,shipaddress3,shipaddress4,shipcity,shipstate,shippostcode,shipcountry,bankname,bankbsb,bankaccountno,bankaccountname,dayscredit,linelimit,orderlimit,creditlimit,ordertemplates_id,quotetemplates_id,invoicetemplates_id,labeltemplates_id,isactive,acn,abn,hscode,custcode1,custcode2,issupplier,isclient,userscreated_id) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48) returning id',
+        'insert into clients (customers_id,clients_id,code,name,url1,email1,phone1,fax1,contact1,address1,address2,address3,address4,city,state,postcode,country,contact2,shipaddress1,shipaddress2,shipaddress3,shipaddress4,shipcity,shipstate,shippostcode,shipcountry,bankname,bankbsb,bankaccountno,bankaccountname,dayscredit,linelimit,orderlimit,creditlimit,ordertemplates_id,quotetemplates_id,invoicetemplates_id,labeltemplates_id,isactive,acn,abn,hscode,custcode1,custcode2,issupplier,isclient,userscreated_id,pricelevel) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47,$48) returning id',
         [
           world.cn.custid,
           __.sanitiseAsBigInt(world.parentid),
@@ -290,19 +290,19 @@ function doNewClient(tx, world)
           {
             var clientid = result.rows[0].id;
 
-            new_clientNote_list.forEach((e) => {
-              tx.query('insert into clientnotes (customers_id,clients_id,userscreated_id,notes) values ($1,$2,$3,$4)',
-              [
-                e.custid,
-                __.sanitiseAsBigInt(clientid),
-                e.userid,
-                __.escapeHTML(e.notes)
-              ], 
-              (err,result) => {
-                if(err)
-                  reject(err);
-              });
-            });
+            // new_clientNote_list.forEach((e) => {
+            //   tx.query('insert into clientnotes (customers_id,clients_id,userscreated_id,notes) values ($1,$2,$3,$4)',
+            //   [
+            //     e.custid,
+            //     __.sanitiseAsBigInt(clientid),
+            //     e.userid,
+            //     __.escapeHTML(e.notes)
+            //   ], 
+            //   (err,result) => {
+            //     if(err)
+            //       reject(err);
+            //   });
+            // });
 
             tx.query
             (
