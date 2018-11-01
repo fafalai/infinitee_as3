@@ -1245,7 +1245,7 @@ function doChangeProductCategory(tx, world)
           {
             var datemodified = global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({datemodified: datemodified, usermodified: word.cn.uname});
+            resolve({datemodified: datemodified, usermodified: world.cn.uname});
           }
           else
             reject(err);
@@ -1279,7 +1279,7 @@ function doNewProductCategory(tx, world)
             var productcategoryid = result.rows[0].id;
             var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({productcategoryid: productcategoryid, datecreated: datecreated, usercreated: word.cn.uname});
+            resolve({productcategoryid: productcategoryid, datecreated: datecreated, usercreated: world.cn.uname});
           }
           else
             reject(err);
@@ -1312,7 +1312,7 @@ function doSaveProductCategory(tx, world)
           {
             var datemodified = global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({datemodified: datemodified, usermodified: word.cn.uname});
+            resolve({datemodified: datemodified, usermodified: world.cn.uname});
           }
           else
             reject(err);
