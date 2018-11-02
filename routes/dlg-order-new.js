@@ -465,12 +465,13 @@ function doDlgOrderNew(isquote, orderid)
         (
           'divOrderNewProductsG',
           rowindex,
-          'productid',
+          // 'productid',
+          'qty',
           function(ed)
           {
             var qty = $(ed.target).numberbox('getValue');
-            
-            doServerDataMessage('getprice', {clientid: clientid, productid: record.id, qty: qty,pricelevel:selectedClientPriceLevel,discountcode:record.discountcodeid}, {type: 'refresh', rowindex: rowindex});
+            console.log(qty);
+            doServerDataMessage('getprice', {clientid: clientid, productid:record.id, qty:qty,pricelevel:selectedClientPriceLevel,discountcode:record.discountcodeid}, {type: 'refresh', rowindex: rowindex});
           }
         );
       }
