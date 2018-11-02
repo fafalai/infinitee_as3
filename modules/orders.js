@@ -2089,6 +2089,8 @@ function LoadOrder(world)
           'o1.invoiceto_name invoicetoname,' +
           'o1.invoiceto_address1 invoicetoaddress1,' +
           'o1.invoiceto_address2 invoicetoaddress2,' +
+          'o1.invoiceto_address3 invoicetoaddress3,' +
+          'o1.invoiceto_address4 invoicetoaddress4,' +
           'o1.invoiceto_city invoicetocity,' +
           'o1.invoiceto_state invoicetostate,' +
           'o1.invoiceto_postcode invoicetopostcode,' +
@@ -2096,6 +2098,8 @@ function LoadOrder(world)
           'o1.shipto_name shiptoname,' +
           'o1.shipto_address1 shiptoaddress1,' +
           'o1.shipto_address2 shiptoaddress2,' +
+          'o1.shipto_address3 shiptoaddress3,' +
+          'o1.shipto_address4 shiptoaddress4,' +
           'o1.shipto_city shiptocity,' +
           'o1.shipto_state shiptostate,' +
           'o1.shipto_postcode shiptopostcode,' +

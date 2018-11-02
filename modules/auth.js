@@ -39,8 +39,7 @@ function doNewUser(tx, world)
           {
             var userid = result.rows[0].id;
             var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
-
-            resolve({userid: userid, datecreated: datecreated, usercreated: world.cn.uname,uuid:uuid});
+            resolve({userid: userid, datecreated: datecreated, usercreated: world.cn.uname,uuid: uuid});
           }
           else
             reject(err);
