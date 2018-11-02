@@ -250,6 +250,7 @@ function doUsersTabWidgets()
       {
         success({total: cache_users.length, rows: cache_users});
         $(this).datagrid('reloadFooter', [{name: '<span class="totals_footer">' + cache_users.length + ' Users</span>'}]);
+        $(this).datagrid('getPanel').find('.datagrid-row').css('height', '32px');
 
         doServerMessage('listconnectedusers', {type: 'refresh'});
       },
