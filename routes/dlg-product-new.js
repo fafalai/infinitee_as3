@@ -306,7 +306,14 @@ function doDlgProductNew(productcategoryid, productid)
   function doPricingNew(ev, args)
   {
     console.log("add a new price");
-    doServerDataMessage('newproductpricing', {productid: productid}, {type: 'refresh'});
+    if (isnew)
+    {
+      $('#divNewProductPricesG').datagrid('insertRow', {index: 0, row: {id: ++rowid}});
+    }
+    else
+    {
+      doServerDataMessage('newproductpricing', {productid: productid}, {type: 'refresh'});
+    } 
   }
 
   function doPricingClear(ev, args)
@@ -353,35 +360,38 @@ function doDlgProductNew(productcategoryid, productid)
         var datefrom,dateto;
        console.log("dateto: " + row.dateto);
        console.log(moment(row.datefrom).isValid());
-       
-        if (moment(row.datefrom).isValid()) 
-        {
-          datefrom = moment(row.datefrom,"YYYY-MM-DD HH:MM:SS" ).format('YYYY-MM-DD 00:00:00');
-          console.log(datefrom);
-        }
-        else
-        {
-          console.log("no date from");
-          datefrom = null;
-          console.log(datefrom);
-        }
-        
-        if(moment(row.dateto).isValid())
-        {
-          dateto = moment(row.dateto,"YYYY-MM-DD HH:MM:SS" ).format('YYYY-MM-DD 23:59:59');
-          console.log(dateto);
-        }
-        else
-        {
-          console.log("no date to");
-          dateto = null;
-          console.log(dateto);
-        }
-        
-        // console.log(moment(row.dateto).isValid());
 
-        // console.log(dateto);
-        doServerDataMessage('saveproductpricing', {priceid: row.id, productid: productid, clientid: row.clientid, minqty: row.minqty, maxqty: row.maxqty, price: row.price, price1: row.price1, price2: row.price2, price3: row.price3, price4: row.price4, price5: row.price5,datefrom:datefrom,dateto:dateto}, {type: 'refresh'});
+       if(!isnew)
+       {
+          if (moment(row.datefrom).isValid()) 
+          {
+            datefrom = moment(row.datefrom,"YYYY-MM-DD HH:MM:SS" ).format('YYYY-MM-DD 00:00:00');
+            console.log(datefrom);
+          }
+          else
+          {
+            console.log("no date from");
+            datefrom = null;
+            console.log(datefrom);
+          }
+          
+          if(moment(row.dateto).isValid())
+          {
+            dateto = moment(row.dateto,"YYYY-MM-DD HH:MM:SS" ).format('YYYY-MM-DD 23:59:59');
+            console.log(dateto);
+          }
+          else
+          {
+            console.log("no date to");
+            dateto = null;
+            console.log(dateto);
+          }
+          doServerDataMessage('saveproductpricing', {priceid: row.id, productid: productid, clientid: row.clientid, minqty: row.minqty, maxqty: row.maxqty, price: row.price, price1: row.price1, price2: row.price2, price3: row.price3, price4: row.price4, price5: row.price5,datefrom:datefrom,dateto:dateto}, {type: 'refresh'});
+        }
+        else
+        {
+          console.log("it is a new product, don't need to save first");
+        }
       }
     );
 
@@ -1061,10 +1071,10 @@ function doDlgProductNew(productcategoryid, productid)
             },
             onDblClickCell: function(index, field, value)
             {
-              // console.log("double click a product price cell");
-              // console.log(index);
-              // console.log(field);
-              //console.log(value);
+              console.log("double click a product price cell");
+              console.log(index);
+              console.log(field);
+              console.log(value);
               doGridStartEdit
               (
                 'divNewProductPricesG',
@@ -1223,63 +1233,63 @@ function doDlgProductNew(productcategoryid, productid)
                 }
                 console.log(prices.rows);
 
-                doServerDataMessage
-                (
-                  'newproduct',
-                  {
-                    productcategoryid: productcategoryid,
-                    code: code,
-                    name: name,
-                    barcode: barcode,
-                    altcode: altcode,
-                    costprice: costprice,
-                    uom: uom,
-                    uomsize: uomsize,
-                    saleuom:saleuom,
-                    saleuomsize:saleuomsize,
-                    clientid: clientid,
-                    isactive: isactive,
-                    buytaxcodeid: buytaxcodeid,
-                    selltaxcodeid: selltaxcodeid,
-                    costofgoodsaccountid: costofgoodsaccountid,
-                    incomeaccountid: incomeaccountid,
-                    assetaccountid: assetaccountid,
-                    buildtemplateid: buildtemplateid,
-                    minqty: minqty,
-                    warnqty: warnqty,
-                    productaliasid: productaliasid,
-                    location1id: location1id,
-                    location2id: location2id,
-                    width: width,
-                    length: length,
-                    height: height,
-                    weight: weight,
-                    price1: price1,
-                    price2: price2,
-                    price3: price3,
-                    price4: price4,
-                    price5: price5,
-                    price6: price6,
-                    price7: price7,
-                    price8: price8,
-                    price9: price9,
-                    price10: price10,
-                    price11: price11,
-                    price12: price12,
-                    price13: price13,
-                    price14: price14,
-                    price15: price15,
-                    attrib1: attrib1,
-                    attrib2: attrib2,
-                    attrib3: attrib3,
-                    attrib4: attrib4,
-                    attrib5: attrib5,
-                    prices: prices.rows,
-                    discountcodeid:discountcode,
-                    listpricecodeid:listpricecode
-                  },
-                  {type: 'refresh'}
-                );
+                // doServerDataMessage
+                // (
+                //   'newproduct',
+                //   {
+                //     productcategoryid: productcategoryid,
+                //     code: code,
+                //     name: name,
+                //     barcode: barcode,
+                //     altcode: altcode,
+                //     costprice: costprice,
+                //     uom: uom,
+                //     uomsize: uomsize,
+                //     saleuom:saleuom,
+                //     saleuomsize:saleuomsize,
+                //     clientid: clientid,
+                //     isactive: isactive,
+                //     buytaxcodeid: buytaxcodeid,
+                //     selltaxcodeid: selltaxcodeid,
+                //     costofgoodsaccountid: costofgoodsaccountid,
+                //     incomeaccountid: incomeaccountid,
+                //     assetaccountid: assetaccountid,
+                //     buildtemplateid: buildtemplateid,
+                //     minqty: minqty,
+                //     warnqty: warnqty,
+                //     productaliasid: productaliasid,
+                //     location1id: location1id,
+                //     location2id: location2id,
+                //     width: width,
+                //     length: length,
+                //     height: height,
+                //     weight: weight,
+                //     price1: price1,
+                //     price2: price2,
+                //     price3: price3,
+                //     price4: price4,
+                //     price5: price5,
+                //     price6: price6,
+                //     price7: price7,
+                //     price8: price8,
+                //     price9: price9,
+                //     price10: price10,
+                //     price11: price11,
+                //     price12: price12,
+                //     price13: price13,
+                //     price14: price14,
+                //     price15: price15,
+                //     attrib1: attrib1,
+                //     attrib2: attrib2,
+                //     attrib3: attrib3,
+                //     attrib4: attrib4,
+                //     attrib5: attrib5,
+                //     prices: prices.rows,
+                //     discountcodeid:discountcode,
+                //     listpricecodeid:listpricecode
+                //   },
+                //   {type: 'refresh'}
+                // );
               }
               else
               {
