@@ -267,10 +267,12 @@ function doClientsTabWidgets()
       },
       onLoadSuccess: function(row)
       {
-        $(this).treegrid('enableDnd');
+        // $(this).treegrid('enableDnd', row ? row.id : null);
       },
       onBeforeDrag: function(source)
       {
+        if (attachmentIndex != null)
+          return false;
         return true;
       },
       onDragOver: function(target, source)

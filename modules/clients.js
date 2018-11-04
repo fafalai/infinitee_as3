@@ -708,12 +708,13 @@ function doSaveClientAttachment(tx, world)
     {
       tx.query
       (
-        'update clientattachments set description=$1,datemodified=now(),usersmodified_id=$2 where customers_id=$3 and id=$4 and dateexpired is null returning clients_id,datemodified',
+        'update clientattachments set name=$5,description=$1,datemodified=now(),usersmodified_id=$2 where customers_id=$3 and id=$4 and dateexpired is null returning clients_id,datemodified',
         [
           __.sanitiseAsString(world.description),
           world.cn.userid,
           world.cn.custid,
-          __.sanitiseAsBigInt(world.clientattachmentid)
+          __.sanitiseAsBigInt(world.clientattachmentid),
+          __.sanitiseAsString(world.name)
         ],
         function(err, result)
         {
@@ -763,6 +764,84 @@ function doExpireClientAttachment(tx, world)
     }
   );
   return promise;
+}
+
+function doNewFolderClientAttachment(tx, world) {
+  return new global.rsvp.Promise(
+    (resolve, reject) => {
+      tx.query(
+        'INSERT INTO clientattachments (customers_id, name, clients_id, datecreated, userscreated_id, parent_id, mimetype, size) VALUES ($1, $2, $3, now(), $4, $5, $6, $7) returning id',
+        [
+          world.cn.custid,
+          'New Folder',
+          __.sanitiseAsBigInt(world.clientid),
+          world.cn.userid,
+          __.sanitiseAsBigInt(world.parentid),
+          'Folder',
+          0
+        ],
+        (err, result) => {
+          if (!err) {
+            tx.query
+            (
+              'select a1.clients_id clientid,a1.dateexpired,u1.name, a1.datemodified, u1.name from clientattachments a1 left join users u1 on (a1.usersmodified_id=u1.id) where a1.customers_id=$1 and a1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(result.rows[0].id)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                  resolve({datemodified: global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss'), usermodified: result.rows[0].name});
+                else
+                  reject(err);
+              }
+            );
+            
+          } else {
+            reject(err);
+          }
+        }
+      );
+    }
+  );
+}
+
+function doChangeClientAttachmentParent(tx, world) {
+  return new global.rsvp.Promise(
+    (resolve, reject) => {
+      tx.query(
+        'update clientattachments set parent_id=$1, datemodified=now(),usersmodified_id=$2 where customers_id=$3 and id=$4',
+        [
+          __.sanitiseAsBigInt(world.parentid),
+          world.cn.userid,
+          world.cn.custid,
+          __.sanitiseAsBigInt(world.clientattachmentid)
+        ],
+        (err, result) => {
+          if (!err) {
+            tx.query
+            (
+              'select a1.clients_id clientid,a1.dateexpired,u1.name, a1.datemodified from clientattachments a1 left join users u1 on (a1.usersmodified_id=u1.id) where a1.customers_id=$1 and a1.id=$2',
+              [
+                world.cn.custid,
+                __.sanitiseAsBigInt(world.clientattachmentid)
+              ],
+              function(err, result)
+              {
+                if (!err)
+                  resolve({clientid: result.rows[0].clientid, datemodified: global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss'), usermodified: result.rows[0].name});
+                else
+                  reject(err);
+              }
+            );
+          } else {
+            reject(err);
+          }
+        }
+      );
+    }
+  );
 }
 
 // *******************************************************************************************************************************************************************************************
@@ -1128,6 +1207,65 @@ function SaveClientNote_NewClient(world) {
   world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, rs: newClientNote_List, pdata: world.pdata });
 }
 
+function NewFolderClientAttachment(world){
+  var msg = '[' + world.eventname + '] ';
+  global.pg.connect(
+    global.cs,
+    (err, client, done) => {
+      if(!err){
+        let tx = new global.pgtx(client);
+        tx.begin(
+          (err) => {
+            if(!err){
+              doNewFolderClientAttachment(tx, world).then(
+                  (result) => {
+                    tx.commit(
+                      (err) => {
+                        if (!err) {
+                          world.spark.emit(world.eventname, {rc: global.errcode_none, msg: global.text_success, clientid: world.clientid, pdata: world.pdata});
+                          global.pr.sendToRoomExcept(global.custchannelprefix + world.cn.custid, 'listclientattachments', {clientid: world.clientid}, world.spark.id);
+                        } else {
+                          done();
+                          tx.rollback(
+                            () => {
+                              msg += global.text_notxstart + ' ' + err.message;
+                              global.log.error({newfolderclientattachment: true}, msg);
+                              world.spark.emit(global.eventerror, {rc: global.errcode_dberr, msg: msg, pdata: world.pdata});
+                            }
+                          );
+                        }
+                      }
+                    );
+                  }
+                ).catch(
+                (err) => {
+                  done();
+                  tx.rollback(
+                    () => {
+                      msg += global.text_notxstart + ' ' + err.message;
+                      global.log.error({newfolderclientattachment: true}, msg);
+                      world.spark.emit(global.eventerror, {rc: global.errcode_dberr, msg: msg, pdata: world.pdata});
+                    }
+                  );
+                }
+              );
+            } else {
+              done();
+              msg += global.text_notxstart + ' ' + err.message;
+              global.log.error({newfolderclientattachment: true}, msg);
+              world.spark.emit(global.eventerror, {rc: global.errcode_dberr, msg: msg, pdata: world.pdata});
+            }
+          }
+        );
+      } else {
+        done();
+        global.log.error({newfolderclientattachment: true}, global.text_nodbconnection);
+        world.spark.emit(global.eventerror, {rc: global.errcode_dbunavail, msg: global.text_nodbconnection, pdata: world.pdata});
+      }
+    }
+  );
+}
+
 function NewClientNote(world)
 {
   global.modhelpers.doSimpleFunc1Tx
@@ -1175,6 +1313,7 @@ function ListClientAttachments(world)
     'ca1.size,' +
     'ca1.datecreated,' +
     'ca1.datemodified,' +
+    'ca1.parent_id parentid,' +
     'u1.name usercreated,' +
     'u2.name usermodified ' +
     'from ' +
@@ -1187,7 +1326,10 @@ function ListClientAttachments(world)
     'and ' +
     'ca1.dateexpired is null ' +
     'order by ' +
-    'ca1.datecreated desc',
+    'ca1.path, ' + 
+    'ca1.id desc,'+
+    'ca1.name',
+    // 'ca1.datecreated desc',
     [
       world.cn.custid,
       __.sanitiseAsBigInt(world.clientid)
@@ -1228,6 +1370,20 @@ function SaveClientAttachment(world)
       }
     }
   );
+}
+
+function ChangeClientAttachmentParent(world) {
+  global.modhelpers.doSimpleFunc1Tx
+    (
+    world,
+    doChangeClientAttachmentParent,
+    function (err, result) {
+      if (!err) {
+        world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, clientid: result.clientid, clientattachmentid: world.clientattachmentid, dateexpired: result.dateexpired, userexpired: result.userexpired, pdata: world.pdata });
+        global.pr.sendToRoomExcept(global.custchannelprefix + world.cn.custid, 'clientattachmentsaved', { clientid: result.clientid, clientattachmentid: world.clientattachmentid, dateexpired: result.dateexpired, userexpired: result.userexpired }, world.spark.id);
+      }
+    }
+    );
 }
 
 function ExpireClientAttachment(world)
@@ -1434,4 +1590,7 @@ module.exports.SaveClientNote_NewClient = SaveClientNote_NewClient;
 module.exports.ListClientAttachments = ListClientAttachments;
 module.exports.SaveClientAttachment = SaveClientAttachment;
 module.exports.ExpireClientAttachment = ExpireClientAttachment;
+
+module.exports.NewFolderClientAttachment = NewFolderClientAttachment;
+module.exports.ChangeClientAttachmentParent = ChangeClientAttachmentParent;
 

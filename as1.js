@@ -2962,8 +2962,11 @@ function main()
 
       // Client attachment requests
       addListener('listclientattachments',                'listclientattachments',                global.modclients.ListClientAttachments,               ['*clientid']);
-      addListener('saveclientattachment',                 'saveclientattachment',                 global.modclients.SaveClientAttachment,                ['*clientattachmentid', '*description']);
+      addListener('saveclientattachment',                 'saveclientattachment',                 global.modclients.SaveClientAttachment,                ['*clientattachmentid', '*name','*description']);
       addListener('expireclientattachment',               'expireclientattachment',               global.modclients.ExpireClientAttachment,              ['*clientattachmentid']);
+
+      addListener('newfolderclientattachment',            'newfolderclientattachment',            global.modclients.NewFolderClientAttachment,           ['*clientid', 'parentid']);
+      addListener('changeclientattachmentparent',         'changeclientattachmentparent',         global.modclients.ChangeClientAttachmentParent,        ['*clientattachmentid','*parentid']);
 
       // Supplier requests
       addListener('listsuppliers',                        'listsuppliers',                        global.modsuppliers.ListSuppliers,                     ['showinactive']);

@@ -506,7 +506,7 @@
 
       // Dropzones...
       console.log('***** Init dropzones...');
-      // doDZClientAttachments();
+      doDZClientAttachments();
       doDZSupplierAttachments();
       doDZOrderAttachments();
       doDZPrintTemplates();
@@ -618,7 +618,7 @@
       data-options="iconCls: 'icon-attachment'">Upload File</div>
     <div onclick="doContextMenu('clientattachmentspopup', 'edit')" data-options="iconCls: 'icon-edit'">Edit</div>
     <div onclick="doContextMenu('clientattachmentspopup', 'remove')" data-options="iconCls: 'icon-remove'">Remove</div>
-    <div onclick="doContextMenu('clientattachmentspopup', 'download')" data-options="iconCls: 'icon-download'">Download</div>
+    <!-- <div onclick="doContextMenu('clientattachmentspopup', 'download')" data-options="iconCls: 'icon-download'">Download</div> -->
   </div>
 
   <div id="divSuppliersMenuPopup" class="easyui-menu" style="width: 120px; display: none;">

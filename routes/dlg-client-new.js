@@ -1,4 +1,4 @@
-var selectedClientIdAttachmentId = null;
+let selectedClientIdAttachmentId = null;
 let attachment_parentid = null;
 
 function doDlgClientNew(parentid, clientid)
@@ -13,7 +13,7 @@ function doDlgClientNew(parentid, clientid)
   var editorPanel = null;
   var editorId = null;
   // For attachments
-  var attachmentIndex = null;
+  let attachmentIndex = null;
 
   // Notes editor methods...
   function doEditorNew()
@@ -176,8 +176,9 @@ function doDlgClientNew(parentid, clientid)
     );
   }
 
+  // Attachments methods
   function doNewFolder(){
-    let row = $('#divClientAttachmentsG').treegrid('getSelected');
+    let row = $('#divNewClientAttachmentsG').treegrid('getSelected');
     attachment_parentid = !row || row.mimetype!=='Folder' ? null : row.id;
     
     doServerDataMessage('newfolderclientattachment',{clientid: clientid, parentid: attachment_parentid}, {type: 'refresh'});
@@ -187,22 +188,21 @@ function doDlgClientNew(parentid, clientid)
   function doUploadFile(){
     $('#tbClientAttachments_uploadFile').click();
     
-    let row = $('#divClientAttachmentsG').treegrid('getSelected');
+    let row = $('#divNewClientAttachmentsG').treegrid('getSelected');
     
     attachment_parentid = !row || row.mimetype!=='Folder' ? null : row.id;
 
     doAttachmentClear();
   }
 
-  // Attachments methods
   function doAttachmentClear()
   {
-    $('#divNewClientAttachmentsG').datagrid('clearSelections');
+    $('#divNewClientAttachmentsG').treegrid('clearSelections');
   }
 
   function doAttachmentEdit()
   {
-    doGridStartEdit
+    doTreeGridStartEdit
     (
       'divNewClientAttachmentsG',
       attachmentIndex,
@@ -210,49 +210,53 @@ function doDlgClientNew(parentid, clientid)
       {
         attachmentIndex = index;
 
-        doGridGetEditor
+        doTreeGridGetEditor
         (
           'divNewClientAttachmentsG',
           attachmentIndex,
-          'description',
+          'name',
           function(ed)
           {
           }
         );
       }
     );
+    doAttachmentClear();
   }
 
   function doAttachmentCancel()
   {
-    attachmentIndex = doGridCancelEdit('divNewClientAttachmentsG', attachmentIndex);
+    attachmentIndex = doTreeGridCancelEdit('divNewClientAttachmentsG', attachmentIndex);
+    doAttachmentClear();
   }
 
   function doAttachmentSave()
   {
-    doGridEndEditGetRow
+    doTreeGridEndEditGetRow
     (
       'divNewClientAttachmentsG',
       attachmentIndex,
       function(row)
       {
-        doServerDataMessage('saveclientattachment', {clientattachmentid: row.id, description: row.description, isthumbnail: row.isthumbnail}, {type: 'refresh'});
+        doServerDataMessage('saveclientattachment', {clientattachmentid: row.id, description: row.description, name: row.name}, {type: 'refresh'});
+        // doServerDataMessage('saveclientattachment', {clientattachmentid: row.id, description: row.description, isthumbnail: row.isthumbnail}, {type: 'refresh'});
       }
     );
 
     attachmentIndex = null;
+    doAttachmentClear();
   }
 
   function doAttachmentRemove()
   {
-    if (!doGridGetSelectedRowData
+    if (!doTreeGridGetSelectedRowData
       (
         'divNewClientAttachmentsG',
         function(row)
         {
           doPromptOkCancel
           (
-            'Remove attachment ' + row.description + '?',
+            'Remove attachment ' + row.name + '?',
             function(result)
             {
               if (result)
@@ -264,6 +268,7 @@ function doDlgClientNew(parentid, clientid)
     {
       doShowError('Please select an attachment to remove');
     }
+    doAttachmentClear();
   }
 
   function doAttachmentDownload()
@@ -281,7 +286,7 @@ function doDlgClientNew(parentid, clientid)
   function doAttachmentSaved(ev, args)
   {
     if (clientid == args.data.clientid)
-      doServerDataMessage('listclientattachments', {clientid: clientid}, {type: 'refresh'});
+      doServerDataMessage('listclientattachments', { clientid: clientid }, { type: 'refresh' });
   }
 
   function doAttachmentList(ev, args)
@@ -290,26 +295,37 @@ function doDlgClientNew(parentid, clientid)
 
     args.data.rs.forEach
     (
-      function(a)
+      function(p)
       {
-        data.push
-        (
-          {
-            id: doNiceId(a.id),
-            name: doNiceString(a.name),
-            description: doNiceString(a.description),
-            mimetype: '<a href="javascript:void(0);" onClick="doThrowClientAttachment(' + a.id + ');">' + mapMimeTypeToImage(a.mimetype) + '</a>',
-            size: doNiceString(a.size),
-            isthumbnail: a.isthumbnail,
-            image: '<image src="' + a.image + '" width="35px">',
-            date: doNiceDateModifiedOrCreated(a.datemodified, a.datecreated),
-            by: doNiceModifiedBy(a.datemodified, a.usermodified, a.usercreated)
+        let node = {
+          id: doNiceId(p.id),
+          name: doNiceString(p.name),
+          description: doNiceString(p.description),
+          mimetype: doNiceString(p.mimetype),
+          size: doNiceString(p.size),
+          date: doNiceDateModifiedOrCreated(p.datemodified, p.datecreated),
+          parentid: doNiceId(p.parentid),
+          by: doNiceModifiedBy(p.datemodified, p.usermodified, p.usercreated),
+          children: []
+        };
+        if (node.mimetype == 'Folder')
+          node.iconCls = 'icon-folder-open';
+
+        if (_.isNull(p.parentid))
+          data.push(node);
+        else {
+          // Find parent...
+          let parent = doFindParentNode(data, p.parentid);
+          
+          if (!_.isNull(parent)){
+            parent.iconCls = '';
+            parent.children.push(node);
           }
-        );
+        }
       }
     );
 
-    $('#divNewClientAttachmentsG').datagrid('loadData', data);
+    $('#divNewClientAttachmentsG').treegrid('loadData', data);
   }
 
   function doReset()
@@ -551,6 +567,7 @@ function doDlgClientNew(parentid, clientid)
   $('#divEvents').on('clientattachmentexpired', doAttachmentSaved);
   $('#divEvents').on('saveclientattachment', doAttachmentSaved);
   $('#divEvents').on('expireclientattachment', doAttachmentSaved);
+  $('#divEvents').on('changeclientattachmentparent', doAttachmentSaved);
 
   $('#divEvents').on('checkclientcode', doCheckCode);
   $('#divEvents').on('newclient', doCientSaved);
@@ -580,6 +597,12 @@ function doDlgClientNew(parentid, clientid)
     }
   });
 
+  //Attachment
+  $('#divEvents').on('newfolderclientattachment', doAttachmentSaved);
+  $('#divEvents').on('listclientattachments', doAttachmentList);
+  $('#divEvents').on('clientattachmentsaved', doAttachmentSaved);
+  $('#divEvents').on('expireclientattachment', doAttachmentSaved);
+
   $('#dlgClientNew').dialog
   (
     {
@@ -587,6 +610,11 @@ function doDlgClientNew(parentid, clientid)
       {
         if(isnew)
           doCleanClientNoteLocally();
+
+        $('#divEvents').off('newfolderclientattachment', doAttachmentSaved);
+        $('#divEvents').off('listclientattachments', doAttachmentList);
+        $('#divEvents').off('clientattachmentsaved', doAttachmentSaved);
+        $('#divEvents').off('expireclientattachment', doAttachmentSaved);
 
         $('#divEvents').off('saveclientnote_newclient', doEditorLoad);
         $('#divEvents').off('newclientnote_newclient', doEditorLoad);
@@ -833,10 +861,12 @@ function doDlgClientNew(parentid, clientid)
         (
           {
             idField: 'id',
+            treeField: 'name',
             fitColumns: true,
             singleSelect: true,
             rownumbers: false,
-            striped: true,
+            collapsible: true,
+            autoRowHeight: false,
             toolbar: '#tbClientAttachments',
             columns:
             [
@@ -849,13 +879,31 @@ function doDlgClientNew(parentid, clientid)
                 {title: 'By',          field: 'by',          width: 100, align: 'left',   resizable: true}
               ]
             ],
-            onRowContextMenu: function(e, index, row)
+            onLoadSuccess: function (row) 
             {
-              doGridContextMenu('divNewClientAttachmentsG', 'divClientAttachmentsMenuPopup', e, index, row);
+              $(this).treegrid('enableDnd', row ? row.id : null);
+            },
+            onContextMenu: function(e, row)
+            {
+              doTreeGridContextMenu("divNewClientAttachmentsG", "divClientAttachmentsMenuPopup", e, row);
+            },
+            onBeforeDrag: function (row)
+            {
+              if (attachmentIndex != null)
+                return false;
+              return true;
+            },
+            onBeforeDrop: function (targetRow, sourceRow, point)
+            {
+              if (!targetRow || targetRow.mimetype !== 'Folder')
+                return false;
+            },
+            onDrop: function (targetRow, sourceRow, point){
+              doServerDataMessage('changeclientattachmentparent', {clientattachmentid: sourceRow.id, parentid: point=='append' ? targetRow.id : null}, {type: 'refresh'});
             },
             onDblClickCell: function(index, field, value)
             {
-              doGridStartEdit
+              doTreeGridStartEdit
               (
                 'divNewClientAttachmentsG',
                 attachmentIndex,
@@ -863,11 +911,13 @@ function doDlgClientNew(parentid, clientid)
                 {
                   attachmentIndex = index;
 
-                  doGridGetEditor
+                  if (['mimetype', 'size', 'by','date'].indexOf(field) != -1)
+                    field = 'name';
+                  doTreeGridGetEditor
                   (
                     'divNewClientAttachmentsG',
                     attachmentIndex,
-                    'description',
+                    field,
                     function(ed)
                     {
                     }
@@ -892,9 +942,8 @@ function doDlgClientNew(parentid, clientid)
 
         if (!_.isUndefined(clientid) && !_.isNull(clientid))
         {
-          doServerDataMessage('loadclient', {clientid: clientid}, {type: 'refresh'});
-          // doServerDataMessage('listclientattachments', {clientid: clientid}, {type: 'refresh'});
-          // doServerDataMessage('loadclient', {clientid: clientid}, {type: 'refresh'});
+          doServerDataMessage('loadclient', { clientid: clientid }, { type: 'refresh' });
+          doServerDataMessage('listclientattachments', {clientid: clientid}, {type: 'refresh'});
           doServerDataMessage('listclientnotes', {clientid: clientid}, {type: 'refresh'});
         }
         else

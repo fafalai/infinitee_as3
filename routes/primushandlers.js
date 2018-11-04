@@ -784,6 +784,9 @@ function doPrimus()
     doAddPrimusListener('saveclientattachment');
     doAddPrimusListener('expireclientattachment');
 
+    doAddPrimusListener('newfolderclientattachment');
+    doAddPrimusListener('changeclientattachmentparent');
+    
     // Supplier requests
     doAddPrimusListener('loadsupplier');
     doAddPrimusListener('newsupplier');

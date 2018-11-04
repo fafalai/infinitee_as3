@@ -1,4 +1,4 @@
-var dzClientAttachments = null;
+let dzClientAttachments = null;
 
 function doDZClientAttachments()
 {
@@ -7,16 +7,26 @@ function doDZClientAttachments()
 
   dzClientAttachments = new Dropzone
   (
-    '#divNewClientAttachmentFile',
+    '#div_Attachments',
     {
       url: '/dropclientattachment',
+      clickable: '.tbClientAttachments_uploadFile',
       uploadMultiple: false,
       parallelUploads: 1,
       addRemoveLinks: true,
+      previewTemplate : '<div style="display:none"></div>',
       maxFilesize: 10,
-      dictDefaultMessage: 'Drop files here to upload - description text will be added',
+      createImageThumbnails: false,
+      dictDefaultMessage: "",
       init: function()
       {
+        this.on
+        (
+          'error',
+          (file, errMsg, xhr) => {
+            noty({text: 'Error :' + errMsg , type: 'error', timeout: 5000});
+          }
+        ),
         this.on
         (
           'sending',
@@ -24,21 +34,19 @@ function doDZClientAttachments()
           {
             formData.append('clientid', selectedClientIdAttachmentId);
             formData.append('uuid', uuid);
-            // TODO: Don't know why we need to use getText rather than getValue...
-            formData.append('description', $('#fldNewClientAttachmentDescription').textbox('getText'));
+            formData.append('parentid', attachment_parentid);
           }
-        );
-
+        ),
         this.on
         (
           'success',
           function(file, res)
           {
-            $('#fldNewClientAttachmentDescription').textbox('setValue', '');
+            doServerDataMessage('listclientattachments', {clientid: selectedClientIdAttachmentId}, {type: 'refresh'});
             this.removeFile(file);
+            
           }
-        );
-
+        ),
         this.on
         (
           'reset',
