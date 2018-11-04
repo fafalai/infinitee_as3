@@ -39,8 +39,7 @@ function doNewUser(tx, world)
           {
             var userid = result.rows[0].id;
             var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
-
-            resolve({userid: userid, datecreated: datecreated, usercreated: world.cn.uname, uuid: uuid});
+            resolve({userid: userid, datecreated: datecreated, usercreated: world.cn.uname,uuid: uuid});
           }
           else
             reject(err);
@@ -1475,7 +1474,8 @@ function NewUser(world)
                           email: world.email,
                           session: null,
                           expires: null,
-                          connectionid: null
+                          connectionid: null,
+                          uuid:result.uuid
                         }
 
                         global.safejsonstringify
@@ -1484,7 +1484,9 @@ function NewUser(world)
                           function(err, json)
                           {
                             if (!err)
+                            {
                               global.users.set(global.config.redis.prefix + result.uuid, json);
+                            }
                             else
                             {
                               msg += global.text_unablestringifyjson + ' ' + world.uid;
@@ -1508,7 +1510,8 @@ function NewUser(world)
                         global.pr.sendToRoomExcept
                         (
                           global.custchannelprefix + world.cn.custid,
-                          'usercreated',
+                          // 'usercreated',
+                          'newuser',
                           {
                             uuid: result.uuid,
                             datecreated: result.datecreated,
