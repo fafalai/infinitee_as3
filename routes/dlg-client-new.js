@@ -221,7 +221,7 @@ function doDlgClientNew(parentid, clientid)
         );
       }
     );
-    doAttachmentClear();
+    // doAttachmentClear();
   }
 
   function doAttachmentCancel()
@@ -268,17 +268,20 @@ function doDlgClientNew(parentid, clientid)
     {
       doShowError('Please select an attachment to remove');
     }
-    doAttachmentClear();
+    // doAttachmentClear();
   }
 
   function doAttachmentDownload()
   {
-    doGridGetSelectedRowData
+    doTreeGridGetSelectedRowData
     (
       'divNewClientAttachmentsG',
       function(row)
       {
-        doThrowClientAttachment(row.id);
+        if(row.mimetype !== 'Folder')
+          doThrowClientAttachment(row.id);
+        else
+          noty({text: 'Please select a file to download', type: 'error', timeout: 2000});
       }
     );
   }
