@@ -957,6 +957,66 @@ function doPrimus()
     doAddPrimusListener('changepassword');
     doAddPrimusListener('listconnectedusers');
     doAddPrimusListener('saveuserpermissions');
+    doAddPrimusListener('newuserroletemplates');
+    doAddPrimusListener('saveuserroletemplates');
+    doAddPrimusListener(
+      'listuserroletemplates',
+      (eventname, data) => {
+        doUpdateInitTasksProgress();
+        
+        if (!_.isUN(data.rs))
+        {
+          cache_roletemplates = [];
+
+          data.rs.forEach
+          (
+            function(u)
+            {
+              cache_roletemplates.push
+              (
+                {
+                  id: u.id,
+                  name: doNiceString(u.name),
+                  canvieworders: u.canvieworders,
+                  cancreateorders: u.cancreateorders,
+                  canviewinvoices: u.canviewinvoices,
+                  cancreateinvoices: u.cancreateinvoices,
+                  canviewinventory: u.canviewinventory,
+                  cancreateinventory: u.cancreateinventory,
+                  canviewpayroll: u.canviewpayroll,
+                  cancreatepayroll: u.cancreatepayroll,
+                  canviewproducts: u.canviewproducts,
+                  cancreateproducts: u.cancreateproducts,
+                  canviewclients: u.canviewclients,
+                  cancreateclients: u.cancreateclients,
+                  canviewcodes: u.canviewcodes,
+                  cancreatecodes: u.cancreatecodes,
+                  canviewusers: u.canviewusers,
+                  cancreateusers: u.cancreateusers,
+                  canviewbuilds: u.canviewbuilds,
+                  cancreatebuilds: u.cancreatebuilds,
+                  canviewtemplates: u.canviewtemplates,
+                  cancreatetemplates: u.cancreatetemplates,
+                  canviewbanking: u.canviewbanking,
+                  cancreatebanking: u.cancreatebanking,
+                  canviewpurchasing: u.canviewpurchasing,
+                  cancreatepurchasing: u.cancreatepurchasing,
+                  canviewalerts: u.canviewalerts,
+                  cancreatealerts: u.cancreatealerts,
+                  canviewdashboard: u.canviewdashboard,
+                  cancreatedashboard: u.cancreatedashboard,
+                  date: doNiceDateModifiedOrCreated(u.datemodified, u.datecreated),
+                  by: doNiceModifiedBy(u.datemodified, u.usermodified, u.usercreated),
+                }
+              );
+            }
+          );
+
+          $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
+        }
+      }
+    );
+
 
     doAddPrimusListener
     (
@@ -1418,10 +1478,10 @@ function doPrimus()
               );
             }
           );
-          console.log("list products");
-          console.log("products original number " + cache_products.length);
+          // console.log("list products");
+          // console.log("products original number " + cache_products.length);
           cache_products = removeDuplicates(cache_products,'id');
-          console.log("after number " + cache_products.length);
+          // console.log("after number " + cache_products.length);
           //console.log(cache_products[2]);
 
           $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
@@ -1592,7 +1652,7 @@ function doPrimus()
 
         if (!_.isUndefined(data.rs) && !_.isNull(data.rs))
         {
-          console.log("I am here");
+          // console.log("I am here");
           cache_listpricecode = [];
 
           data.rs.forEach

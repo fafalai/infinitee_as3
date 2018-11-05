@@ -37,6 +37,8 @@ function doWidgetListeners()
   doEmailsTabWidgets();
   doMaintenanceTabWidgets();
 
+  doRoleTemplatesTabWidgets();
+
   doDiscountCodeTabWidgets();
   doListPriceCodeTabWidgets();
 

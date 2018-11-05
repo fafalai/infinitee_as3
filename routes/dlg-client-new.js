@@ -865,11 +865,11 @@ function doDlgClientNew(parentid, clientid)
           {
             idField: 'id',
             treeField: 'name',
-            fitColumns: true,
+            // fitColumns: true,
             singleSelect: true,
             rownumbers: false,
             collapsible: true,
-            autoRowHeight: false,
+            // autoRowHeight: false,
             toolbar: '#tbClientAttachments',
             columns:
             [
@@ -877,7 +877,7 @@ function doDlgClientNew(parentid, clientid)
                 {title: 'Name',        field: 'name',        width: 250, align: 'left',   resizable: true, editor: 'text'},
                 {title: 'Description', field: 'description', width: 300, align: 'left',   resizable: true, editor: 'text'},
                 {title: 'Type',        field: 'mimetype',    width: 100, align: 'center', resizable: true},
-                {title: 'Size',        field: 'size',        width: 100, align: 'right',  resizable: true, formatter: function(value, row) {return filesize(value, {base: 10});}},
+                {title: 'Size',        field: 'size',        width: 100, align: 'right',  resizable: true, formatter: function(value, row) {return row.mimetype=='Folder'? '':filesize(value, {base: 10});}},
                 {title: 'Modified',    field: 'date',        width: 150, align: 'right',  resizable: true},
                 {title: 'By',          field: 'by',          width: 100, align: 'left',   resizable: true}
               ]

@@ -348,6 +348,7 @@ var cache_porders = [];
 var cache_producttemplates = [];
 var cache_products = [];
 var cache_users = [];
+var cache_roletemplates = [];
 var cache_statusalerts = [];
 var cache_exchangerates = [];
 var cache_timesheets = [];
@@ -1630,6 +1631,7 @@ function doRefreshAll()
   doServerMessage('listexchangerates', {type: 'refresh'});
   doServerMessage('listprinttemplates', {type: 'refresh'});
   doServerMessage('loadconfig', {type: 'refresh'});
+  doServerMessage('listuserroletemplates', {type: 'refresh'});
   
   //primus.emit('listbuildtemplateroots', {fguid: fguid, uuid: uuid, session: session, pdata: {type: 'refresh'}});
 

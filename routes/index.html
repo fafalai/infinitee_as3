@@ -121,7 +121,7 @@
   <script type="text/javascript" src="dlg-journal-new.js"></script>
   <script type="text/javascript" src="dlg-alert-new.js"></script>
   <script type="text/javascript" src="dlg-pick-abn.js"></script>
-  <!-- <script type="text/javascript" src="dlg-permission-templates.js"></script> -->
+  <script type="text/javascript" src="dlg-role-templates.js"></script>
 
   <script type="text/javascript" src="dz-client-attachments.js"></script>
   <script type="text/javascript" src="dz-supplier-attachments.js"></script>
@@ -166,7 +166,7 @@
   <script type="text/javascript" src="tab-product-categories.js"></script>
   <script type="text/javascript" src="tab-build-templates.js"></script>
   <script type="text/javascript" src="tab-product-templates.js"></script>
-  <!-- <script type="text/javascript" src="tab-permission-templates.js"></script> -->
+  <script type="text/javascript" src="tab-role-templates.js"></script>
 
   <script type="text/javascript" src="tab-timeclock.js"></script>
   <script type="text/javascript" src="tab-taxcodes.js"></script>
@@ -1133,7 +1133,7 @@
     <div id="divInventoryBuildsG" style="width: 100%; height: 500px;"></div>
   </div>
 
-  <div id="dlgUserPermissions" class="easyui-dialog" title="User Permissions" style="width: 220px; height: 600px;" data-options="resizable: false, modal: true, closable: false, closed: true">
+  <div id="dlgUserPermissions" class="easyui-dialog" title="User Permissions" style="width: 220px; height: 600px;" data-options="resizable: true, modal: true, closable: false, closed: true">
     <div id="divPermissionsPG" style="width: 100%; height: 500px;"></div>
   </div>
 
@@ -3591,14 +3591,14 @@
     </div>
   </div>
 
-  <div id="tbPermissionTemplates" style="height: auto; display: none">
+  <div id="tbRoleTemplates" style="height: auto; display: none">
     <div style="margin-bottom: 5px">
-      <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'new')" class="easyui-linkbutton" iconCls="icon-add">New</a>
-      <!-- <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'clear')" class="easyui-linkbutton" iconCls="icon-clear">Clear</a> -->
-      <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'edit')" class="easyui-linkbutton" iconCls="icon-edit">Edit</a>
-      <!-- <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'cancel')" class="easyui-linkbutton" iconCls="icon-cancel">Cancel</a> -->
-      <!-- <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'save')" class="easyui-linkbutton" iconCls="icon-save">Save</a> -->
-      <a href="javascript:void(0)" onClick="doContextMenu('permissiontemplatespopup', 'remove')" class="easyui-linkbutton" iconCls="icon-remove">Remove</a>
+      <a href="javascript:void(0)" onClick="doContextMenu('roletemplatespopup', 'new')" class="easyui-linkbutton" iconCls="icon-add">New</a>
+      <!-- <a href="javascript:void(0)" onClick="doContextMenu('roletemplatespopup', 'clear')" class="easyui-linkbutton" iconCls="icon-clear">Clear</a> -->
+      <a href="javascript:void(0)" onClick="doContextMenu('roletemplatespopup', 'edit')" class="easyui-linkbutton" iconCls="icon-edit">Edit</a>
+      <!-- <a href="javascript:void(0)" onClick="doContextMenu('roletemplatespopup', 'cancel')" class="easyui-linkbutton" iconCls="icon-cancel">Cancel</a> -->
+      <!-- <a href="javascript:void(0)" onClick="doContextMenu('roletemplatespopup', 'save')" class="easyui-linkbutton" iconCls="icon-save">Save</a> -->
+      <a href="javascript:void(0)" onClick="doContextMenu('roletemplatespopup', 'remove')" class="easyui-linkbutton" iconCls="icon-remove">Remove</a>
     </div>
   </div>
 
@@ -4140,8 +4140,8 @@
                 <div id="divPrintTemplatesG" data-options="fit: true"></div>
               </div>
 
-              <div title="Permission Templates" data-options="iconCls: 'icon-lock'">
-                <table id="divPermissionTemplates" data-options="fit: true"></table>
+              <div title="Role Templates" data-options="iconCls: 'icon-lock'">
+                <table id="divRoleTemplatesTG" data-options="fit: true"></table>
               </div>
               
               <div title="Emails" data-options="iconCls: 'icon-email'">
