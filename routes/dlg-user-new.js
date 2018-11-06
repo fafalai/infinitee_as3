@@ -18,6 +18,7 @@ function doDlgUserNew(useruuid)
       $('#fldNewUserMobile').textbox('clear');
 
       $('#cbNewUserIsAdmin').switchbutton('uncheck');
+      $('#cbNewUserRoleTemplate').combobox('clear');
 
       $('#fldNewUserPwd1').textbox('enable');
       $('#fldNewUserPwd2').textbox('enable');
@@ -37,6 +38,7 @@ function doDlgUserNew(useruuid)
         $('#fldNewUserMobile').textbox('setValue', user.phone);
 
         $('#cbNewUserIsAdmin').switchbutton(user.isadmin ? 'check' : 'uncheck');
+        $('#cbNewUserRoleTemplate').combobox('setValue', user.roletemplateid);
 
         $('#fldNewUserPwd1').textbox('clear');
         $('#fldNewUserPwd2').textbox('clear');
@@ -151,6 +153,11 @@ function doDlgUserNew(useruuid)
       },
       onOpen: function()
       {
+        if (!isadmin) {
+          $('#cbNewUserIsAdmin').switchbutton('disable');
+          $('#cbNewUserRoleTemplate').combobox('disable');
+        }
+
         $('#fldNewUserUid').textbox
         (
           {
@@ -210,6 +217,15 @@ function doDlgUserNew(useruuid)
           }
         );
 
+        $('#cbNewUserRoleTemplate').combobox
+        (
+          {
+            valueField: 'id',
+            textField: 'name',
+            data: cache_roletemplates
+          }
+        )
+
         if (isnew)
           $('#btnUserNewAdd').linkbutton({text: 'Add'});
         else
@@ -241,6 +257,7 @@ function doDlgUserNew(useruuid)
             var avatar = $('#cbNewUserAvatar').combobox('getValue');
             var isadmin = doSwitchButtonChecked('cbNewUserIsAdmin') ? 1: 0;
             var isclient = _.isBlank(clientid) ? 0 : 1;
+            var roletemplateid = $('#cbNewUserRoleTemplate').combobox('getValue');
 
             if (!_.isBlank(name))
             {
@@ -249,12 +266,12 @@ function doDlgUserNew(useruuid)
                 if (isnew)
                 {
                   if (!_.isBlank(pwd1 == pwd2))
-                    doServerDataMessage('newuser', {clientid: clientid, name: name, uid: uid, pwd: pwd1, email: email, mobile: mobile, avatar: avatar, isadmin: isadmin, isclient: isclient}, {type: 'refresh'});
+                    doServerDataMessage('newuser', {roletemplateid:roletemplateid,clientid: clientid, name: name, uid: uid, pwd: pwd1, email: email, mobile: mobile, avatar: avatar, isadmin: isadmin, isclient: isclient}, {type: 'refresh'});
                   else
                     doMandatoryTextbox('Passwords do not match', 'fldNewUserPwd1');
                 }
                 else
-                  doServerDataMessage('saveuser', {useruuid: useruuid, clientid: clientid, name: name, uid: uid, email: email, mobile: mobile, avatar: avatar, isadmin: isadmin, isclient: isclient}, {type: 'refresh'});
+                  doServerDataMessage('saveuser', {roletemplateid:roletemplateid,useruuid: useruuid, clientid: clientid, name: name, uid: uid, email: email, mobile: mobile, avatar: avatar, isadmin: isadmin, isclient: isclient}, {type: 'refresh'});
               }
               else
                 doMandatoryTextbox('Please enter a unique login name', 'fldNewUserUid');

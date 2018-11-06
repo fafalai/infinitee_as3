@@ -6,7 +6,6 @@ function doDlgRoleTemplates(row) {
         isnew = false;
 
     $('#divEvents').on('newuserroletemplates', doSaved);
-    // $('#divEvents').on('userroletemplatessaved', doSaved);
     $('#divEvents').on('saveuserroletemplates', doSaved);
 
     function doSave() {
@@ -40,7 +39,7 @@ function doDlgRoleTemplates(row) {
             canviewalerts: rows[25].value,
             cancreatealerts: rows[26].value,
             canviewdashboard: rows[27].value,
-            cancreatedashboard: rows[28].value,
+            cancreatedashboard: rows[28].value
         };
 
         if (!isnew)
@@ -62,12 +61,12 @@ function doDlgRoleTemplates(row) {
                 },
             },
         };
-
         return row;
     }
 
     function doSaved(ev, args) {
         $('#dlgUserPermissions').dialog('close');
+        $('#divRoleTemplatesTG').datagrid('clearSelections');
     }
 
     //   $('#divEvents').on('saveuserroles', doSaved);
@@ -78,7 +77,6 @@ function doDlgRoleTemplates(row) {
             //   title: 'roles for ' + user.name,
             onClose() {
                 $('#divEvents').off('newuserroletemplates', doSaved);
-                // $('#divEvents').on('userroletemplatessaved', doSaved);
                 $('#divEvents').off('saveuserroletemplates', doSaved);
             },
             onOpen() {

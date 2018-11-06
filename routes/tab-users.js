@@ -266,13 +266,14 @@ function doUsersTabWidgets()
       columns:
       [
         [
-          {title: 'User Name',     rowspan: 2, field: 'username', width: 300, align: 'left',   resizable: true, sortable: true},
-          {title: 'Email',         rowspan: 2, field: 'email',    width: 300, align: 'left',   resizable: true},
-          {title: 'Phone',         rowspan: 2, field: 'phone',    width: 150, align: 'left',   resizable: true},
-          {title: 'Admin?',        rowspan: 2, field: 'isadmin',  width: 80,  align: 'center', resizable: true, formatter: function(value, row) {return mapBoolToImage(value);}},
-          {title: 'Client?',       rowspan: 2, field: 'isclient', width: 80,  align: 'center', resizable: true, formatter: function(value, row) {return mapBoolToImage(value);}},
-          {title: 'Client',        rowspan: 2, field: 'clientid', width: 300, align: 'left',   resizable: true, formatter: function(value, row) {return doGetNameFromTreeArray(cache_clients, value);}, styler: function(value, row, index) {if (row.isclient) return 'color: ' + colour_blueviolet;}, sortable: true},
-          {title: 'Avatar',        rowspan: 2, field: 'avatar',   width: 100, align: 'center', resizable: true, formatter: function(value, row) {return mapAvatarToImage(value);}},
+          {title: 'User Name',     rowspan: 2, field: 'username',   width: 300, align: 'left',   resizable: true, sortable: true},
+          {title: 'Role Name',     rowspan: 2, field: 'rolename',   width: 150, align: 'left',   resizable: true, sortable: true},
+          {title: 'Email',         rowspan: 2, field: 'email',      width: 300, align: 'left',   resizable: true},
+          {title: 'Phone',         rowspan: 2, field: 'phone',      width: 150, align: 'left',   resizable: true},
+          {title: 'Admin?',        rowspan: 2, field: 'isadmin',    width: 80,  align: 'center', resizable: true, formatter: function(value, row) {return mapBoolToImage(value);}},
+          {title: 'Client?',       rowspan: 2, field: 'isclient',   width: 80,  align: 'center', resizable: true, formatter: function(value, row) {return mapBoolToImage(value);}},
+          {title: 'Client',        rowspan: 2, field: 'clientid',   width: 300, align: 'left',   resizable: true, formatter: function(value, row) {return doGetNameFromTreeArray(cache_clients, value);}, styler: function(value, row, index) {if (row.isclient) return 'color: ' + colour_blueviolet;}, sortable: true},
+          {title: 'Avatar',        rowspan: 2, field: 'avatar',     width: 100, align: 'center', resizable: true, formatter: function(value, row) {return mapAvatarToImage(value);}},
           {title: 'Last',          colspan: 3},
           {title: 'Modified',      rowspan: 2, field: 'date',     width: 150, align: 'right', resizable: true, sortable: true},
           {title: 'By',            rowspan: 2, field: 'by',       width: 200, align: 'left',  resizable: true, sortable: true}

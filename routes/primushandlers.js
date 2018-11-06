@@ -229,6 +229,7 @@ function doPrimus()
 
             $('#maintenancetabs').tabs('close', 'Status Alerts');
             $('#maintenancetabs').tabs('close', 'Product Templates');
+            $('#maintenancetabs').tabs('close', 'Role Templates');
             $('#maintenancetabs').tabs('close', 'Print Templates');
             $('#maintenancetabs').tabs('close', 'Emails');
 
@@ -374,6 +375,7 @@ function doPrimus()
               {
                 $('#maintenancetabs').tabs('close', 'Product Templates');
                 $('#maintenancetabs').tabs('close', 'Print Templates');
+                $('#maintenancetabs').tabs('close', 'Role Templates');
               }
 
               // Command centre permissions...
@@ -959,6 +961,8 @@ function doPrimus()
     doAddPrimusListener('saveuserpermissions');
     doAddPrimusListener('newuserroletemplates');
     doAddPrimusListener('saveuserroletemplates');
+    doAddPrimusListener('removeuserroletemplates');
+
     doAddPrimusListener(
       'listuserroletemplates',
       (eventname, data) => {
@@ -1012,7 +1016,7 @@ function doPrimus()
             }
           );
 
-          $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
+          $('#divEvents').trigger(eventname, {data: cache_roletemplates, pdata: $.extend(data.pdata, {})});
         }
       }
     );
@@ -1080,7 +1084,8 @@ function doPrimus()
                   clientid: u.clientid,
                   date: doNiceDateModifiedOrCreated(u.datemodified, u.datecreated),
                   by: doNiceModifiedBy(u.datemodified, u.usermodified, u.usercreated),
-                  status: imgstatus
+                  status: imgstatus,
+                  rolename: u.rolename
                 }
               );
             }

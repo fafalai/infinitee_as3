@@ -7,13 +7,13 @@ function doRoleTemplatesTabWidgets() {
     roletemplatesTabWidgetsLoaded = true;
 
     $('#divEvents').on('listuserroletemplates', (ev, args) => {
-        $('#divRoleTemplatesTG').datagrid('reload', cache_roletemplates);
+        $('#divRoleTemplatesTG').datagrid('reload', args.data);
     });
 
     $('#divEvents').on('newuserroletemplates', doSaved);
     $('#divEvents').on('userroletemplatessaved', doSaved);
     $('#divEvents').on('saveuserroletemplates', doSaved);
-    $('#divEvents').on('removeuserroletemplatebyid', doSaved);
+    $('#divEvents').on('removeuserroletemplates', doSaved);
 
     $('#divEvents').on('roletemplatespopup',
         function (ev, args) {
@@ -67,7 +67,9 @@ function doRoleTemplatesTabWidgets() {
             doDlgRoleTemplates(row);
     }
 
-    function doClear() {}
+    function doClear() {
+        $('#divRoleTemplatesTG').datagrid('clearSelections');
+    }
 
     function doEdit() {
         if (!doGridGetSelectedRowData(
@@ -92,12 +94,13 @@ function doRoleTemplatesTabWidgets() {
                             'Remove ' + row.name + '?',
                             function (result) {
                                 if (result)
-                                    doServerDataMessage('removeroletemplatebyid', {roletemplate_id: row.id}, {type: 'refresh'});
+                                    doServerDataMessage('removeuserroletemplates', {roletemplateid: row.id}, {type: 'refresh'});
                             });
                 }
             )) {
             doShowError('Please select a template to delete');
         }
+        doClear();
     }
 
     function doSaved(ev, args)
@@ -113,7 +116,7 @@ function doRoleTemplatesTabWidgets() {
         // fitColumns: true,
         autoRowHeight: false,
         rownumbers: true,
-        striped: true,
+        // striped: true,
         singleSelect: true,
         // nowrap:true,
         toolbar: '#tbRoleTemplates',

@@ -3000,16 +3000,17 @@ function main()
       addListener('listusers',                            'listusers',                            global.modauth.ListUsers,                              []);
       addListener('listconnectedusers',                   'listconnectedusers',                   global.modauth.ListConnectedUsers,                     []);
       addListener('loaduser',                             'loaduser',                             global.modauth.LoadUser,                               ['*useruuid']);
-      addListener('newuser',                              'newuser',                              global.modauth.NewUser,                                ['*name', '*uid', '*pwd', '*clientid', '*email', '*mobile', '*avatar', '*isadmin', 'isclient']);
-      addListener('saveuser',                             'saveuser',                             global.modauth.SaveUser,                               ['*useruuid', '*name', '*uid', '*clientid', '*email', '*mobile', '*isadmin', '*avatar', '*isclient', '*clientid']);
+      addListener('newuser',                              'newuser',                              global.modauth.NewUser,                                ['*name', '*uid', '*pwd', '*clientid', '*email', '*mobile', '*avatar', '*isadmin', 'isclient', 'roletemplateid']);
+      addListener('saveuser',                             'saveuser',                             global.modauth.SaveUser,                               ['*useruuid', '*name', '*uid', '*clientid', '*email', '*mobile', '*isadmin', '*avatar', '*isclient', '*clientid','roletemplateid']);
       addListener('expireuser',                           'expireuser',                           global.modauth.ExpireUser,                             ['*useruuid']);
       addListener('checkuseruid',                         'checkuseruid',                         global.modauth.CheckUserUid,                           ['*useruuid', '*uid']);
       addListener('changepassword',                       'changepassword',                       global.modauth.ChangePassword,                         ['*useruuid', '*pwd']);
       addListener('saveuserpermissions',                  'saveuserpermissions',                  global.modauth.SaveUserPermissions,                    ['*useruuid', '*permissions']);
       addListener('newuserroletemplates',                 'newuserroletemplates',                 global.modauth.NewUserRoleTemplates,                   ['*name', '*roles']);
       addListener('saveuserroletemplates',                'saveuserroletemplates',                global.modauth.SaveUserRoleTemplates,                  ['*roletemplateid','*name', '*roles']);
-      addListener('listuserroletemplates',                'listuserroletemplates',                global.modauth.ListUserRoleTemplates,                  [])
-      
+      addListener('listuserroletemplates',                'listuserroletemplates',                global.modauth.ListUserRoleTemplates,                  []);
+      addListener('removeuserroletemplates',              'removeuserroletemplates',              global.modauth.RemoveUserRoleTemplates,                ['*roletemplateid']);
+
       // Config requests                                 
       addListener('listprinttemplates',                   'listprinttemplates',                   global.modconfig.ListPrintTemplates,                   []);
       addListener('saveprinttemplate',                    'saveprinttemplate',                    global.modconfig.SavePrintTemplate,                    ['*printtemplateid', '*description']);
