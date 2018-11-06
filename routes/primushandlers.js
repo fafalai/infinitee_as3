@@ -419,6 +419,7 @@ function doPrimus()
                 $('#maintenancetabs').tabs('close', 'Status Alerts');
                 $('#maintenancetabs').tabs('close', 'Product Templates');
                 $('#maintenancetabs').tabs('close', 'Print Templates');
+                $('#maintenancetabs').tabs('close', 'Role Templates');
 
                 $('#maintenancetabs').tabs('close', 'Emails');
                 $('#maintenancetabs').tabs('close', 'Settings');
