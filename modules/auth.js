@@ -41,14 +41,19 @@ function doNewUser(tx, world)
             var userid = result.rows[0].id;
             var datecreated = global.moment(result.rows[0].datecreated).format('YYYY-MM-DD HH:mm:ss');
 
-            if(!__.isUNB(world.roletemplateid)){
-              console.log('object');
+            if(!__.isUNB(world.roletemplateid))
+            {
+              world.useruuid = uuid;
+              return doUpdatePermissionFromRoleTemplate(tx, world)
+                .then(
+                  resolve({ userid: userid, datecreated: datecreated, usercreated: world.cn.uname, uuid: uuid })
+                )
+                .catch(
+                  reject(err)
+                );
             }
             else
               resolve({userid: userid, datecreated: datecreated, usercreated: world.cn.uname,uuid: uuid});
-            
-
-            
           }
           else
             reject(err);
