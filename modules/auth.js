@@ -44,7 +44,7 @@ function doNewUser(tx, world)
             if(!__.isUNB(world.roletemplateid))
             {
               world.useruuid = uuid;
-              return doUpdatePermissionFromRoleTemplate(tx, world)
+              return doUpdateUserPermissionFromRoleTemplate(tx, world)
                 .then(
                   resolve({ userid: userid, datecreated: datecreated, usercreated: world.cn.uname, uuid: uuid })
                 )
@@ -165,7 +165,125 @@ function doChangePassword(tx, world)
   return promise;
 }
 
-function doUpdatePermissionFromRoleTemplate(tx, world){
+function doSyncUsersPermissionFromRoleTemplate(tx, world) {
+  return new global.rsvp.Promise(
+    (resolve, reject) => {
+      let sqltext = 'SELECT u1.uuid, u1.name FROM users u1 WHERE u1.customers_id=$1 AND u1.dateexpired IS NULL AND u1.roletemplate_id=$2',
+          value = [
+            world.cn.custid,
+            world.roletemplateid
+          ];
+
+      tx.query(sqltext, value, (err, result) => {
+        if (!err) {
+          let sqltext =
+            'SELECT canvieworders, cancreateorders, ' +
+            'canviewinvoices, cancreateinvoices, ' +
+            'canviewinventory, cancreateinventory, ' +
+            'canviewpayroll, cancreatepayroll, ' +
+            'canviewproducts, cancreateproducts, ' +
+            'canviewclients, cancreateclients, ' +
+            'canviewcodes, cancreatecodes, ' +
+            'canviewusers, cancreateusers, ' +
+            'canviewbuilds, cancreatebuilds, ' +
+            'canviewtemplates, cancreatetemplates, ' +
+            'canviewbanking, cancreatebanking, ' +
+            'canviewpurchasing, cancreatepurchasing, ' +
+            'canviewalerts, cancreatealerts, ' +
+            'canviewdashboard, cancreatedashboard FROM roletemplates WHERE customers_id=$1 AND dateexpired IS NULL AND id=$2',
+            value = 
+            [
+              world.cn.custid,
+              __.sanitiseAsBigInt(world.roletemplateid)
+            ];
+
+          tx.query(sqltext, value, (err, result2) => {
+              if (!err) {
+                let tasks = [];
+                result.rows.forEach(user => {
+                  tasks.push(
+                    (callback) => {
+                      let sqltext =
+                        'UPDATE users SET ' +
+                        'canvieworders=$1,cancreateorders=$2,' +
+                        'canviewinvoices=$3,cancreateinvoices=$4,' +
+                        'canviewinventory=$5,cancreateinventory=$6,' +
+                        'canviewpayroll=$7,cancreatepayroll=$8,' +
+                        'canviewproducts=$9,cancreateproducts=$10,' +
+                        'canviewclients=$11,cancreateclients=$12,' +
+                        'canviewcodes=$13,cancreatecodes=$14,' +
+                        'canviewusers=$15,cancreateusers=$16,' +
+                        'canviewbuilds=$17,cancreatebuilds=$18,' +
+                        'canviewtemplates=$19,cancreatetemplates=$20,' +
+                        'canviewbanking=$21,cancreatebanking=$22,' +
+                        'canviewpurchasing=$23,cancreatepurchasing=$24,' +
+                        'canviewalerts=$25,cancreatealerts=$26,' +
+                        'canviewdashboard=$27,cancreatedashboard=$28 ' +
+                        'WHERE customers_id=$29 AND uuid=$30',
+                        value = 
+                        [
+                          __.sanitiseAsBigInt(result2.rows[0].canvieworders),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreateorders),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewinvoices),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreateinvoices),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewinventory),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreateinventory),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewpayroll),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatepayroll),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewproducts),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreateproducts),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewclients),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreateclients),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewcodes),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatecodes),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewusers),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreateusers),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewbuilds),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatebuilds),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewtemplates),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatetemplates),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewbanking),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatebanking),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewpurchasing),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatepurchasing),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewalerts),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatealerts),
+                          __.sanitiseAsBigInt(result2.rows[0].canviewdashboard),
+                          __.sanitiseAsBigInt(result2.rows[0].cancreatedashboard),
+                          world.cn.custid,
+                          __.sanitiseAsString(user.uuid)
+                        ];
+
+                        tx.query(sqltext, value, (err, result3) => {
+                          if(!err){
+                            callback(null, result3);
+                          }else {
+                            callback(err);
+                          }
+                        });
+                    }
+                  );
+                });
+
+                global.async.series(
+                  tasks,
+                  (err, results) => {
+                    if (!err) {
+                      resolve(results);
+                    } else
+                      reject(err);
+                  });
+              }
+            });
+        } else
+          reject(err);
+      })
+    }
+  )
+}
+
+function doUpdateUserPermissionFromRoleTemplate(tx, world){
+  console.log(world.useruuid);
   return new global.rsvp.Promise(
     (resolve, reject) => {
       tx.query
@@ -242,10 +360,12 @@ function doUpdatePermissionFromRoleTemplate(tx, world){
                 __.sanitiseAsString(world.useruuid)
               ],
               (err, result2) => {
-                if(!err)
-                  resolve();
-                else
+                if(!err){
+                  resolve({uuid: world.useruuid});
+                }
+                else{
                   reject(err);
+                }
               }
             )
           }
@@ -287,7 +407,7 @@ function doSaveUser(tx, world)
             let datemodified = global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss');
 
             if(!__.isUNB(world.roletemplateid)){
-              return doUpdatePermissionFromRoleTemplate(tx, world)
+              return doUpdateUserPermissionFromRoleTemplate(tx, world)
               .then(resolve({datemodified: datemodified, usermodified: world.cn.uname}))
               .catch(reject(err));
             }
@@ -678,85 +798,93 @@ function doNewUserRoleTemplates(tx, world) {
   );
 }
 
-function doSaveUserRoleTemplates(tx, world){
+function doSaveUserRoleTemplates(tx, world) {
   return new global.rsvp.Promise(
     (resolve, reject) => {
-      tx.query(
-        'UPDATE roletemplates SET name=$1, datemodified=now(), usersmodified_id=$3, '+
-        'canvieworders=$4, cancreateorders=$5, '+
-        'canviewinvoices=$6, cancreateinvoices=$7, '+
-        'canviewinventory=$8, cancreateinventory=$9, '+
-        'canviewpayroll=$10, cancreatepayroll=$11, '+
-        'canviewproducts=$12, cancreateproducts=$13, '+
-        'canviewclients=$14, cancreateclients=$15, '+
-        'canviewcodes=$16, cancreatecodes=$17, '+
-        'canviewusers=$18, cancreateusers=$19, '+
-        'canviewbuilds=$20, cancreatebuilds=$21, '+
-        'canviewtemplates=$22, cancreatetemplates=$23, '+
-        'canviewbanking=$24, cancreatebanking=$25, '+
-        'canviewpurchasing=$26, cancreatepurchasing=$27, '+
-        'canviewalerts=$28, cancreatealerts=$29, '+
-        'canviewdashboard=$30, cancreatedashboard=$31 ' + 
-        'WHERE customers_id=$2 AND dateexpired IS NULL AND id=$32',
-        [
-          __.sanitiseAsString(world.name, 50),
-          world.cn.custid,
-          world.cn.userid,
-          world.roles.canvieworders,
-          world.roles.cancreateorders,
-          world.roles.canviewinvoices,
-          world.roles.cancreateinvoices,
-          world.roles.canviewinventory,
-          world.roles.cancreateinventory,
-          world.roles.canviewpayroll,
-          world.roles.cancreatepayroll,
-          world.roles.canviewproducts,
-          world.roles.cancreateproducts,
-          world.roles.canviewclients,
-          world.roles.cancreateclients,
-          world.roles.canviewcodes,
-          world.roles.cancreatecodes,
-          world.roles.canviewusers,
-          world.roles.cancreateusers,
-          world.roles.canviewbuilds,
-          world.roles.cancreatebuilds,
-          world.roles.canviewtemplates,
-          world.roles.cancreatetemplates,
-          world.roles.canviewbanking,
-          world.roles.cancreatebanking,
-          world.roles.canviewpurchasing,
-          world.roles.cancreatepurchasing,
-          world.roles.canviewalerts,
-          world.roles.cancreatealerts,
-          world.roles.canviewdashboard,
-          world.roles.cancreatedashboard,
-          world.roletemplateid
-        ],
-        (err, result) => 
-        {
-          if (!err) {
-            
-            tx.query(
-              'SELECT rp1.id, rp1.name, rp1.datecreated, rp1.datemodified, u1.name usercreated, u2.name usermodified ' +
-              'FROM roletemplates rp1 ' +
-              'left join users u1 on (rp1.userscreated_id=u1.id) ' +
-              'left join users u2 on (rp1.usersmodified_id=u2.id) ' +
-              'WHERE rp1.dateexpired IS NULL AND rp1.customers_id=$1 AND rp1.id=$2',
-              [
-                world.cn.custid,
-                result.roletemplateid
-              ],
-              (err, result2) => {
-                if (!err)
-                  resolve(result2);
-                else
-                  reject(err);
-              }
-            )
-          } else {
-            reject(err);
+      let sqltext =
+        'UPDATE roletemplates SET name=$1, datemodified=now(), usersmodified_id=$3, ' +
+        'canvieworders=$4, cancreateorders=$5, ' +
+        'canviewinvoices=$6, cancreateinvoices=$7, ' +
+        'canviewinventory=$8, cancreateinventory=$9, ' +
+        'canviewpayroll=$10, cancreatepayroll=$11, ' +
+        'canviewproducts=$12, cancreateproducts=$13, ' +
+        'canviewclients=$14, cancreateclients=$15, ' +
+        'canviewcodes=$16, cancreatecodes=$17, ' +
+        'canviewusers=$18, cancreateusers=$19, ' +
+        'canviewbuilds=$20, cancreatebuilds=$21, ' +
+        'canviewtemplates=$22, cancreatetemplates=$23, ' +
+        'canviewbanking=$24, cancreatebanking=$25, ' +
+        'canviewpurchasing=$26, cancreatepurchasing=$27, ' +
+        'canviewalerts=$28, cancreatealerts=$29, ' +
+        'canviewdashboard=$30, cancreatedashboard=$31 ' +
+        'WHERE customers_id=$2 AND dateexpired IS NULL AND id=$32';
+
+      let value = [
+        __.sanitiseAsString(world.name, 50),
+        world.cn.custid,
+        world.cn.userid,
+        world.roles.canvieworders,
+        world.roles.cancreateorders,
+        world.roles.canviewinvoices,
+        world.roles.cancreateinvoices,
+        world.roles.canviewinventory,
+        world.roles.cancreateinventory,
+        world.roles.canviewpayroll,
+        world.roles.cancreatepayroll,
+        world.roles.canviewproducts,
+        world.roles.cancreateproducts,
+        world.roles.canviewclients,
+        world.roles.cancreateclients,
+        world.roles.canviewcodes,
+        world.roles.cancreatecodes,
+        world.roles.canviewusers,
+        world.roles.cancreateusers,
+        world.roles.canviewbuilds,
+        world.roles.cancreatebuilds,
+        world.roles.canviewtemplates,
+        world.roles.cancreatetemplates,
+        world.roles.canviewbanking,
+        world.roles.cancreatebanking,
+        world.roles.canviewpurchasing,
+        world.roles.cancreatepurchasing,
+        world.roles.canviewalerts,
+        world.roles.cancreatealerts,
+        world.roles.canviewdashboard,
+        world.roles.cancreatedashboard,
+        world.roletemplateid
+      ];
+      tx.query(sqltext, value, (err, result) => {
+        if (!err) {
+          if(world.sync){
+            return doSyncUsersPermissionFromRoleTemplate(tx, world)
+              .then(resolve(result))
+              .catch(err=>reject(err))
           }
-        });
+          else
+          {
+            resolve(result);
+            // tx.query(
+            //   'SELECT rp1.id, rp1.name, rp1.datecreated, rp1.datemodified, u1.name usercreated, u2.name usermodified ' +
+            //   'FROM roletemplates rp1 ' +
+            //   'left join users u1 on (rp1.userscreated_id=u1.id) ' +
+            //   'left join users u2 on (rp1.usersmodified_id=u2.id) ' +
+            //   'WHERE rp1.dateexpired IS NULL AND rp1.customers_id=$1 AND rp1.id=$2',
+            //   [
+            //     world.cn.custid,
+            //     result.roletemplateid
+            //   ],
+            //   (err, result2) => {
+            //     if (!err)
+            //       resolve(result2);
+            //     else
+            //       reject(err);
+            //   }
+            // )
+          }
+        } else {
+          reject(err);
+        }
+      });
     }
   );
 }
@@ -1667,8 +1795,9 @@ function SaveUserRoleTemplates(world) {
     doSaveUserRoleTemplates,
     function (err, result) {
       if (!err) {
-        world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, rs: result.rows, pdata: world.pdata });
-        global.pr.sendToRoomExcept(global.custchannelprefix + world.cn.custid, 'userroletemplatessaved', { rs: result.rows }, world.spark.id);
+        world.spark.emit(world.eventname, { rc: global.errcode_none, msg: global.text_success, pdata: world.pdata });
+        global.pr.sendToRoomExcept(global.custchannelprefix + world.cn.custid, 'saveuserroletemplates', {}, world.spark.id);
+        global.pr.sendToRoom(global.custchannelprefix + world.cn.custid, 'usersaved', {}, world.spark.id);
       }
     }
     );
