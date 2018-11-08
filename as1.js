@@ -43,6 +43,7 @@ global.path = require('path');
 global.xlwriter = require('xlsx-template');
 global.xlreader = require('node-xlsx');
 global.exceljs = require('exceljs');
+global.exceljs.config.setValue('promise', require('bluebird'));
 global.oxr = require('open-exchange-rates');
 global.fx = require('money');
 global.diceware = require('diceware-password-generator');

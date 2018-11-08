@@ -54,14 +54,47 @@ function doQuotesTabWidgets()
 
   function doPrint()
   {
-    doGridGetSelectedRowData
+    doPromptYesNoCancel
     (
-      'divQuotesG',
-      function(row)
+      'Print all listed quotes (Yes) or selected only (No)?',
+      function(result)
       {
-        doServerDataMessage('printquotes', {quotes: [row.id]}, {type: 'refresh'});
+        console.log(result);
+        if (result === true)
+        {
+          console.log('Print all listed orders');
+          var rowids = [];
+          var data = $('#divQuotesG').datagrid('getData');
+          console.log(data.rows.length);
+          
+          // data.rows = data.rows.slice(0,20);
+          //console.log(data.rows);
+          for(var i=0;i<data.rows.length;i++)
+          {
+            //console.log(data.rows[i].id);
+            rowids.push(data.rows[i].id);
+          }
+          
+          console.log(rowids);
+          doServerDataMessage('printquotes', {quotes: rowids}, {type: 'refresh'});
+        }
+        else if (result ==  false)
+        {
+          if (!doGridGetSelectedRowData
+            (
+              'divQuotesG',
+              function(row)
+              {
+                console.log(row.id);
+                doServerDataMessage('printquotes', {quotes: [row.id]}, {type: 'refresh'});
+              }
+            ))
+          {
+            doShowError('Please select an quote to print');
+          }
+        }
       }
-    );
+    )
   }
 
   function doEmail()
