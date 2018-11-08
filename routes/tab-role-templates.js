@@ -189,7 +189,6 @@ function doRoleTemplatesTabWidgets() {
                 { field: 'cancreatedashboard', title: 'Can Create Dashboard', width: 130, formatter: function (value, row, index) { return mapBoolToImage(value); } }
             ]
         ],
-        onLoadSuccess: function (row) {console.log('object');},
         onDblClickRow: function (index,row) {
             doDlgRoleTemplates(row);
         }
