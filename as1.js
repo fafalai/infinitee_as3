@@ -3008,7 +3008,7 @@ function main()
       addListener('changepassword',                       'changepassword',                       global.modauth.ChangePassword,                         ['*useruuid', '*pwd']);
       addListener('saveuserpermissions',                  'saveuserpermissions',                  global.modauth.SaveUserPermissions,                    ['*useruuid', '*permissions']);
       addListener('newuserroletemplates',                 'newuserroletemplates',                 global.modauth.NewUserRoleTemplates,                   ['*name', '*roles']);
-      addListener('saveuserroletemplates',                'saveuserroletemplates',                global.modauth.SaveUserRoleTemplates,                  ['*roletemplateid','*name', '*roles']);
+      addListener('saveuserroletemplates',                'saveuserroletemplates',                global.modauth.SaveUserRoleTemplates,                  ['*roletemplateid','*name', '*roles', '*sync']);
       addListener('listuserroletemplates',                'listuserroletemplates',                global.modauth.ListUserRoleTemplates,                  []);
       addListener('removeuserroletemplates',              'removeuserroletemplates',              global.modauth.RemoveUserRoleTemplates,                ['*roletemplateid']);
 

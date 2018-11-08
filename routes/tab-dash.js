@@ -173,10 +173,8 @@ function doDashTabWidgets()
     'useronline',
     function(ev, args)
     {
-      /*
       if (args.data.uuid != uuid)
         doShowInfo('[' + args.data.uname + '] is now online...');
-      */
     }
   );
 
@@ -185,9 +183,7 @@ function doDashTabWidgets()
     'useroffline',
     function(ev, args)
     {
-      /*
       doShowInfo('[' + args.data.uname + '] is now onffline...');
-      */
     }
 );
 
@@ -196,9 +192,7 @@ $('#divEvents').on
   'userlogout',
     function(ev, args)
     {
-      /*
       doShowInfo('[' + args.data.uname + '] has logged out...');
-      */
     }
   );
 

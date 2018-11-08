@@ -43,7 +43,15 @@ function doDlgRoleTemplates(row) {
         };
 
         if (!isnew)
-            doServerDataMessage('saveuserroletemplates', { roletemplateid: row.id, name: name, roles: roles }, { type: 'refresh' });
+        {
+            doPromptYesNoCancel(
+                'Would you like also make changes to user who belongs to role: ' + name + '?', (result) => {
+                    if (!_.isNull(result))
+                        doServerDataMessage('saveuserroletemplates', { roletemplateid: row.id, name: name, roles: roles, sync: result }, { type: 'refresh' });
+                }
+            );
+            
+        }
         else
             doServerDataMessage('newuserroletemplates', { name: name, roles: roles }, { type: 'refresh' });
     }
@@ -74,7 +82,7 @@ function doDlgRoleTemplates(row) {
     $('#dlgUserPermissions')
         .dialog({
             width: 400,
-            //   title: 'roles for ' + user.name,
+            title: 'Permission Roles for ' + row.name,
             onClose() {
                 $('#divEvents').off('newuserroletemplates', doSaved);
                 $('#divEvents').off('saveuserroletemplates', doSaved);

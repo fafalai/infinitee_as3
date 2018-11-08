@@ -2640,7 +2640,8 @@ function doShowSuccess(msg)
 
 function doShowInfo(msg)
 {
-  noty({text: msg, type: 'information', animation: {open: 'animated fadeIn', close: 'animated fadeOut', easing: 'swing', speed: 500}, layout: 'topRight', timeout: 3000});
+  noty({ text: msg, type: 'information', timeout: 4000, animation: { open: 'animated fadeIn', close: 'animated fadeOut', easing: 'swing', speed: 500 }, layout: 'topRight' });
+
 }
 
 function doShowChat(msg)
