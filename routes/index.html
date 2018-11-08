@@ -481,6 +481,16 @@
               }
             );
 
+            $('#fldUid').textbox('textbox').bind
+            (
+              'keydown',
+              function(ev)
+              {
+                if (ev.keyCode == 13)
+                  doLogin();
+              }
+            );
+
             if ((self.location.hostname == 'localhost') && (self.location.port == 57555))
             {
               $('#fldUid').textbox('setValue', 'iwu');
@@ -2722,13 +2732,14 @@
         <td><div id="cbNewProductCategoryParent" style="width: 300px;"></div></td>
       </tr>
       <tr>
-        <td style="width: 200px;">Name:</td>
-        <td><input type="text" id="fldNewProductCategoryName" class="easyui-textbox" style="width: 300px;"></td>
-      </tr>
-      <tr>
         <td style="width: 200px;">Code:</td>
         <td><input type="text" id="fldNewProductCategoryCode" class="easyui-textbox" style="width: 300px;"></td>
       </tr>
+      <tr>
+        <td style="width: 200px;">Name:</td>
+        <td><input type="text" id="fldNewProductCategoryName" class="easyui-textbox" style="width: 300px;"></td>
+      </tr>
+      
     </table>
   </div>
 
