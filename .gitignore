@@ -3,4 +3,7 @@ node_modules/
 .DS_Store
 routes/uploads/clientattachments/
 .vscode/settings.json
-routes/downloads/
+routes/downloads/quotes
+routes/downloads/orders
+routes/downloads/invoices
+

@@ -62,7 +62,7 @@ function doQuotesTabWidgets()
         console.log(result);
         if (result === true)
         {
-          console.log('Print all listed orders');
+          console.log('Print all listed quotes');
           var rowids = [];
           var data = $('#divQuotesG').datagrid('getData');
           console.log(data.rows.length);

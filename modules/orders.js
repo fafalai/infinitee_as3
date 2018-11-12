@@ -128,6 +128,9 @@ function doGetCustIdFromOrderNo(orderno)
 
 function doGetCustIdFromQuoteNo(quoteno)
 {
+  global.ConsoleLog(quoteno);
+  let type = quoteno.substring(0,2);
+  global.ConsoleLog(type);
   var promise = new global.rsvp.Promise
   (
     function(resolve, reject)
@@ -139,48 +142,149 @@ function doGetCustIdFromQuoteNo(quoteno)
         {
           if (!err)
           {
-            client.query
-            (
-              'select o1.customers_id customerid from orders o1 where o1.quoteno=$1 and o1.dateexpired is null',
-              [
-                quoteno
-              ],
-              function(err, result)
-              {
-                var customerid = result.rows[0].customerid;
-
-                done();
-
-                if (!err)
+            if(type == "QN")
+            {
+              global.ConsoleLog("want to open quote excel");
+              client.query
+              (
+                'select o1.customers_id customerid from orders o1 where o1.quoteno=$1 and o1.dateexpired is null',
+                [
+                  quoteno
+                ],
+                function(err, result)
                 {
-                  global.getCustConfig(customerid).then
-                  (
-                    function(result)
-                    {
-                      resolve({customerid: customerid, custconfig: result});
-                    }
-                  ).then
-                  (
-                    null,
-                    function(err)
-                    {
-                      global.log.error({dogetcustidfromquoteno: true}, err.message);
-                      reject(err);
-                    }
-                  )
+                  var customerid = result.rows[0].customerid;
+
+                  done();
+
+                  if (!err)
+                  {
+                    global.getCustConfig(customerid).then
+                    (
+                      function(result)
+                      {
+                        resolve({customerid: customerid, custconfig: result});
+                      }
+                    ).then
+                    (
+                      null,
+                      function(err)
+                      {
+                        global.log.error({dogetcustidfromquoteno: true}, err.message);
+                        reject(err);
+                      }
+                    )
+                  }
+                  else
+                  {
+                    global.log.error({dogetcustidfromquoteno: true}, err.message);
+                    reject(err);
+                  }
                 }
-                else
+              );
+            }
+            else if (type == "OR")
+            {
+              global.ConsoleLog("want to open order excel");
+              client.query
+              (
+                'select o1.customers_id customerid from orders o1 where o1.orderno=$1 and o1.dateexpired is null',
+                [
+                  quoteno
+                ],
+                function(err, result)
                 {
-                  global.log.error({dogetcustidfromquoteno: true}, err.message);
-                  reject(err);
+                  var customerid = result.rows[0].customerid;
+
+                  done();
+
+                  if (!err)
+                  {
+                    global.getCustConfig(customerid).then
+                    (
+                      function(result)
+                      {
+                        resolve({customerid: customerid, custconfig: result});
+                      }
+                    ).then
+                    (
+                      null,
+                      function(err)
+                      {
+                        global.log.error({dogetcustidfromorderno: true}, err.message);
+                        reject(err);
+                      }
+                    )
+                  }
+                  else
+                  {
+                    global.log.error({dogetcustidfromorderno: true}, err.message);
+                    reject(err);
+                  }
                 }
-              }
-            );
+              );
+
+            }
+            else if (type == "IN")
+            {
+              global.ConsoleLog("want to open invoice excel");
+              client.query
+              (
+                'select o1.customers_id customerid from orders o1 where o1.invoiceno=$1 and o1.dateexpired is null',
+                [
+                  quoteno
+                ],
+                function(err, result)
+                {
+                  var customerid = result.rows[0].customerid;
+
+                  done();
+
+                  if (!err)
+                  {
+                    global.getCustConfig(customerid).then
+                    (
+                      function(result)
+                      {
+                        resolve({customerid: customerid, custconfig: result});
+                      }
+                    ).then
+                    (
+                      null,
+                      function(err)
+                      {
+                        global.log.error({dogetcustidfrominvoiceno: true}, err.message);
+                        reject(err);
+                      }
+                    )
+                  }
+                  else
+                  {
+                    global.log.error({dogetcustidfrominvoiceno: true}, err.message);
+                    reject(err);
+                  }
+                }
+              );
+            }
           }
           else
           {
-            global.log.error({dogetcustidfromquoteno: true}, global.text_nodbconnection);
-            reject(err);
+            if(type == "QN")
+            {
+              global.log.error({dogetcustidfromquoteno: true}, global.text_nodbconnection);
+              reject(err);
+            }
+            else if (type == "OR")
+            {
+              global.log.error({dogetcustidfromorderno: true}, global.text_nodbconnection);
+              reject(err);
+            }
+            else if (type == "IN")
+            {
+              global.log.error({dogetcustidfrominvoiceno: true}, global.text_nodbconnection);
+              reject(err);
+            }
+
           }
         }
       );
