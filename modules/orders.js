@@ -139,6 +139,22 @@ function doGetCustIdFromQuoteNo(quoteno)
         {
           if (!err)
           {
+            global.ConsoleLog(quoteno.substring(0,2));
+            let type = quoteno.substring(0,2);
+            if(type == "QN")
+            {
+              global.ConsoleLog("want to open quote excel");
+            }
+            else if (type == "OR")
+            {
+              global.ConsoleLog("want to open order excel");
+
+            }
+            else if (type == "IN")
+            {
+              global.ConsoleLog("want to open invoice excel");
+
+            }
             client.query
             (
               'select o1.customers_id customerid from orders o1 where o1.quoteno=$1 and o1.dateexpired is null',

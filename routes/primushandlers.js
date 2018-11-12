@@ -1179,17 +1179,26 @@ function doPrimus()
       {
         if (!_.isUN(data.rs))
         {
-          data.rs.forEach
-          (
-            function(f)
-            {
-              var url = '/do?no=' + f.orderno + '&fguid=' + fguid;
-              var w = window.open(url, '_blank');
+          console.log(data.rs.fullpath);
+          console.log(data.rs.basename);
+          let url = '/dq?no=' + data.rs.orderno + '&fguid=' + fguid;
+          console.log(url);
+          let w = window.open(url, '_blank');
+          if(w)
+          {
+            w.print();
+          }
+          // data.rs.forEach
+          // (
+          //   function(f)
+          //   {
+          //     var url = '/do?no=' + f.orderno + '&fguid=' + fguid;
+          //     var w = window.open(url, '_blank');
 
-              if (w)
-                w.print();
-            }
-          );
+          //     if (w)
+          //       w.print();
+          //   }
+          // );
         }
       }
     );
@@ -1225,14 +1234,17 @@ function doPrimus()
 
         if (!_.isUN(data.rs))
         {
+          
           console.log(data.rs.fullpath);
           console.log(data.rs.basename);
           let url = '/dq?no=' + data.rs.quoteno + '&fguid=' + fguid;
-          let w = window.open(url,'_blank');
+          console.log(url);
+          let w = window.open(url, '_blank');
           if(w)
           {
             w.print();
           }
+
           // data.rs.forEach
           // (
           //   function(f)

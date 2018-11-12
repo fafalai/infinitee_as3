@@ -12,7 +12,6 @@ function doExcelToPDF(xlsx, exportaspdf)
         var pdf = path.join(p.dir, p.name) + global.config.defaults.defaultPDFExtension;
         var cmd = global.config.apps.libreoffice + ' --headless --convert-to pdf --outdir ' + p.dir + "/" + xlsx.basename;
         global.ConsoleLog(cmd);
-        global.ConsoleLog(global.exec);
         global.exec
         (
           cmd,
@@ -886,299 +885,6 @@ function doGenOrder(tx, type, custid, header, details, templatename, uname)
   return promise;
 }
 
-function doSendFile(res, custid, no, folder, exportaspdf)
-{
-  var foldername = global.path.join(__dirname, folder + custid);
-  var mimetype = '';
-  var filename = no;
-
-  if (exportaspdf)
-  {
-    filename += global.config.defaults.defaultPDFExtension;
-    mimetype = global.config.mime.pdf;
-  }
-  else
-  {
-    filename += global.config.defaults.defaultXLExtension;
-    mimetype = global.config.mime.excel;
-  }
-
-  res.setHeader('Content-disposition', 'attachment; filename=' + filename);
-  res.setHeader('Content-type', mimetype);
-  res.sendFile(foldername + '/' + filename);
-}
-
-function doPrintOrders(tx, type, templateid, orders, world)
-{
-  var promise = new global.rsvp.Promise
-  (
-    function(resolve, reject)
-    {
-      var calls = [];
-      var count = orders.length;
-      global.ConsoleLog("the number of orders need to pring is: " + count);  
-      if(count == 1)
-      {
-        global.ConsoleLog("pring one order, use the standard one");
-        orders.forEach
-        (
-          function(orderid)
-          {
-            calls.push
-            (
-              function(callback)
-              {
-                var header = null;
-                var details = null;
-                var print = null;
-  
-                doGetOrderHeader(tx, world.cn.custid, orderid).then
-                (
-                  function(result)
-                  {
-                    header = result;
-                    return doGetOrderDetails(tx, world.cn.custid, header);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    details = result;
-                    return doGetLastPrintNo(tx, world.cn.custid, orderid);
-                  }
-                ).then
-                (
-                  function(copyno)
-                  {
-                    world.copyno = copyno;
-                    return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    print = result;
-                    return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    return doGenOrder(tx, type, world.cn.custid, header, details, result, world.cn.uname);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    if (world.custconfig.exportaspdf)
-                      world.spark.emit(global.eventinfo, {rc: global.errcode_none, msg: 'Output generated, now converting to PDF', pdata: world.pdata});
-  
-                    return doExcelToPDF(result, world.custconfig.exportaspdf);
-                  }
-                ).then
-                (
-                  function(xlsx)
-                  {
-                    callback(null, xlsx);
-                  }
-                ).then
-                (
-                  null,
-                  function(err)
-                  {
-                    callback(err);
-                  }
-                )
-              }
-            );
-          }
-        );
-
-      }
-      else
-      {
-        global.ConsoleLog("pring more than one orders, use the other one");
-        orders.forEach
-        (
-          function(orderid)
-          {
-            calls.push
-            (
-              function(callback)
-              {
-                var header = null;
-                var details = null;
-                var print = null;
-  
-                doGetOrderHeader(tx, world.cn.custid, orderid).then
-                (
-                  function(result)
-                  {
-                    header = result;
-                    return doGetOrderDetails(tx, world.cn.custid, header);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    details = result;
-                    return doGetLastPrintNo(tx, world.cn.custid, orderid);
-                  }
-                ).then
-                (
-                  function(copyno)
-                  {
-                    world.copyno = copyno;
-                    return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
-                  }
-                ).then
-                // (
-                //   function(result)
-                //   {
-                //     print = result;
-                //     return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
-                //   }
-                // ).then
-                (
-                  function(result)
-                  {
-                    return doGenOrders(tx, type, world.cn.custid, header, details, world.cn.uname,count,world);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    global.ConsoleLog(result);
-                    //global.ConsoleLog(callback);
-                    if(result.completed == 0)
-                    {
-                      callback(null, result);
-                    }
-                    else
-                    {
-                      resolve (result);
-                    }
-                    //return result;
-                  }
-                ).then
-                (
-                  null,
-                  function(err)
-                  {
-                    callback(err);
-                    return err;
-                  }
-                )
-              }
-            );
-          }
-        );
-      }
-
-
-      global.async.series
-      (
-        calls,
-        function(err, results)
-        {
-          if (!err)
-            resolve(results);
-          else
-            reject(err);
-        }
-      );
-    }
-  );
-  return promise;
-}  
-
-function doEmailOrder(tx, type, templateid, world)
-{
-  var promise = new global.rsvp.Promise
-  (
-    function(resolve, reject)
-    {
-      var header = null;
-      var details = null;
-      var email = null;
-
-      doGetOrderHeader(tx, world.cn.custid, world.orderid).then
-      (
-        function(result)
-        {
-          header = result;
-          return doGetOrderDetails(tx, world.cn.custid, header);
-        }
-      ).then
-      (
-        function(result)
-        {
-          details = result;
-          return doGetLastEmailNo(tx, world.cn.custid, world.orderid);
-        }
-      ).then
-      (
-        function(result)
-        {
-          world.copyno = result;
-          return doSetLastEmailNo(tx, world);
-        }
-      ).then
-      (
-        function(result)
-        {
-          email = result;
-          return doGetPrintTemplate(tx, world.cn.custid, type, header.orderid, header.clientid, templateid);
-        }
-      ).then
-      (
-        function(result)
-        {
-          return doGenOrder(tx, type, world.cn.custid, header, details, result, world.cn.uname);
-        }
-      ).then
-      (
-        function(result)
-        {
-          var transporter = createSMTPTransport();
-
-          transporter.sendMail
-          (
-            {
-              from: global.config.smtp.returnmail,
-              to: world.recipients,
-              subject: world.subject + ' - Copy #' + world.copyno,
-              html: world.message,
-              attachments:
-              [
-                {
-                  filename: result.basename,
-                  path: result.fullpath
-                }
-              ]
-            },
-            function(err, info)
-            {
-              if (!err)
-                resolve(email);
-              else
-                reject(err);
-            }
-          );
-        }
-      ).then
-      (
-        null,
-        function(err)
-        {
-          reject(err);
-        }
-      );
-    }
-  );
-  return promise;
-}
-
 var totalOrderList = [];
 var orderProductTotal = 0;
 var accumulatedOrders = 0;
@@ -1207,22 +913,25 @@ function doGenOrders(tx, type,custid, header, details, uname,orderstotal,world)
         {
           foldername = global.path.join(__dirname, global.config.folders.quotes + custid);
           no = header.quoteno;
-          filename = "AllQuotes_"+ now + global.config.defaults.defaultXLExtension;
+          // filename = "AllQuotes_"+ now + global.config.defaults.defaultXLExtension;
+          filename = no + global.config.defaults.defaultXLExtension;
 
         }
         else if (type == global.type_order)
         {
           foldername = global.path.join(__dirname, global.config.folders.orders + custid);
           no = header.orderno;
-          filename = "AllOrders_"+ now + global.config.defaults.defaultXLExtension;
+          // filename = "AllOrders_"+ now + global.config.defaults.defaultXLExtension;
+          filename = no + global.config.defaults.defaultXLExtension;
+
 
         }
         else
         {
           foldername = global.path.join(__dirname, global.config.folders.invoices + custid);
           no = header.invoiceno;
-          filename = "AllInvoices" + global.config.defaults.defaultXLExtension;
-
+          // filename = "AllInvoices" + global.config.defaults.defaultXLExtension;
+          filename = no + global.config.defaults.defaultXLExtension;
         }
         var path = foldername + '/' + filename;
   
@@ -1646,7 +1355,7 @@ function doGenOrders(tx, type,custid, header, details, uname,orderstotal,world)
                   //global.ConsoleLog("the total number of rows: " + worksheet.rowCount);
                   workbook.xlsx.writeFile(path).then(function(){
                       global.ConsoleLog("write file succeed");
-                      let result = {orderno: header.orderno, invoiceno: header.invoiceno, basename: filename, fullpath: foldername + '/' + filename,completed:1};
+                      let result = {orderno: header.orderno, invoiceno: header.invoiceno,quoteno: no, basename: filename, fullpath: foldername + '/' + filename,completed:1};
                       // resolve({orderno: header.orderno, invoiceno: header.invoiceno, basename: filename, fullpath: foldername + '/' + filename});
 
                       if (world.custconfig.exportaspdf)
@@ -1674,6 +1383,299 @@ function doGenOrders(tx, type,custid, header, details, uname,orderstotal,world)
       }
     );
     return promise;
+}
+
+function doSendFile(res, custid, no, folder, exportaspdf)
+{
+  var foldername = global.path.join(__dirname, folder + custid);
+  var mimetype = '';
+  var filename = no;
+
+  if (exportaspdf)
+  {
+    filename += global.config.defaults.defaultPDFExtension;
+    mimetype = global.config.mime.pdf;
+  }
+  else
+  {
+    filename += global.config.defaults.defaultXLExtension;
+    mimetype = global.config.mime.excel;
+  }
+
+  res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+  res.setHeader('Content-type', mimetype);
+  res.sendFile(foldername + '/' + filename);
+}
+
+function doPrintOrders(tx, type, templateid, orders, world)
+{
+  var promise = new global.rsvp.Promise
+  (
+    function(resolve, reject)
+    {
+      var calls = [];
+      var count = orders.length;
+      global.ConsoleLog("the number of orders need to pring is: " + count);  
+      if(count == 1)
+      {
+        global.ConsoleLog("pring one order, use the standard one");
+        orders.forEach
+        (
+          function(orderid)
+          {
+            calls.push
+            (
+              function(callback)
+              {
+                var header = null;
+                var details = null;
+                var print = null;
+  
+                doGetOrderHeader(tx, world.cn.custid, orderid).then
+                (
+                  function(result)
+                  {
+                    header = result;
+                    return doGetOrderDetails(tx, world.cn.custid, header);
+                  }
+                ).then
+                (
+                  function(result)
+                  {
+                    details = result;
+                    return doGetLastPrintNo(tx, world.cn.custid, orderid);
+                  }
+                ).then
+                (
+                  function(copyno)
+                  {
+                    world.copyno = copyno;
+                    return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
+                  }
+                ).then
+                (
+                  function(result)
+                  {
+                    print = result;
+                    return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
+                  }
+                ).then
+                (
+                  function(result)
+                  {
+                    return doGenOrder(tx, type, world.cn.custid, header, details, result, world.cn.uname);
+                  }
+                ).then
+                (
+                  function(result)
+                  {
+                    if (world.custconfig.exportaspdf)
+                      world.spark.emit(global.eventinfo, {rc: global.errcode_none, msg: 'Output generated, now converting to PDF', pdata: world.pdata});
+  
+                    return doExcelToPDF(result, world.custconfig.exportaspdf);
+                  }
+                ).then
+                (
+                  function(xlsx)
+                  {
+                    callback(null, xlsx);
+                  }
+                ).then
+                (
+                  null,
+                  function(err)
+                  {
+                    callback(err);
+                  }
+                )
+              }
+            );
+          }
+        );
+
+      }
+      else
+      {
+        global.ConsoleLog("pring more than one orders, use the other one");
+        orders.forEach
+        (
+          function(orderid)
+          {
+            calls.push
+            (
+              function(callback)
+              {
+                var header = null;
+                var details = null;
+                var print = null;
+  
+                doGetOrderHeader(tx, world.cn.custid, orderid).then
+                (
+                  function(result)
+                  {
+                    header = result;
+                    return doGetOrderDetails(tx, world.cn.custid, header);
+                  }
+                ).then
+                (
+                  function(result)
+                  {
+                    details = result;
+                    return doGetLastPrintNo(tx, world.cn.custid, orderid);
+                  }
+                ).then
+                (
+                  function(copyno)
+                  {
+                    world.copyno = copyno;
+                    return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
+                  }
+                ).then
+                // (
+                //   function(result)
+                //   {
+                //     print = result;
+                //     return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
+                //   }
+                // ).then
+                (
+                  function(result)
+                  {
+                    return doGenOrders(tx, type, world.cn.custid, header, details, world.cn.uname,count,world);
+                  }
+                ).then
+                (
+                  function(result)
+                  {
+                    global.ConsoleLog(result.completed);
+                    //global.ConsoleLog(callback);
+                    if(result.completed == 0)
+                    {
+                      callback(null, result);
+                    }
+                    else
+                    {
+                      resolve (result);
+                    }
+                    //return result;
+                  }
+                ).then
+                (
+                  null,
+                  function(err)
+                  {
+                    callback(err);
+                    return err;
+                  }
+                )
+              }
+            );
+          }
+        );
+      }
+
+
+      global.async.series
+      (
+        calls,
+        function(err, results)
+        {
+          if (!err)
+            resolve(results);
+          else
+            reject(err);
+        }
+      );
+    }
+  );
+  return promise;
+}  
+
+function doEmailOrder(tx, type, templateid, world)
+{
+  var promise = new global.rsvp.Promise
+  (
+    function(resolve, reject)
+    {
+      var header = null;
+      var details = null;
+      var email = null;
+
+      doGetOrderHeader(tx, world.cn.custid, world.orderid).then
+      (
+        function(result)
+        {
+          header = result;
+          return doGetOrderDetails(tx, world.cn.custid, header);
+        }
+      ).then
+      (
+        function(result)
+        {
+          details = result;
+          return doGetLastEmailNo(tx, world.cn.custid, world.orderid);
+        }
+      ).then
+      (
+        function(result)
+        {
+          world.copyno = result;
+          return doSetLastEmailNo(tx, world);
+        }
+      ).then
+      (
+        function(result)
+        {
+          email = result;
+          return doGetPrintTemplate(tx, world.cn.custid, type, header.orderid, header.clientid, templateid);
+        }
+      ).then
+      (
+        function(result)
+        {
+          return doGenOrder(tx, type, world.cn.custid, header, details, result, world.cn.uname);
+        }
+      ).then
+      (
+        function(result)
+        {
+          var transporter = createSMTPTransport();
+
+          transporter.sendMail
+          (
+            {
+              from: global.config.smtp.returnmail,
+              to: world.recipients,
+              subject: world.subject + ' - Copy #' + world.copyno,
+              html: world.message,
+              attachments:
+              [
+                {
+                  filename: result.basename,
+                  path: result.fullpath
+                }
+              ]
+            },
+            function(err, info)
+            {
+              if (!err)
+                resolve(email);
+              else
+                reject(err);
+            }
+          );
+        }
+      ).then
+      (
+        null,
+        function(err)
+        {
+          reject(err);
+        }
+      );
+    }
+  );
+  return promise;
 }
 
 // *******************************************************************************************************************************************************************************************
@@ -1770,6 +1772,9 @@ function PrintQuotes(world)
 function PrintOrders(world)
 {
   var msg = '[' + world.eventname + '] ';
+
+  global.ConsoleLog(world.custconfig.quoteprinttemplateid);
+
   //
   global.pg.connect
   (
@@ -1796,7 +1801,7 @@ function PrintOrders(world)
                       if (!err)
                       {
                         done();
-
+                        global.ConsoleLog(result);
                         world.spark.emit(world.eventname, {rc: global.errcode_none, msg: global.text_success, rs: result, pdata: world.pdata});
                       }
                       else
