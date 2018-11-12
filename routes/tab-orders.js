@@ -54,14 +54,56 @@ function doOrdersTabWidgets()
 
   function doPrint()
   {
-    doGridGetSelectedRowData
+    // doGridGetSelectedRowData
+    // (
+    //   'divOrdersG',
+    //   function(row)
+    //   {
+    //     doServerDataMessage('printorders', {orders: [row.id]}, {type: 'refresh'});
+    //   }
+    // );
+
+    doPromptYesNoCancel
     (
-      'divOrdersG',
-      function(row)
+      'Print all listed orders (Yes) or selected only (No)?',
+      function(result)
       {
-        doServerDataMessage('printorders', {orders: [row.id]}, {type: 'refresh'});
+        console.log(result);
+        if (result === true)
+        {
+          console.log('Print all listed orders');
+          var rowids = [];
+          var data = $('#divOrdersG').datagrid('getData');
+          console.log(data.rows.length);
+          
+          // data.rows = data.rows.slice(0,20);
+          //console.log(data.rows);
+          for(var i=0;i<data.rows.length;i++)
+          {
+            //console.log(data.rows[i].id);
+            rowids.push(data.rows[i].id);
+          }
+          
+          console.log(rowids);
+          doServerDataMessage('printorders', {orders: rowids}, {type: 'refresh'});
+        }
+        else if (result ==  false)
+        {
+          if (!doGridGetSelectedRowData
+            (
+              'divOrdersG',
+              function(row)
+              {
+                console.log(row.id);
+                doServerDataMessage('printorders', {orders: [row.id]}, {type: 'refresh'});
+              }
+            ))
+          {
+            doShowError('Please select an order to print');
+          }
+        }
       }
-    );
+    )
   }
 
   function doEmail()
