@@ -1675,7 +1675,7 @@ function doExpireProductPricing(tx, world)
   return promise;
 }
 
-function doNewBuildTemplateStep1(tx, custid, userid, code, clientid)
+function doNewBuildTemplateStep1(tx, custid, userid, code, clientid, world)
 {
   var promise = new global.rsvp.Promise
   (
@@ -8408,7 +8408,7 @@ function NewBuildTemplate(world)
               var datecreated = null;
               var usercreated = null;
 
-              doNewBuildTemplateStep1(tx, world.cn.custid, world.cn.userid, world.code, world.clientid).then
+              doNewBuildTemplateStep1(tx, world.cn.custid, world.cn.userid, world.code, world.clientid, world).then
               (
                 function(result)
                 {

@@ -218,7 +218,7 @@ function doBuildTemplatesTabWidgets()
   {
     doServerMessage('listbuildtemplateroots', {type: 'refresh', buildtemplateid: args.data.buildtemplateid});
   }
-
+  
   function doFooter()
   {
     $('#divBuildTemplatesTG').treegrid('reloadFooter', [{code: '<span class="totals_footer">' + doGetCountTreeArray(cache_buildtemplates) + ' Templates</span>'}]);
@@ -232,6 +232,18 @@ function doBuildTemplatesTabWidgets()
   $('#divEvents').on('syncbuildtemplatestomaster', doSaved);
   $('#divEvents').on('productupdated', doSaved);
 
+  $('#divEvents').on
+  (
+    'listbuildtemplateroots',
+    function(ev, args)
+    {
+      $('#divBuildTemplatesTG').treegrid('loadData', cache_buildtemplates);
+      doFooter();
+
+      doExpandTreeToId('divBuildTemplatesTG', args.pdata.buildtemplateid);
+    }
+  );
+  
   $('#divEvents').on
   (
     'listbuildtemplates',

@@ -3075,7 +3075,7 @@ function main()
       // Build template requests
       addListener('listbuildtemplates',                   'listbuildtemplates',                   global.modproducts.ListBuildTemplates,                 []);
       addListener('listbuildtemplateroots',               'listbuildtemplateroots',               global.modproducts.ListBuildTemplateRoots,             []);
-      addListener('buildtemplategetchildren',             'buildtemplategetchildren',             global.modproducts.BuildTemplateGetChildren,           []);
+      addListener('buildtemplategetchildren',             'buildtemplategetchildren',             global.modproducts.BuildTemplateGetChildren,           ['*buildtemplateid']);
       addListener('newbuildtemplate',                     'newbuildtemplate',                     global.modproducts.NewBuildTemplate,                   ['*code', '*templates', 'clientid']);
       addListener('savebuildtemplate',                    'savebuildtemplate',                    global.modproducts.SaveBuildTemplate,                  ['*buildtemplateid', '*name', 'code', 'clientid', 'taxcodeid', 'price', 'qty']);
       addListener('changebuildtemplateparent',            'changebuildtemplateparent',            global.modproducts.ChangeBuildTemplateParent,          ['*buildtemplateid', '*parentid']);

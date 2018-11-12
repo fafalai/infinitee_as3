@@ -1632,6 +1632,7 @@ function doRefreshAll()
   doServerMessage('listprinttemplates', {type: 'refresh'});
   doServerMessage('loadconfig', {type: 'refresh'});
   doServerMessage('listuserroletemplates', {type: 'refresh'});
+  doServerMessage('listbuildtemplateroots', {type: 'refresh'});
   
   //primus.emit('listbuildtemplateroots', {fguid: fguid, uuid: uuid, session: session, pdata: {type: 'refresh'}});
 
