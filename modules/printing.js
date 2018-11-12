@@ -1079,8 +1079,9 @@ function doGenOrders(tx, type,custid, header, details, uname,orderstotal,world)
          order_productstotal.push(products.length);
   
          accumulatedOrders = accumulatedOrders + 1;
-         //global.ConsoleLog(accumulatedOrders);
-        
+         
+         global.ConsoleLog(accumulatedOrders);
+         global.ConsoleLog(orderstotal);
         
          if(accumulatedOrders == orderstotal)
          {
@@ -1354,8 +1355,14 @@ function doGenOrders(tx, type,custid, header, details, uname,orderstotal,world)
                   });
                   //global.ConsoleLog("the total number of rows: " + worksheet.rowCount);
                   workbook.xlsx.writeFile(path).then(function(){
-                      global.ConsoleLog("write file succeed");
-                      let result = {orderno: header.orderno, invoiceno: header.invoiceno,quoteno: no, basename: filename, fullpath: foldername + '/' + filename,completed:1};
+                      global.ConsoleLog("write file succeed,reset variables");
+                      
+                      totalOrderList = [];
+                      orderProductTotal = 0;
+                      accumulatedOrders = 0;
+                      order_productstotal = [];
+
+                      let result = {orderno: header.orderno, invoiceno: header.invoiceno,quoteno: header.quoteno, basename: filename, fullpath: foldername + '/' + filename,completed:1};
                       // resolve({orderno: header.orderno, invoiceno: header.invoiceno, basename: filename, fullpath: foldername + '/' + filename});
 
                       if (world.custconfig.exportaspdf)
@@ -2082,24 +2089,64 @@ function SendQuote(req, res)
 {
   if (!__.isUN(req.query.no))
   {
+    let type = req.query.no.substring(0,2);
     // TODO: look up FGUID make sure it's valid, also use that to determine customers_id etc...
     global.modorders.doGetCustIdFromQuoteNo(req.query.no).then
     (
       function(result)
       {
-        doSendFile(res, result.customerid, req.query.no, global.config.folders.quotes, result.custconfig.exportaspdf);
+        global.ConsoleLog(result);
+        if(type == "QN")
+        {
+          global.ConsoleLog("do send file quote");
+          doSendFile(res, result.customerid, req.query.no, global.config.folders.quotes, result.custconfig.exportaspdf);
+        }
+        else if (type == "OR")
+        {
+          global.ConsoleLog("do send file order");
+          doSendFile(res, result.customerid, req.query.no, global.config.folders.orders, result.custconfig.exportaspdf);
+        }
+        else if (type == "IN")
+        {
+          global.ConsoleLog("do send file invoice");
+          doSendFile(res, result.customerid, req.query.no, global.config.folders.invoices, result.custconfig.exportaspdf);
+        }
       }
     ).then
     (
       null,
       function(err)
       {
-        res.sendFile('./routes/nosuchquote.html');
+        if(type == "QN")
+        {
+          res.sendFile('./routes/nosuchquote.html');
+        }
+        else if (type == "OR")
+        {
+          res.sendFile('./routes/nosuchorder.html');
+        }
+        else if (type == "IN")
+        {
+          res.sendFile('./routes/nosuchinvoice.html');
+        }
       }
     );
   }
   else
-    res.sendFile('./routes/nosuchquote.html');
+  {
+    if(type == "QN")
+    {
+      res.sendFile('./routes/nosuchquote.html');
+    }
+    else if (type == "OR")
+    {
+      res.sendFile('./routes/nosuchorder.html');
+    }
+    else if (type == "IN")
+    {
+      res.sendFile('./routes/nosuchinvoice.html');
+    }
+  }
 }
 
 function SendJobSheet(req, res)
