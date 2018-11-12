@@ -679,6 +679,12 @@ function doDlgClientNew(parentid, clientid)
           }
         );
 
+        $('#fldNewClientCode + span:first').keyup(function (e) { 
+          let value = $('#fldNewClientCode').textbox('getText');
+          if(!_.isBlank(value))
+          doServerDataMessage('checkclientcode', {clientid: clientid, code: value}, {type: 'refresh'});
+        });
+
         $('#fldNewClientCode').textbox
         (
           {
@@ -1030,6 +1036,7 @@ function doDlgClientNew(parentid, clientid)
             {
               if (isnew)
               {
+                
                 doServerDataMessage
                 (
                   'newclient',
