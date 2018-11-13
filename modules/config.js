@@ -1171,7 +1171,7 @@ function doSavePrintTemplate(tx, world)
           {
             var datemodified = global.moment(result.rows[0].datemodified).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({datemodified: datemodified, usermodified: rwprld.cn.uname});
+            resolve({datemodified: datemodified, usermodified: world.cn.uname});
           }
           else
             reject(err);
@@ -1202,7 +1202,7 @@ function doExpirePrintTemplate(tx, world)
           {
             var dateexpired = global.moment(result.rows[0].dateexpired).format('YYYY-MM-DD HH:mm:ss');
 
-            resolve({dateexpired: dateexpired, userexpired: rwprld.cn.uname});
+            resolve({dateexpired: dateexpired, userexpired: world.cn.uname});
           }
           else
             reject(err);
@@ -1312,7 +1312,8 @@ function ListPrintTemplates(world)
           'where ' +
           'p1.customers_id=$1 ' +
           'and ' +
-          'p1.dateexpired is null',
+          'p1.dateexpired is null ' + 
+          'order by name',
           [
             world.cn.custid
           ],

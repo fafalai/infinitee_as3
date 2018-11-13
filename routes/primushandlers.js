@@ -1381,7 +1381,8 @@ function doPrimus()
               );
             }
           );
-
+          console.log('listprinttemplates');
+          console.log(eventname);
           $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
         }
       }

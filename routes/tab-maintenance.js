@@ -162,6 +162,23 @@ function doMaintenanceTabWidgets()
       $('#divSettingsPG').propertygrid('updateRow', {index: index, row: {value: e}});
   }
 
+    // Refresh when these events occur...
+    $('#divEvents').on
+    (
+      'listprinttemplates',
+      function(ev, args)
+      {
+        if(data.length > 0)
+        {
+          data[24].editor.options.data = cache_printtemplates;
+          data[25].editor.options.data = cache_printtemplates;
+          data[26].editor.options.data = cache_printtemplates;
+          data[27].editor.options.data = cache_printtemplates;
+
+        }
+      }
+    );
+
   // Refresh when these events occur...
   $('#divEvents').on
   (
