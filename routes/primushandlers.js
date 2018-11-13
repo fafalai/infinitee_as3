@@ -1154,17 +1154,36 @@ function doPrimus()
       {
         if (!_.isUN(data.rs))
         {
-          data.rs.forEach
-          (
-            function(f)
-            {
-              var url = '/di?no=' + f.invoiceno + '&fguid=' + fguid;
-              var w = window.open(url, '_blank');
+          let url = '';
+          console.log(data.rs);
+          if(data.rs.length > 0)
+          {
+            console.log('one invoice');
+            url = '/dq?no=' + data.rs[0].invoiceno + '&fguid=' + fguid;
+            console.log(url);
+          }
+          else 
+          {
+            console.log('all invoices');
+            url = '/dq?no=' + data.rs.invoiceno + '&fguid=' + fguid;
+            console.log(url);
+          }
+          let w = window.open(url, '_blank');
+          if(w)
+          {
+            w.print();
+          }
+          // data.rs.forEach
+          // (
+          //   function(f)
+          //   {
+          //     var url = '/di?no=' + f.invoiceno + '&fguid=' + fguid;
+          //     var w = window.open(url, '_blank');
 
-              if (w)
-                w.print();
-            }
-          );
+          //     if (w)
+          //       w.print();
+          //   }
+          // );
 
           // Get updated display of #copies printed for invoice(s)
           doServerMessage('listinvoices', {type: 'refresh'});
@@ -1177,12 +1196,31 @@ function doPrimus()
       'printorders',
       function(eventname, data)
       {
+       
         if (!_.isUN(data.rs))
         {
+          let url = '';
           console.log(data.rs);
           // console.log(data.rs.basename);
-          let url = '/dq?no=' + data.rs.orderno + '&fguid=' + fguid;
-          console.log(url);
+          // let url = '/dq?no=' + data.rs.orderno + '&fguid=' + fguid;
+          // console.log(url);
+          // let w = window.open(url, '_blank');
+          // if(w)
+          // {
+          //   w.print();
+          // }
+          if(data.rs.length > 0)
+          {
+            console.log('one order');
+            url = '/dq?no=' + data.rs[0].orderno + '&fguid=' + fguid;
+            console.log(url);
+          }
+          else 
+          {
+            console.log('all orders');
+            url = '/dq?no=' + data.rs.orderno + '&fguid=' + fguid;
+            console.log(url);
+          }
           let w = window.open(url, '_blank');
           if(w)
           {
@@ -1231,19 +1269,30 @@ function doPrimus()
       function(eventname, data)
       {
         console.log(data);
+        let url = '';
 
         if (!_.isUN(data.rs))
         {
-          
-          console.log(data.rs.fullpath);
-          console.log(data.rs.basename);
-          let url = '/dq?no=' + data.rs.quoteno + '&fguid=' + fguid;
-          console.log(url);
+          // console.log(data.rs.fullpath);
+          // console.log(data.rs.basename);
+          if(data.rs.length > 0)
+          {
+            console.log('one quote');
+            url = '/dq?no=' + data.rs[0].quoteno + '&fguid=' + fguid;
+            console.log(url);
+          }
+          else 
+          {
+            console.log('all quotes');
+            url = '/dq?no=' + data.rs.quoteno + '&fguid=' + fguid;
+            console.log(url);
+          }
           let w = window.open(url, '_blank');
           if(w)
           {
             w.print();
           }
+          
 
           // data.rs.forEach
           // (

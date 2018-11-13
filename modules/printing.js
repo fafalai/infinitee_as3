@@ -1422,10 +1422,10 @@ function doPrintOrders(tx, type, templateid, orders, world)
     {
       var calls = [];
       var count = orders.length;
-      global.ConsoleLog("the number of orders need to pring is: " + count);  
+      global.ConsoleLog("the number of orders/quotes/invoices need to pring is: " + count);  
       if(count == 1)
       {
-        global.ConsoleLog("pring one order, use the standard one");
+        global.ConsoleLog("pring one orders/quotes/invoices, use the standard one");
         orders.forEach
         (
           function(orderid)
@@ -1503,7 +1503,7 @@ function doPrintOrders(tx, type, templateid, orders, world)
       }
       else
       {
-        global.ConsoleLog("pring more than one orders, use the other one");
+        global.ConsoleLog("pring more than one orders/quotes/invoices, use the other one");
         orders.forEach
         (
           function(orderid)

@@ -56,7 +56,7 @@ function doQuotesTabWidgets()
   {
     doPromptYesNoCancel
     (
-      'Print all listed quotes (Yes) or selected only (No)?',
+      'Download all listed quotes (Yes) or selected only (No)?',
       function(result)
       {
         console.log(result);
@@ -90,7 +90,7 @@ function doQuotesTabWidgets()
               }
             ))
           {
-            doShowError('Please select an quote to print');
+            doShowError('Please select an quote to download');
           }
         }
       }
