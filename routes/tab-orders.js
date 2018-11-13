@@ -65,7 +65,7 @@ function doOrdersTabWidgets()
 
     doPromptYesNoCancel
     (
-      'Print all listed orders (Yes) or selected only (No)?',
+      'Download all listed orders (Yes) or selected only (No)?',
       function(result)
       {
         console.log(result);
@@ -99,7 +99,7 @@ function doOrdersTabWidgets()
               }
             ))
           {
-            doShowError('Please select an order to print');
+            doShowError('Please select an order to download');
           }
         }
       }

@@ -19,14 +19,55 @@ function doInvoicesTabWidgets()
 
   function doPrint()
   {
-    doGridGetSelectedRowData
+    // doGridGetSelectedRowData
+    // (
+    //   'divInvoicesG',
+    //   function(row)
+    //   {
+    //     doServerDataMessage('printinvoices', {invoices: [row.id]}, {type: 'refresh'});
+    //   }
+    // );
+    doPromptYesNoCancel
     (
-      'divInvoicesG',
-      function(row)
+      'Download all listed invoices (Yes) or selected only (No)?',
+      function(result)
       {
-        doServerDataMessage('printinvoices', {invoices: [row.id]}, {type: 'refresh'});
+        console.log(result);
+        if (result === true)
+        {
+          console.log('Print all listed invoices');
+          var rowids = [];
+          var data = $('#divInvoicesG').datagrid('getData');
+          console.log(data.rows.length);
+          
+          // data.rows = data.rows.slice(0,20);
+          //console.log(data.rows);
+          for(var i=0;i<data.rows.length;i++)
+          {
+            //console.log(data.rows[i].id);
+            rowids.push(data.rows[i].id);
+          }
+          
+          console.log(rowids);
+          doServerDataMessage('printinvoices', {invoices: rowids}, {type: 'refresh'});
+        }
+        else if (result ==  false)
+        {
+          if (!doGridGetSelectedRowData
+            (
+              'divInvoicesG',
+              function(row)
+              {
+                console.log(row.id);
+                doServerDataMessage('printinvoices', {invoices: [row.id]}, {type: 'refresh'});
+              }
+            ))
+          {
+            doShowError('Please select an invoices to download');
+          }
+        }
       }
-    );
+    )
   }
 
   function doEmail()
@@ -171,7 +212,7 @@ function doInvoicesTabWidgets()
     {
       idField: 'id',
       fitColumns: false,
-      singleSelect: false,
+      singleSelect: true,
       rownumbers: true,
       striped: true,
       toolbar: '#tbInvoices',
