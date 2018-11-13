@@ -2626,7 +2626,7 @@ function doShowCriticalError(msg)
 
 function doShowError(msg)
 {
-  noty({text: msg, type: 'error', timeout: 4000});
+  noty({text: msg, type: 'error', timeout: 4000, killer: true});
 }
 
 function doShowWarning(msg)
