@@ -188,18 +188,19 @@ function doPrimus()
         // Display login details
         var imgAvatar = mapAvatarToImage(avatar);
 
-        if (_.isBlank(imgAvatar))
-          $('#spnMenu').html('Logged in as <strong>' + _.titleize(uname) + '</strong>');
-        else
-        {
+       // if (_.isBlank(imgAvatar))
+          // $('#spnMenu').html('Logged in as <strong>' + _.titleize(uname) + '</strong>');
+        // else
+        // {
           $('#spnMenu').html
           (
             '<table><tr>' +
               '<td valign="middle">' + imgAvatar + '</td>' +
               '<td valign="middle">Logged in as <strong>' + _.titleize(uname) + '</strong></td>' +
+              '<td valign="right"><a id="userLogout" href="#" onclick="doLogout()" class="easyui-linkbutton" style="width:120px; color: red;"> [ Logout ]</a></td>'+
             '</tr></table>'
           );
-        }
+          // }
 
         // Indicate which server we're connected to and close login dialog...
         $('#spnServer').text(server);
@@ -1430,8 +1431,8 @@ function doPrimus()
               );
             }
           );
-          console.log('listprinttemplates');
-          console.log(eventname);
+          // console.log('listprinttemplates');
+          // console.log(eventname);
           $('#divEvents').trigger(eventname, {data: data, pdata: $.extend(data.pdata, {})});
         }
       }

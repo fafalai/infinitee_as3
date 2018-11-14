@@ -516,6 +516,7 @@ function doDlgOrderNew(isquote, orderid)
     doSave();
     $('#divOrderNewProductsG').datagrid('insertRow', {index: 0, row: {id: 'NEW-' + rowid}});
 
+    
     /*
     var clientid = doGetComboTreeSelectedId('cbNewOrderClients');
 
@@ -600,28 +601,26 @@ function doDlgOrderNew(isquote, orderid)
       editingIndex,
       function(row)
       {
-        if (isnew)
-          doReCalcTotals();
-        else
-        {
-          var v = $('#cbNewOrderVersions').combobox('getValue');
+        if (isnew) doReCalcTotals();
+				else {
+					var v = $('#cbNewOrderVersions').combobox('getValue');
 
-          doServerDataMessage
-          (
-            'saveorderdetail',
-            {
-              orderdetailid: row.id,
+					console.log(row.id.indexOf('NEW'));
+					if (row.id.indexOf('NEW') < 0) {
+						doServerDataMessage('saveorderdetail', { orderdetailid: row.id, productid: row.productid, price: row.price, qty: row.qty, discount: row.discount, expressfee: row.expressfee, isrepeat: row.isrepeat, version: v }, { type: 'refresh' });
+          }
+          else{
+            doServerDataMessage('neworderdetail', {
+              orderid: orderid,
+              version: v,
               productid: row.productid,
               price: row.price,
               qty: row.qty,
               discount: row.discount,
-              expressfee: row.expressfee,
-              isrepeat: row.isrepeat,
-              version: v
-            },
-            {type: 'refresh'}
-          );
-        }
+              expressfee: row.expressfee
+            });
+          }
+				}
       }
     );
 

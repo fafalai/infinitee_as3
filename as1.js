@@ -965,7 +965,7 @@ global.CreatePlainUUID = function()
 global.ConsoleLog = function(txt)
 {
   if (global.config.env.debug){}
-    console.log(txt);
+   console.log(txt);
 };
 
 global.fileExists = function(f)
@@ -2651,6 +2651,7 @@ function main()
     'close',
     function()
     {
+      console.log('primus close');
     }
   );
 
