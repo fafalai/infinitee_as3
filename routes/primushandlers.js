@@ -1213,19 +1213,37 @@ function doPrimus()
           if(data.rs.length > 0)
           {
             console.log('one order');
-            url = '/dq?no=' + data.rs[0].orderno + '&fguid=' + fguid;
-            console.log(url);
+            if(!_.isUN(data.rs[0]))
+            {
+              url = '/dq?no=' + data.rs[0].orderno + '&fguid=' + fguid;
+              console.log(url);
+              let w = window.open(url, '_blank');
+              if(w)
+              {
+                w.print();
+              }
+            }
+            else 
+            {
+              doShowError('Could not convert to pdf for now, please go to Maintenance-Settings set the Export as PDF to false');
+            }
           }
           else 
           {
-            console.log('all orders');
-            url = '/dq?no=' + data.rs.orderno + '&fguid=' + fguid;
-            console.log(url);
-          }
-          let w = window.open(url, '_blank');
-          if(w)
-          {
-            w.print();
+            if(!_.isUN(data.rs.orderno))
+            {
+              url = '/dq?no=' + data.rs.orderno + '&fguid=' + fguid;
+              console.log(url);
+              let w = window.open(url, '_blank');
+              if(w)
+              {
+                w.print();
+              }
+            }
+            else
+            {
+              doShowError('Could not convert to pdf for now, please go to Maintenance-Settings set the Export as PDF to false');
+            }
           }
           // data.rs.forEach
           // (
@@ -1279,20 +1297,43 @@ function doPrimus()
           if(data.rs.length > 0)
           {
             console.log('one quote');
-            url = '/dq?no=' + data.rs[0].quoteno + '&fguid=' + fguid;
-            console.log(url);
+            if(!_.isUN(data.rs[0]))
+            {
+              url = '/dq?no=' + data.rs[0].quoteno + '&fguid=' + fguid;
+              console.log(url);
+              let w = window.open(url, '_blank');
+              if(w)
+              {
+                w.print();
+              }
+            }
+            else 
+            {
+              doShowError('Could not convert to pdf for now, please go to Maintenance-Settings set the Export as PDF to false');
+            }
+            
           }
           else 
           {
             console.log('all quotes');
-            url = '/dq?no=' + data.rs.quoteno + '&fguid=' + fguid;
-            console.log(url);
+            if(!_.isUN(data.rs.quoteno))
+            {
+              url = '/dq?no=' + data.rs.quoteno + '&fguid=' + fguid;
+              console.log(url);
+              let w = window.open(url, '_blank');
+              if(w)
+              {
+                w.print();
+              }
+            }
+            else
+            {
+              doShowError('Could not convert to pdf for now, please go to Maintenance-Settings set the Export as PDF to false');
+            }
+
+            
           }
-          let w = window.open(url, '_blank');
-          if(w)
-          {
-            w.print();
-          }
+          
           
 
           // data.rs.forEach
