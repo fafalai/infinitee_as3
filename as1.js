@@ -85,6 +85,7 @@ global.modgov = require('./modules/gov');
 // Custom implementations
 global.modtpcc = require('./modules/tpcc');
 global.modsubway = require('./modules/subway');
+global.scanappserver = require('./modules/scanapp_server');
 
 // *******************************************************************************************************************************************************************************************
 // Reusable text...
@@ -2586,6 +2587,177 @@ function main()
     }
   );
 
+  //Start scan app REST request.
+  app.post(
+    '/scanapp_productregister',
+    function (req, res) 
+    {
+      "use strict";
+
+      let location = {
+        name : req.body.name,
+        barcode: req.body.barcode,
+        serialnumber: req.body.serialnumber,
+        description:req.body.description,
+        locationid: req.body.locationid,
+        categoryid: req.body.categoryid,
+        statusid:req.body.statusid,
+      }
+
+      scanappserver.Product_Register(location).then(
+        result => {
+          res.send(result);
+        }
+      ).catch(
+        err => {
+          res.status(500).send(err);
+        }
+      )
+    }
+  )
+
+  app.get('/scanapp_productcheckbarcode/:barcode', function (req,res) {
+    // 'use strict'
+    //  if(isUNB(req.params.barcode)) res.status(500).send('Barcode can not empty. ');
+
+    //  let barcode = req.params.barcode;
+    //  scanappserver.Product_CheckBarcode(barcode).then(
+    //    result => res.send(result)
+    //  ).catch(
+    //    err => {
+    //      res.status(500).send(err);
+    //    }
+    //  )
+  })
+
+  app.get('/scanapp_productsearchbarcode/:barcode', function (req, res) {
+    'use strict';
+
+    let barcode = req.params.barcode;
+    scanappserver.Product_Search_Barcode(barcode).then(
+      result => res.send(result)
+    ).catch(err => {
+      res.status(500).send(err);
+    })
+  })
+
+  app.get('/scanapp_locationgetall', function (req, res) {
+    'use strict';
+
+    scanappserver.LocationGetAll()
+    .then(results => {
+      res.send(results);
+    })
+    .catch(err => {
+      res.status(500).send(err);
+    });
+  })
+
+  app.post('/scanapp_locationnew', function(req, res) {
+    'use strict';
+    let location = {
+      name: req.body.name
+    };
+    scanappserver.LocationNew(location)
+      .then(result => {
+        res.send(result)
+      })
+      .catch(err => {
+        res.status(500).send(err);
+      });
+});
+
+  app.get('/scanapp_locationdelete/:locationid', function(req, res) {
+    'use strict';
+    let locationid = req.params.locationid;
+    scanappserver.LocationDelete(locationid)
+      .then(result => {
+        // res.send(result + ' has been deleted. ')
+        res.send(result)
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(500).send(err);
+      });
+  });
+
+  app.post('/scanapp_locationedit', function(req, res) {
+    'use strict';
+    let location = {
+      id: req.body.id,
+      name: req.body.name
+    };
+    // console.log(location, 'Location');
+    scanappserver.LocationEdit(location)
+      .then(result => {
+        // res.send(result + ' has been updated. ')
+        res.send(result)
+      })
+      .catch(err => {
+        // console.log(err);
+        res.status(500).send(err);
+      });
+  });
+
+  app.get('/scanapp_categorygetall', function(req, res) {
+    'use strict';
+    scanappserver.CategoryGetAll()
+      .then(result => {
+        // console.log(result.length);
+        res.send(result);
+      })
+      .catch(err => {
+        // console.log(err.message);
+        res.status(500).send(err);
+      });
+  });
+
+  app.post('/scanapp_categorynew', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.body.name)) res.status(500).send('Empty name.');
+    let cat = {
+      name: req.body.name
+    };
+    scanappserver.CategoryNew(cat)
+      .then(result => {
+        res.send(result);
+      })
+      .catch(err => {
+        res.status(500).send(err);
+      });
+  });
+
+  app.get('/scanapp_caregorydelete/:categoryid', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.params.categoryid)) res.status(500).send('ID is empty.');
+
+    let categoryid = req.params.categoryid;
+    scanappserver.CategoryDelete(categoryid)
+      .then(result => {
+        res.send(result);
+      })
+      .catch(err => {
+        res.status(500).send(err);
+      });
+  });
+
+  app.post('/scanapp_categoryedit', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
+    let cat = {
+      id: req.body.id,
+      name: req.body.name
+    };
+
+    scanappserver.CategoryEdit(cat)
+      .then(result => {
+        res.send(result);
+      })
+      .catch(err => {
+        res.status(500).send(err);
+      });
+  });
+  
   // This line is last for static files...
   app.use('/', express.static(__dirname + '/routes'));
 
