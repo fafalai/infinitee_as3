@@ -531,9 +531,6 @@ function CategoryEdit(cat) {
 	});
 }
 
-<<<<<<< HEAD
-function StatusGetAll() {
-=======
 function AuditOnType(type, typeid) {
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
@@ -651,7 +648,6 @@ function AuditDiscardList() {
 }
 
 function AuditGetList(length) {
->>>>>>> 0212a9ce7008417198f59ed3e6ebcf2ed13acf14
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
 			global.cs,
@@ -662,12 +658,6 @@ function AuditGetList(length) {
 				}
 
 				let sql =
-<<<<<<< HEAD
-					'SELECT s1.id,s1.name FROM scanapp_testing_statuses s1 where dateexpired is null order by id asc';
-				client.query(sql, (err, result) => {
-					done();
-					err ? reject(err.message) : resolve(result.rows);
-=======
 					'SELECT p1.name productname,p1.barcode productbarcode,s1.name status FROM scanapp_testing_audit a1 ' +
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ' +
@@ -675,16 +665,32 @@ function AuditGetList(length) {
 				let params = ['999', _.isInteger(length) ? length : 10];
 				client.query(sql, params, (err, result) => {
 					err ? reject('Error get audit list. ') : resolve(result.rows);
->>>>>>> 0212a9ce7008417198f59ed3e6ebcf2ed13acf14
 				});
 			}
 		);
 	});
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> 0212a9ce7008417198f59ed3e6ebcf2ed13acf14
+function StatusGetAll() {
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+				}
+
+				let sql =
+					'SELECT s1.id,s1.name FROM scanapp_testing_statuses s1 where dateexpired is null order by id asc';
+				client.query(sql, (err, result) => {
+					done();
+					err ? reject(err.message) : resolve(result.rows);
+				});
+			}
+		);
+	});
+}
 module.exports.Product_CheckBarcode = Product_CheckBarcode;
 module.exports.Product_Search_Barcode = Product_Search_Barcode;
 module.exports.Product_Register = Product_Register;
@@ -697,10 +703,7 @@ module.exports.CategoryGetAll = CategoryGetAll;
 module.exports.CategoryNew = CategoryNew;
 module.exports.CategoryDelete = CategoryDelete;
 module.exports.CategoryEdit = CategoryEdit;
-<<<<<<< HEAD
 module.exports.StatusGetAll = StatusGetAll;
-=======
 module.exports.AuditOnType = AuditOnType;
 module.exports.AuditDiscardList = AuditDiscardList;
 module.exports.AuditGetList = AuditGetList;
->>>>>>> 0212a9ce7008417198f59ed3e6ebcf2ed13acf14
