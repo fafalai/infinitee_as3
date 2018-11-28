@@ -52,11 +52,8 @@ function Product_Search_Barcode(data) {
 
 				let barcode = __.sanitiseAsString(data, 200).toUpperCase();
 				let sql =
-					'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,s1.name statusname,p1.productcategories_id ' +
-					'FROM scanapp_testing_products p1 LEFT JOIN ' +
-					
-					'scanapp_testing_statuses s1 on(s1.id=p1.status_id)' +
-					
+					'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,p1.status_id,p1.productcategories_id ' +
+					'FROM scanapp_testing_products p1' +
 					'WHERE p1.barcode=$1';
 				let params = [barcode];
 

@@ -2641,6 +2641,34 @@ function main()
     })
   })
 
+  app.post(
+    '/scanapp_productupdate',
+    function (req, res) 
+    {
+      "use strict";
+
+      let location = {
+        name : req.body.name,
+        barcode: req.body.barcode,
+        serialnumber: req.body.serialnumber,
+        description:req.body.description,
+        locationid: req.body.locationid,
+        categoryid: req.body.categoryid,
+        statusid:req.body.statusid,
+      }
+
+      scanappserver.Product_Register(location).then(
+        result => {
+          res.send(result);
+        }
+      ).catch(
+        err => {
+          res.status(500).send(err);
+        }
+      )
+    }
+  )
+
   app.get('/scanapp_locationgetall', function (req, res) {
     'use strict';
 
