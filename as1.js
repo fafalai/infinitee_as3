@@ -2798,6 +2798,44 @@ function main()
     });
   })
   
+  app.get('/scanapp_auditontype/:type/:typeid', function(req, res){
+    'user strict';
+    let type = req.params.type;
+    let typeid = req.params.typeid;
+    scanappserver.AuditOnType(type, typeid).then(
+      result => {
+        res.send(result);
+      }
+    ).catch(
+      err => {
+        res.status(500).send(err);
+      }
+    )
+  })
+
+  app.get('/scanapp_auditgetlist/:length', function (req, res) {
+    'use strict';
+    let length = req.params.length;
+    scanappserver.AuditGetList(length).then(
+      result => {
+        res.send(result);
+      }
+    ).catch(err => {
+      res.status(500).send(err);
+    })
+  })
+
+  app.get('/scanapp_auditdiscardlist', function (req, res){
+    'use strict';
+
+    scanappserver.AuditDiscardList().then(
+      result => {
+        res.send(result);
+      }
+    ).catch(err => {
+      res.status(500).send(err);
+    })
+  })
   // This line is last for static files...
   app.use('/', express.static(__dirname + '/routes'));
 
