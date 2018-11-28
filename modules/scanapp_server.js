@@ -52,11 +52,11 @@ function Product_Search_Barcode(data) {
 
 				let barcode = __.sanitiseAsString(data, 200).toUpperCase();
 				let sql =
-					'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,l1.name locationname,s1.name statusname,c1.name categoryname ' +
+					'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,s1.name statusname,p1.productcategories_id ' +
 					'FROM scanapp_testing_products p1 LEFT JOIN ' +
-					'scanapp_testing_locations l1 on(l1.id=p1.locations1_id) LEFT JOIN ' +
-					'scanapp_testing_statuses s1 on(s1.id=p1.status_id)LEFT JOIN ' +
-					'scanapp_testing_productcategories c1 on(c1.id=p1.productcategories_id)' +
+					
+					'scanapp_testing_statuses s1 on(s1.id=p1.status_id)' +
+					
 					'WHERE p1.barcode=$1';
 				let params = [barcode];
 
@@ -532,6 +532,27 @@ function CategoryEdit(cat) {
 	});
 }
 
+function StatusGetAll() {
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+				}
+
+				let sql =
+					'SELECT s1.id,s1.name FROM scanapp_testing_statuses s1 where dateexpired is null order by id asc';
+				client.query(sql, (err, result) => {
+					done();
+					err ? reject(err.message) : resolve(result.rows);
+				});
+			}
+		);
+	});
+}
+
 module.exports.Product_CheckBarcode = Product_CheckBarcode;
 module.exports.Product_Search_Barcode = Product_Search_Barcode;
 module.exports.Product_Register = Product_Register;
@@ -544,3 +565,4 @@ module.exports.CategoryGetAll = CategoryGetAll;
 module.exports.CategoryNew = CategoryNew;
 module.exports.CategoryDelete = CategoryDelete;
 module.exports.CategoryEdit = CategoryEdit;
+module.exports.StatusGetAll = StatusGetAll;

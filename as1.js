@@ -2757,6 +2757,18 @@ function main()
         res.status(500).send(err);
       });
   });
+
+  app.get('/scanapp_statusgetall', function (req, res) {
+    'use strict';
+
+    scanappserver.StatusGetAll()
+    .then(results => {
+      res.send(results);
+    })
+    .catch(err => {
+      res.status(500).send(err);
+    });
+  })
   
   // This line is last for static files...
   app.use('/', express.static(__dirname + '/routes'));
