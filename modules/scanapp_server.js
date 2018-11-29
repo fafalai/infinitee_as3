@@ -581,7 +581,15 @@ function AuditOnType(type, typeid) {
 								if (err) {
 									console.error('Error committing transaction', err.stack);
 								} else {
-									result.rows.length ? AuditGetList(10) : reject('No result. ');
+									result.rows.length
+										? AuditGetList(10)
+												.then(result => {
+													resolve(result);
+												})
+												.catch(err => {
+													reject(err);
+												})
+										: reject('No result. ');
 								}
 							});
 							// let selectSql =
