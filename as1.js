@@ -2642,22 +2642,21 @@ function main()
   })
 
   app.post(
-    '/scanapp_productupdate',
+    '/scanapp_productupdate/',
     function (req, res) 
     {
       "use strict";
 
-      let location = {
+      let product = {
+        id:req.body.id,
         name : req.body.name,
-        barcode: req.body.barcode,
         serialnumber: req.body.serialnumber,
-        description:req.body.description,
         locationid: req.body.locationid,
         categoryid: req.body.categoryid,
         statusid:req.body.statusid,
       }
 
-      scanappserver.Product_Register(location).then(
+      scanappserver.Product_Update(product).then(
         result => {
           res.send(result);
         }
