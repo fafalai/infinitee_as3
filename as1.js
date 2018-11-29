@@ -2798,7 +2798,7 @@ function main()
     });
   })
   
-  app.get('/scanapp_auditontype/:type/:typeid', function(req, res){
+  app.get('/scanapp_auditontype/:type/:typeid?', function(req, res){
     'user strict';
     let type = req.params.type;
     let typeid = req.params.typeid;
@@ -2813,7 +2813,7 @@ function main()
     )
   })
 
-  app.get('/scanapp_auditgetlist/:length', function (req, res) {
+  app.get('/scanapp_auditgetlist/:length?', function (req, res) {
     'use strict';
     let length = req.params.length;
     scanappserver.AuditGetList(length).then(

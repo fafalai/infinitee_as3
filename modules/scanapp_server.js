@@ -562,9 +562,9 @@ function AuditOnType(type, typeid) {
 						// let typeid = _.isNil(typeid)? '' : ''+typeid;
 						let condition =
 							type.toUpperCase() == 'CATEGORY'
-								? ' productcategories_id=' + typeid
+								? ' AND productcategories_id=' + typeid
 								: type.toUpperCase() == 'LOCATION'
-								? ' location1_id=' + typeid
+								? ' AND location1_id=' + typeid
 								: '';
 						let insertSql =
 							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id) ' +
@@ -574,7 +574,16 @@ function AuditOnType(type, typeid) {
 						client.query(insertSql, (err, result) => {
 							if (shouldAbort(err)) return;
 
-							result.rows.length ? AuditGetList() : reject('Fail to create auditing list.');
+							// result.rows.length ? AuditGetList() : reject('Fail to create auditing list.');
+
+							client.query('COMMIT', err => {
+								done();
+								if (err) {
+									console.error('Error committing transaction', err.stack);
+								} else {
+									result.rows.length ? AuditGetList(10) : reject('No result. ');
+								}
+							});
 							// let selectSql =
 							// 	'SELECT p1.name productname,p1.barcode productbarcode,s1.name status FROM scanapp_testing_audit a1 ' +
 							// 	'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
@@ -662,7 +671,7 @@ function AuditGetList(length) {
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ' +
 					'LIMIT $2';
-				let params = ['999', _.isInteger(length) ? length : 10];
+				let params = ['999', !__.isUNB(length) ? length : 10];
 				client.query(sql, params, (err, result) => {
 					err ? reject('Error get audit list. ') : resolve(result.rows);
 				});
