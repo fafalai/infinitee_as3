@@ -2642,7 +2642,7 @@ function main()
   })
 
   app.post(
-    '/scanapp_productupdate/',
+    '/scanapp_productupdate',
     function (req, res) 
     {
       "use strict";
@@ -2650,7 +2650,7 @@ function main()
       let product = {
         id:req.body.id,
         name : req.body.name,
-        serialnumber: req.body.serialnumber,
+        serialnumber: req.body.serial_number,
         locationid: req.body.locationid,
         categoryid: req.body.categoryid,
         statusid:req.body.statusid,
@@ -2666,7 +2666,7 @@ function main()
         }
       )
     }
-  )
+  );
 
   app.get('/scanapp_locationgetall', function (req, res) {
     'use strict';
