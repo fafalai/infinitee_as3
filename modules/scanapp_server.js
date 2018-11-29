@@ -202,7 +202,7 @@ function Product_Update(data) {
 						__.sanitiseAsString(data.name, 50),
 						data.serialnumber,
 						__.sanitiseAsBigInt(data.locationid),
-						__.sanitiseAsBigInt(data.caregoryid),
+						__.sanitiseAsBigInt(data.categoryid),
 						__.sanitiseAsBigInt(data.statusid),
 						999,
 						__.sanitiseAsBigInt(data.id)
