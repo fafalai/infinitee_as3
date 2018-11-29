@@ -40,7 +40,10 @@ function GetAllProducts() {
 
 function Product_Search_Barcode(data) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(data)) reject('Barcode can not be empty.');
+		if (__.isUNB(data)) {
+			done();
+			reject('Barcode can not be empty.');
+		}
 
 		global.pg.connect(
 			global.cs,
@@ -624,7 +627,7 @@ function AuditOnType(type, typeid) {
 							type.toUpperCase() == 'CATEGORY'
 								? ' AND productcategories_id=' + typeid
 								: type.toUpperCase() == 'LOCATION'
-								? ' AND location1_id=' + typeid
+								? ' AND locations1_id=' + typeid
 								: '';
 						let insertSql =
 							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id) ' +
@@ -737,10 +740,11 @@ function AuditGetList(length, offset) {
 				let sql =
 					'SELECT p1.name productname,p1.barcode productbarcode,s1.name status FROM scanapp_testing_audit a1 ' +
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
-					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ' +
+					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ORDER BY a1.id ' +
 					'LIMIT $2 OFFSET $3';
-				let params = ['999', !__.isUNB(length) ? length : 10, !__.isUNB(offset) ? offset : 0];
+				let params = ['999', !__.isUNB(length) ? length : '10', !__.isUNB(offset) ? offset : '0'];
 				client.query(sql, params, (err, result) => {
+					done();
 					err ? reject('Error get audit list. ') : resolve(result.rows);
 				});
 			}
