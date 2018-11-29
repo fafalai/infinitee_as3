@@ -165,6 +165,66 @@ function Product_Register(data) {
 	});
 }
 
+function Product_Update(data){
+	return new Promise((resolve, reject) => {
+		if (__.isUNB(cat.name) || __.isUNB(cat.id)) reject('Name or ID can not be empty. ');
+
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+				}
+
+				const shouldAbort = err => {
+					if (err) {
+						console.error('Error in transaction', err.stack);
+						client.query('ROLLBACK', err => {
+							if (err) {
+								console.error('Error rolling back client', err.stack);
+							}
+							// release the client back to the pool
+							done();
+						});
+
+						reject(err.message);
+					}
+					return !!err;
+				};
+
+				client.query('BEGIN', err => {
+					if (shouldAbort(err)) return;
+
+					let sql =
+						'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id WHERE id=$7 AND dateexpired is null returning name';
+					let params = [
+						__.sanitiseAsString(cat.name, 50),
+						data.serialnumber,
+						__.sanitiseAsBigInt(data.locationid),
+						__.sanitiseAsBigInt(data.caregoryid),
+						__.sanitiseAsBigInt(data.statusid),
+						999, 
+						__.sanitiseAsBigInt(cat.id)
+					];
+					client.query(sql, params, (err, result) => {
+						if (shouldAbort(err)) return;
+
+						client.query('COMMIT', err => {
+							done();
+							if (err) {
+								console.error('Error committing transaction', err.stack);
+							} else {
+								resolve(cat.name + ' has been updated. ');
+							}
+						});
+					});
+				});
+			}
+		);
+	});
+}
+
 function LocationGetAll() {
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
@@ -711,6 +771,7 @@ function StatusGetAll() {
 module.exports.Product_CheckBarcode = Product_CheckBarcode;
 module.exports.Product_Search_Barcode = Product_Search_Barcode;
 module.exports.Product_Register = Product_Register;
+module.exports.Product_Update = Product_Update
 module.exports.GetAllProducts = GetAllProducts;
 module.exports.LocationGetAll = LocationGetAll;
 module.exports.LocationNew = LocationNew;
@@ -724,3 +785,4 @@ module.exports.StatusGetAll = StatusGetAll;
 module.exports.AuditOnType = AuditOnType;
 module.exports.AuditDiscardList = AuditDiscardList;
 module.exports.AuditGetList = AuditGetList;
+
