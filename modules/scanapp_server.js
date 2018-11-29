@@ -624,7 +624,7 @@ function AuditOnType(type, typeid) {
 							type.toUpperCase() == 'CATEGORY'
 								? ' AND productcategories_id=' + typeid
 								: type.toUpperCase() == 'LOCATION'
-								? ' AND location1_id=' + typeid
+								? ' AND locations1_id=' + typeid
 								: '';
 						let insertSql =
 							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id) ' +
