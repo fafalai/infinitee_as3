@@ -2798,7 +2798,7 @@ function main()
   })
   
   app.get('/scanapp_auditontype/:type/:typeid?', function(req, res){
-    'user strict';
+    'use strict';
     let type = req.params.type;
     let typeid = req.params.typeid;
     scanappserver.AuditOnType(type, typeid).then(
@@ -2812,10 +2812,11 @@ function main()
     )
   })
 
-  app.get('/scanapp_auditgetlist/:length?', function (req, res) {
+  app.get('/scanapp_auditgetlist/:offset/:length?', function (req, res) {
     'use strict';
     let length = req.params.length;
-    scanappserver.AuditGetList(length).then(
+    let offset = req.params.offset;
+    scanappserver.AuditGetList(length, offset).then(
       result => {
         res.send(result);
       }
