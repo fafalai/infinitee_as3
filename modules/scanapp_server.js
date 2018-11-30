@@ -41,8 +41,8 @@ function GetAllProducts() {
 function Product_Search_Barcode(data) {
 	return new Promise((resolve, reject) => {
 		if (__.isUNB(data)) {
-			done();
 			reject('Barcode can not be empty.');
+			return;
 		}
 
 		global.pg.connect(
@@ -51,23 +51,23 @@ function Product_Search_Barcode(data) {
 				if (err) {
 					done();
 					reject('Unable to connect server. ');
+				} else {
+					let barcode = __.sanitiseAsString(data, 200).toUpperCase();
+					let sql =
+						'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,p1.status_id,p1.productcategories_id ' +
+						'FROM scanapp_testing_products p1' +
+						'WHERE p1.barcode=$1';
+					let params = [barcode];
+
+					client.query(sql, params, (err, result) => {
+						done();
+						err
+							? reject(err.message)
+							: result.rows.length
+							? resolve(result.rows[0])
+							: resolve('No result. ');
+					});
 				}
-
-				let barcode = __.sanitiseAsString(data, 200).toUpperCase();
-				let sql =
-					'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,p1.status_id,p1.productcategories_id ' +
-					'FROM scanapp_testing_products p1' +
-					'WHERE p1.barcode=$1';
-				let params = [barcode];
-
-				client.query(sql, params, (err, result) => {
-					done();
-					err
-						? reject(err.message)
-						: result.rows.length
-						? resolve(result.rows[0])
-						: resolve('No result. ');
-				});
 			}
 		);
 	});
@@ -89,80 +89,81 @@ function Product_CheckBarcode(barcode) {
 
 function Product_Register(data) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(data.name) || __.isUNB(data.barcode) || __.isUNB(data.locationid))
+		if (__.isUNB(data.name) || __.isUNB(data.barcode) || __.isUNB(data.locationid)){
 			reject('Name, Barcode or Location can not be empty. ');
-
+			return;
+		}
 		global.pg.connect(
 			global.cs,
 			(err, client, done) => {
 				if (err) {
 					done();
 					reject('Unable to connect server.');
-				}
-
-				client.query(
-					'SELECT * FROM scanapp_testing_products WHERE barcode=$1',
-					[__.sanitiseAsString(data.barcode).toUpperCase()],
-					(err, result) => {
-						if (result.rows.length) {
-							done();
-							reject('Barcode is existed. ');
-						}
-
-						const shouldAbort = err => {
-							if (err) {
-								console.error('Error in transaction', err.stack);
-								client.query('ROLLBACK', err => {
+				} else {
+					client.query(
+						'SELECT * FROM scanapp_testing_products WHERE barcode=$1',
+						[__.sanitiseAsString(data.barcode).toUpperCase()],
+						(err, result) => {
+							if (result.rows.length) {
+								done();
+								reject('Barcode is existed. ');
+							} else {
+								const shouldAbort = err => {
 									if (err) {
-										console.error('Error rolling back client', err.stack);
+										console.error('Error in transaction', err.stack);
+										client.query('ROLLBACK', err => {
+											if (err) {
+												console.error('Error rolling back client', err.stack);
+											}
+											// release the client back to the pool
+											done();
+										});
+
+										reject(err.message);
 									}
-									// release the client back to the pool
-									done();
-								});
+									return !!err;
+								};
 
-								reject(err.message);
-							}
-							return !!err;
-						};
-
-						client.query('BEGIN', err => {
-							if (shouldAbort(err)) return;
-
-							let sql =
-								'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated) VALUES($1,$2,$3,$4,$5,$6,$7,now()) returning id';
-							let params = [
-								__.sanitiseAsString(data.name, 50),
-								data.barcode.toUpperCase(),
-								data.serialnumber,
-								__.sanitiseAsString(data.description),
-								__.sanitiseAsBigInt(data.locationid),
-								__.sanitiseAsBigInt(data.caregoryid),
-								__.sanitiseAsBigInt(data.statusid)
-							];
-
-							client.query(sql, params, (err, result) => {
-								if (shouldAbort(err)) return;
-
-								let productid = result.rows[0].id;
-								let sql2 =
-									'INSERT INTO scanapp_testing_inventory(products_id,locations_id,status_id,datecreated) VALUES($1,$2,$3,now())';
-								let params2 = [productid, data.locationid, data.statusid];
-								client.query(sql2, params2, (err, result2) => {
+								client.query('BEGIN', err => {
 									if (shouldAbort(err)) return;
 
-									client.query('COMMIT', err => {
-										done();
-										if (err) {
-											console.error('Error committing transaction', err.stack);
-										} else {
-											resolve(data.name + ' has been registered. ');
-										}
+									let sql =
+										'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated) VALUES($1,$2,$3,$4,$5,$6,$7,now()) returning id';
+									let params = [
+										__.sanitiseAsString(data.name, 50),
+										data.barcode.toUpperCase(),
+										data.serialnumber,
+										__.sanitiseAsString(data.description),
+										__.sanitiseAsBigInt(data.locationid),
+										__.sanitiseAsBigInt(data.categoryid),
+										__.sanitiseAsBigInt(data.statusid)
+									];
+
+									client.query(sql, params, (err, result) => {
+										if (shouldAbort(err)) return;
+
+										let productid = result.rows[0].id;
+										let sql2 =
+											'INSERT INTO scanapp_testing_inventory(products_id,locations_id,status_id,datecreated) VALUES($1,$2,$3,now())';
+										let params2 = [productid, data.locationid, data.statusid];
+										client.query(sql2, params2, (err, result2) => {
+											if (shouldAbort(err)) return;
+
+											client.query('COMMIT', err => {
+												done();
+												if (err) {
+													console.error('Error committing transaction', err.stack);
+												} else {
+													resolve(data.name + ' has been registered. ');
+												}
+											});
+										});
 									});
 								});
-							});
-						});
-					}
-				);
+							}
+						}
+					);
+				}
 			}
 		);
 	});
@@ -170,7 +171,10 @@ function Product_Register(data) {
 
 function Product_Update(data) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(data.name) || __.isUNB(data.id)) reject('Name or ID can not be empty. ');
+		if (__.isUNB(data.name) || __.isUNB(data.id)) {
+			reject('Name or ID can not be empty. ');
+			return;
+		}
 
 		global.pg.connect(
 			global.cs,
@@ -178,51 +182,51 @@ function Product_Update(data) {
 				if (err) {
 					done();
 					reject('Unable to connect server. ');
-				}
+				} else {
+					const shouldAbort = err => {
+						if (err) {
+							console.error('Error in transaction', err.stack);
+							client.query('ROLLBACK', err => {
+								if (err) {
+									console.error('Error rolling back client', err.stack);
+								}
+								// release the client back to the pool
+								done();
+							});
 
-				const shouldAbort = err => {
-					if (err) {
-						console.error('Error in transaction', err.stack);
-						client.query('ROLLBACK', err => {
-							if (err) {
-								console.error('Error rolling back client', err.stack);
-							}
-							// release the client back to the pool
-							done();
-						});
+							reject(err.message);
+						}
+						return !!err;
+					};
 
-						reject(err.message);
-					}
-					return !!err;
-				};
-
-				client.query('BEGIN', err => {
-					if (shouldAbort(err)) return;
-
-					let sql =
-						'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6 WHERE id=$7 AND dateexpired is null returning name';
-					let params = [
-						__.sanitiseAsString(data.name, 50),
-						data.serialnumber,
-						__.sanitiseAsBigInt(data.locationid),
-						__.sanitiseAsBigInt(data.categoryid),
-						__.sanitiseAsBigInt(data.statusid),
-						999,
-						__.sanitiseAsBigInt(data.id)
-					];
-					client.query(sql, params, (err, result) => {
+					client.query('BEGIN', err => {
 						if (shouldAbort(err)) return;
 
-						client.query('COMMIT', err => {
-							done();
-							if (err) {
-								console.error('Error committing transaction', err.stack);
-							} else {
-								resolve(result.rows[0]);
-							}
+						let sql =
+							'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6 WHERE id=$7 AND dateexpired is null returning name';
+						let params = [
+							__.sanitiseAsString(data.name, 50),
+							data.serialnumber,
+							__.sanitiseAsBigInt(data.locationid),
+							__.sanitiseAsBigInt(data.categoryid),
+							__.sanitiseAsBigInt(data.statusid),
+							999,
+							__.sanitiseAsBigInt(data.id)
+						];
+						client.query(sql, params, (err, result) => {
+							if (shouldAbort(err)) return;
+
+							client.query('COMMIT', err => {
+								done();
+								if (err) {
+									console.error('Error committing transaction', err.stack);
+								} else {
+									resolve(result.rows[0]);
+								}
+							});
 						});
 					});
-				});
+				}
 			}
 		);
 	});
@@ -236,6 +240,7 @@ function LocationGetAll() {
 				if (err) {
 					done();
 					reject('Unable to connect server. ');
+					return;
 				}
 
 				client.query(
@@ -262,6 +267,7 @@ function LocationNew(location) {
 					if (err) {
 						done();
 						reject('Unable to connect server.');
+						return;
 					}
 
 					const shouldAbort = err => {
@@ -308,7 +314,10 @@ function LocationNew(location) {
 
 function LocationDelete(locationid) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(locationid)) reject('locationid can not be empty.');
+		if (__.isUNB(locationid)){
+			reject('locationid can not be empty.');
+			return;
+		} 
 
 		global.pg.connect(
 			global.cs,
@@ -316,6 +325,7 @@ function LocationDelete(locationid) {
 				if (err) {
 					done();
 					reject('Unable to connect to server.');
+					return;
 				}
 
 				const shouldAbort = err => {
@@ -363,7 +373,10 @@ function LocationDelete(locationid) {
 
 function LocationEdit(location) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(location.name) || __.isUNB(location.id)) reject('Name or ID can not be empty.');
+		if (__.isUNB(location.name) || __.isUNB(location.id)){
+			reject('Name or ID can not be empty.');
+			return;
+		} 
 
 		global.pg.connect(
 			global.cs,
@@ -371,6 +384,7 @@ function LocationEdit(location) {
 				if (err) {
 					done();
 					reject('Unable to connect to server.');
+					return;
 				}
 
 				const shouldAbort = err => {
@@ -421,6 +435,7 @@ function CategoryGetAll() {
 				if (err) {
 					done();
 					reject('Unable to connect server. ');
+					return;
 				}
 
 				let sql =
@@ -436,7 +451,10 @@ function CategoryGetAll() {
 
 function CategoryNew(cat) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(cat.name)) reject('Please insert name.');
+		if (__.isUNB(cat.name)){
+			reject('Please insert name.');
+			return;
+		} 
 
 		global.pg.connect(
 			global.cs,
@@ -444,6 +462,7 @@ function CategoryNew(cat) {
 				if (err) {
 					done();
 					reject('Unable to connect server.');
+					return;
 				}
 
 				const shouldAbort = err => {
@@ -488,7 +507,10 @@ function CategoryNew(cat) {
 
 function CategoryDelete(id) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(id)) reject('ID can not be empty');
+		if (__.isUNB(id)){
+			reject('ID can not be empty');
+			return;
+		} 
 
 		global.pg.connect(
 			global.cs,
@@ -496,6 +518,7 @@ function CategoryDelete(id) {
 				if (err) {
 					done();
 					reject('Unable to connect server.');
+					return;
 				}
 
 				const shouldAbort = err => {
@@ -544,7 +567,10 @@ function CategoryDelete(id) {
 
 function CategoryEdit(cat) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(cat.name) || __.isUNB(cat.id)) reject('Name or ID can not be empty. ');
+		if (__.isUNB(cat.name) || __.isUNB(cat.id)){
+			reject('Name or ID can not be empty. ');
+			return;
+		} 
 
 		global.pg.connect(
 			global.cs,
@@ -552,6 +578,7 @@ function CategoryEdit(cat) {
 				if (err) {
 					done();
 					reject('Unable to connect server. ');
+					return;
 				}
 
 				const shouldAbort = err => {
@@ -655,26 +682,6 @@ function AuditOnType(type, typeid) {
 										: reject('No result. ');
 								}
 							});
-							// let selectSql =
-							// 	'SELECT p1.name productname,p1.barcode productbarcode,s1.name status FROM scanapp_testing_audit a1 ' +
-							// 	'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
-							// 	'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) WHERE a1.dateexpired is null AND a1.userscreated_id=$1 ' +
-							// 	'LIMIT $2';
-							// let selectParams = ['999', _.isNil(length) ? 10 : length];
-							// result.rows.length
-							// 	? client.query(selectSql, selectParams, (err, result2) => {
-							// 			if (shouldAbort(err)) return;
-
-							// 			client.query('COMMIT', err => {
-							// 				done();
-							// 				if (err) {
-							// 					console.error('Error committing transaction', err.stack);
-							// 				} else {
-							// 					result2.rows.length ? resolve(result2.rows) : reject('No result. ');
-							// 				}
-							// 			});
-							// 	  })
-							// 	: reject('Fail to insert audit list. ');
 						});
 					});
 				}
@@ -735,6 +742,7 @@ function AuditGetList(length, offset) {
 				if (err) {
 					done();
 					reject('Unable to connect server. ');
+					return;
 				}
 
 				let sql =
@@ -760,6 +768,7 @@ function StatusGetAll() {
 				if (err) {
 					done();
 					reject('Unable to connect server. ');
+					return;
 				}
 
 				let sql =
