@@ -54,12 +54,16 @@ function Product_Search_Barcode(data) {
 				} else {
 					let barcode = __.sanitiseAsString(data, 200).toUpperCase();
 					let sql =
-						'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,p1.status_id,p1.productcategories_id ' +
-						'FROM scanapp_testing_products p1' +
+						'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,p1.status_id,p1.productcategories_id,p1.comments ' +
+						'FROM scanapp_testing_products p1 ' +
 						'WHERE p1.barcode=$1';
 					let params = [barcode];
 
 					client.query(sql, params, (err, result) => {
+						// global.ConsoleLog(sql);
+						// global.ConsoleLog(params);
+						// global.ConsoleLog(err);
+						// global.ConsoleLog(result);
 						done();
 						err
 							? reject(err.message)
@@ -128,7 +132,7 @@ function Product_Register(data) {
 									if (shouldAbort(err)) return;
 
 									let sql =
-										'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated) VALUES($1,$2,$3,$4,$5,$6,$7,now()) returning id';
+										'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8) returning id';
 									let params = [
 										__.sanitiseAsString(data.name, 50),
 										data.barcode.toUpperCase(),
@@ -136,7 +140,8 @@ function Product_Register(data) {
 										__.sanitiseAsString(data.description),
 										__.sanitiseAsBigInt(data.locationid),
 										__.sanitiseAsBigInt(data.categoryid),
-										__.sanitiseAsBigInt(data.statusid)
+										__.sanitiseAsBigInt(data.statusid),
+										__.sanitiseAsString(data.comments),
 									];
 
 									client.query(sql, params, (err, result) => {
@@ -154,7 +159,7 @@ function Product_Register(data) {
 												if (err) {
 													console.error('Error committing transaction', err.stack);
 												} else {
-													resolve(data.name + ' has been registered. ');
+													resolve(data.name + ' saved. ');
 												}
 											});
 										});
@@ -170,6 +175,7 @@ function Product_Register(data) {
 }
 
 function Product_Update(data) {
+	// global.ConsoleLog("update product");
 	return new Promise((resolve, reject) => {
 		if (__.isUNB(data.name) || __.isUNB(data.id)) {
 			reject('Name or ID can not be empty. ');
@@ -203,17 +209,23 @@ function Product_Update(data) {
 						if (shouldAbort(err)) return;
 
 						let sql =
-							'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6 WHERE id=$7 AND dateexpired is null returning name';
+							'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6,comments=$7,description=$8 WHERE id=$9 AND dateexpired is null returning name';
 						let params = [
 							__.sanitiseAsString(data.name, 50),
-							data.serialnumber,
+							data.serial_number,
 							__.sanitiseAsBigInt(data.locationid),
 							__.sanitiseAsBigInt(data.categoryid),
 							__.sanitiseAsBigInt(data.statusid),
 							999,
+							__.sanitiseAsString(data.comments),
+							__.sanitiseAsString(data.description),
 							__.sanitiseAsBigInt(data.id)
 						];
 						client.query(sql, params, (err, result) => {
+							// global.ConsoleLog(sql);
+							 global.ConsoleLog(params);
+							// global.ConsoleLog(err);
+							// global.ConsoleLog(result);
 							if (shouldAbort(err)) return;
 
 							client.query('COMMIT', err => {
