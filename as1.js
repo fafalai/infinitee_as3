@@ -2594,7 +2594,7 @@ function main()
     {
       "use strict";
 
-      let location = {
+      let newproduct = {
         name : req.body.name,
         barcode: req.body.barcode,
         serialnumber: req.body.serialnumber,
@@ -2602,9 +2602,10 @@ function main()
         locationid: req.body.locationid,
         categoryid: req.body.categoryid,
         statusid:req.body.statusid,
+        comments:req.body.comments,
       }
 
-      scanappserver.Product_Register(location).then(
+      scanappserver.Product_Register(newproduct).then(
         result => {
           res.send(result);
         }
@@ -2650,10 +2651,12 @@ function main()
       let product = {
         id:req.body.id,
         name : req.body.name,
-        serialnumber: req.body.serial_number,
+        serial_number: req.body.serial_number,
         locationid: req.body.locationid,
         categoryid: req.body.categoryid,
         statusid:req.body.statusid,
+        comments:req.body.comments,
+        description:req.body.description,
       }
 
       scanappserver.Product_Update(product).then(
