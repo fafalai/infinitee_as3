@@ -2597,7 +2597,7 @@ function main()
       let newproduct = {
         name : req.body.name,
         barcode: req.body.barcode,
-        serialnumber: req.body.serialnumber,
+        serial_number: req.body.serial_number,
         description:req.body.description,
         locationid: req.body.locationid,
         categoryid: req.body.categoryid,
@@ -2828,6 +2828,18 @@ function main()
     })
   })
 
+  app.get('/scanapp_auditscanbarcode/:barcode', function (req, res) {
+    'use strict';
+
+    let barcode = req.params.barcode;
+    let userscreated_id = 999;
+    scanappserver.Audit_Scan_Barcode(barcode,userscreated_id).then(
+      result => res.send(result,)
+    ).catch(err => {
+      res.status(500).send(err);
+    })
+  })
+
   app.get('/scanapp_auditdiscardlist', function (req, res){
     'use strict';
 
@@ -2839,6 +2851,30 @@ function main()
       res.status(500).send(err);
     })
   })
+
+   /**
+   * During an audit, if the user scann a barcode which is not in the audit list,but has been registered, he can choose 'Add', 
+   * so this product will be changed to the current auditing location or category automatically
+   * without changing to another page in the frontend. one-stop-saction. 
+   */
+  app.post('/scanapp_auditupdateproduct', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
+    let product = {
+      productid: req.body.productid,
+      locations1_id: req.body.locations_id,
+      productcategories_id:req.body.productcategories_id,
+      usermodified_id:999
+    };
+
+    scanappserver.Audit_UpdateProduct(product)
+      .then(result => {
+        res.send(result);
+      })
+      .catch(err => {
+        res.status(500).send(err);
+      });
+  });
   // This line is last for static files...
   app.use('/', express.static(__dirname + '/routes'));
 
