@@ -11,6 +11,156 @@
 // 	process.exit(-1);
 // });
 
+
+// *******************************************************************************************************************************************************************************************
+// Internal functions
+
+/**
+ * This is the function to check whether the scanned barcode is in the audit list
+ */
+function doCheckAuditList(barcode,userscreated_id)
+{
+	global.ConsoleLog("doCheckAuditList");
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				let selectsql =
+						'select a1.id,a1.products_id,a1.datefinished,p1.barcode from scanapp_testing_audit a1 left join scanapp_testing_products p1 on (p1.id = a1.products_id) ' + 
+						'where p1.barcode = $1 '+
+						'and a1.dateexpired is null ' +
+						// 'and a1.datefinished is null ' +
+						'and a1.userscreated_id =$2';
+				let params = [
+					__.sanitiseAsString(barcode, 50),
+					userscreated_id,	
+				];
+				client.query(selectsql, params, (err, result) => {
+					global.ConsoleLog(selectsql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+
+					client.query('COMMIT', err => {
+						done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							resolve(result.rows);							
+						}
+					});
+				});
+			}
+		);
+	});
+}
+
+/** 
+ * This is the function called when the scanned barcode is in the audit list. Use this function to update the product in the audite list to be 'audited'
+*/
+function doUpdateAuditList(auditid)
+{
+	global.ConsoleLog("doUpdateAuditList");
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				let updatesql =
+						'UPDATE scanapp_testing_audit ' + 
+						'SET datefinished=now() '+
+						'where id = $1 '+
+						'returning datefinished ';
+				let params = [
+					auditid	
+				];
+				client.query(updatesql, params, (err, result) => {
+					global.ConsoleLog(updatesql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+
+					client.query('COMMIT', err => {
+						done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							global.ConsoleLog(result.rows[0]['datefinished']);
+							let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							global.ConsoleLog(datefinished);
+							resolve(datefinished);
+						}
+					});
+				});
+			}
+		);
+	});
+}
+
+/**
+ * This is the function used when the scanned barcode is not in the to-be-audit list, and hasn't been audited before. Use it to get the product detail for next move. 
+ */
+function doGetBarcodeDetails(barcode)
+{
+	global.ConsoleLog("doGetBarcodeDetails");
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				let selectsql =
+						'select p1.id, p1.name,s1.name status,l1.name locations,c1.name category,p1.productcategories_id,p1.locations1_id, p1.serial_number,p1.description,p1.comments ' + 
+						'from scanapp_testing_products p1 '+
+						'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
+						'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
+						'left join scanapp_testing_productcategories c1 on(c1.id = p1.productcategories_id) '+
+						'where barcode = $1'
+				let params = [
+					barcode	
+				];
+				client.query(selectsql, params, (err, result) => {
+					global.ConsoleLog(selectsql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+
+					client.query('COMMIT', err => {
+						done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							// global.ConsoleLog(result.rows[0]['datefinished']);
+							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// global.ConsoleLog(datefinished);
+							resolve(result.rows);							
+						}
+					});
+				});
+			}
+		);
+	});
+}
+
+
+
+// *******************************************************************************************************************************************************************************************
+// Public functions
 function GetAllProducts() {
 	// return new Promise((resolve, reject) => {
 	// 	let sql = 'SELECT p1.id,p1.name, p1.barcode, p1.location FROM products p1';
@@ -136,7 +286,7 @@ function Product_Register(data) {
 									let params = [
 										__.sanitiseAsString(data.name, 50),
 										data.barcode.toUpperCase(),
-										data.serialnumber,
+										__.sanitiseAsString(data.serial_number, 50),
 										__.sanitiseAsString(data.description),
 										__.sanitiseAsBigInt(data.locationid),
 										__.sanitiseAsBigInt(data.categoryid),
@@ -207,12 +357,13 @@ function Product_Update(data) {
 
 					client.query('BEGIN', err => {
 						if (shouldAbort(err)) return;
-
+						global.ConsoleLog(data.serial_number);
 						let sql =
 							'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6,comments=$7,description=$8 WHERE id=$9 AND dateexpired is null returning name';
 						let params = [
 							__.sanitiseAsString(data.name, 50),
-							data.serial_number,
+							__.sanitiseAsString(data.serial_number, 50),
+							// data.serial_number,
 							__.sanitiseAsBigInt(data.locationid),
 							__.sanitiseAsBigInt(data.categoryid),
 							__.sanitiseAsBigInt(data.statusid),
@@ -222,10 +373,10 @@ function Product_Update(data) {
 							__.sanitiseAsBigInt(data.id)
 						];
 						client.query(sql, params, (err, result) => {
-							// global.ConsoleLog(sql);
-							 global.ConsoleLog(params);
-							// global.ConsoleLog(err);
-							// global.ConsoleLog(result);
+							global.ConsoleLog(sql);
+							global.ConsoleLog(params);
+							global.ConsoleLog(err);
+							global.ConsoleLog(result);
 							if (shouldAbort(err)) return;
 
 							client.query('COMMIT', err => {
@@ -758,16 +909,135 @@ function AuditGetList(length, offset) {
 				}
 
 				let sql =
-					'SELECT p1.name productname,p1.barcode productbarcode,s1.name status FROM scanapp_testing_audit a1 ' +
+					'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,s1.name status,l1.name locations,c1.name category ' +
+					'FROM scanapp_testing_audit a1 '+
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
-					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ORDER BY a1.id ' +
+					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
+					'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
+					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
+					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ORDER BY a1.id ' +
 					'LIMIT $2 OFFSET $3';
 				let params = ['999', !__.isUNB(length) ? length : '10', !__.isUNB(offset) ? offset : '0'];
+				global.ConsoleLog(sql);
+				global.ConsoleLog(params);
 				client.query(sql, params, (err, result) => {
 					done();
 					err ? reject('Error get audit list. ') : resolve(result.rows);
 				});
 			}
+		);
+	});
+}
+
+function Audit_Scan_Barcode(barcode,userscreated_id){
+	global.ConsoleLog("Audit Scan barcode");
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server.');
+				} 
+				else 
+				{
+					const shouldAbort = err => {
+						if (err) {
+							console.error('Error in transaction', err.stack);
+							client.query('ROLLBACK', err => {
+								if (err) {
+									console.error('Error rolling back client', err.stack);
+								}
+								// release the client back to the pool
+								done();
+							});
+							reject(err.message);
+						}
+						return !!err;
+					};
+
+					doCheckAuditList(barcode,userscreated_id).then(result => 
+					{
+						global.ConsoleLog(result);
+						if(result.length == 1)
+						{
+							let auditDetail = result[0]
+							let auditid = auditDetail.id;
+							global.ConsoleLog(auditDetail.datefinished);
+
+							if(!__.isUN(auditDetail.datefinished))
+							{
+								resolve({errorcode:0,data:auditDetail,message:'This barcode has been audited'});
+							}
+							else
+							{
+								//Barcode is in the list but never been scanned before. 
+								doUpdateAuditList(auditid).then(result => 
+								{
+									global.ConsoleLog(result);
+									resolve({errorcode:0,message:'audit successed',data:{datefinished:result}});							
+									// resolve();	
+									// if(result.errorcode == 0)
+									// {
+									// 								
+									// }
+									// else
+									// {
+									// 	//the scaned barcode is not in the list, need to get all the details to the front end. 
+									// 	doGetBarcodeDetails(auditid).then(result => 
+									// 	{
+									// 		global.ConsoleLog(result);
+											
+									// 		resolve(result);								
+											
+									// 	})
+									// 	.catch(err => 
+									// 	{
+									// 		reject(err);
+									// 	})
+									// }
+								})
+								.catch(err => 
+								{
+									reject(err);
+								})
+							}
+							// global.ConsoleLog(result[0].id);
+							// resolve(result[0]);
+						}
+						else
+						{
+							global.ConsoleLog("the scanned barcode is not in the list");
+							// resolve({errorcode:1,message:'The scanned barcode is not in the to-be-audit list'});	
+							// resolve("The scanned barcode is not in the to-be-audit list");
+							doGetBarcodeDetails(barcode).then(result => 
+							{
+								global.ConsoleLog(result);
+								if(result.length > 0)
+								{
+									resolve({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
+								}
+								else
+								{
+									resolve({errorcode:2,message:'The scanned product has not been registered'});
+								}
+								
+							})
+							.catch(err => 
+							{
+								reject(err);
+							})
+						}
+					
+					})
+					.catch(err => 
+					{
+						reject(err);
+					})
+
+					
+				}
+		}
 		);
 	});
 }
@@ -793,6 +1063,104 @@ function StatusGetAll() {
 		);
 	});
 }
+
+ /**
+ * During an audit, if the user scann a barcode which is not in the audit list,but has been registered, he can choose 'Add', 
+ * so this product will be changed to the current auditing location or category automatically
+ * without changing to another page in the frontend. one-stop-saction. 
+ */
+function Audit_UpdateProduct(data)
+{
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server.');
+				} else {
+					const shouldAbort = err => {
+						if (err) {
+							console.error('Error in transaction', err.stack);
+							client.query('ROLLBACK', err => {
+								if (err) {
+									console.error('Error rolling back client', err.stack);
+								}
+								// release the client back to the pool
+								done();
+							});
+
+							reject(err.message);
+						}
+						return !!err;
+					};
+
+					client.query('BEGIN', err => {
+						if (shouldAbort(err)) return;
+
+						let sql = '';
+						let locations1_id = ''
+						let productcategories_id = ''
+						if(!__.isUN(data.locations1_id))
+						{
+							sql = ' locations1_id = $1 '
+							locations1_id = __.sanitiseAsBigInt(data.locations1_id);
+						}
+						else if(!__.isUN(data.productcategories_id))
+						{
+							sql = ' productcategories_id = $2 '
+							productcategories_id = __.sanitiseAsBigInt(data.productcategories_id);
+
+						}
+
+						// let typeid = _.isNil(typeid)? '' : ''+typeid;
+						let updatesql = 
+								'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$3, '+
+								 sql +
+								'WHERE id=$4 AND dateexpired is null returning id';
+
+						let params = [
+							locations1_id,
+							productcategories_id,
+							999,
+							__.sanitiseAsBigInt(data.productid)
+						];
+						global.ConsoleLog(params);
+						
+						client.query(updatesql,params, (err, result) => {
+							if (shouldAbort(err)) return;
+							global.ConsoleLog(updatesql);
+							global.ConsoleLog(params);
+							global.ConsoleLog(err);
+							global.ConsoleLog(result);
+							// result.rows.length ? AuditGetList() : reject('Fail to create auditing list.');
+
+							client.query('COMMIT', err => {
+								done();
+								if (err) {
+									console.error('Error committing transaction', err.stack);
+								} else {
+									global.ConsoleLog(result);
+									resolve({errorcode:0,message:'update successfully',data:result});
+								}
+							});
+						});
+					});
+				}
+			}
+		);
+	});
+}
+
+// *******************************************************************************************************************************************************************************************
+// Internal functions
+module.exports.doUpdateAuditList = doUpdateAuditList;
+module.exports.doUpdateAuditList = doUpdateAuditList
+
+
+// *******************************************************************************************************************************************************************************************
+// Public functions
 module.exports.Product_CheckBarcode = Product_CheckBarcode;
 module.exports.Product_Search_Barcode = Product_Search_Barcode;
 module.exports.Product_Register = Product_Register;
@@ -810,3 +1178,5 @@ module.exports.StatusGetAll = StatusGetAll;
 module.exports.AuditOnType = AuditOnType;
 module.exports.AuditDiscardList = AuditDiscardList;
 module.exports.AuditGetList = AuditGetList;
+module.exports.Audit_Scan_Barcode = Audit_Scan_Barcode;
+module.exports.Audit_UpdateProduct = Audit_UpdateProduct;
