@@ -1043,6 +1043,7 @@ function AuditGetAll(data) {
 						
 						doGetAuditUnscanned(data).then(result => 
 						{
+							done();
 							let unscannedList = result;
 							global.ConsoleLog(unscannedList);
 							resolve({scanned:scannedList,unscanned:unscannedList});
@@ -1050,11 +1051,13 @@ function AuditGetAll(data) {
 						})
 						.catch(err => 
 						{
+							done();
 							reject(err);
 						})
 					})
 					.catch(err => 
 					{
+						done();
 						reject(err);
 					})
 
@@ -1333,7 +1336,7 @@ function Audit_UpdateProduct(data)
 						let params = [];
 						if(!__.isUNB(data.locations1_id))
 						{
-							sql = ' locations1_id = $1 '
+							sql = ',locations1_id = $1 '
 							locations1_id = __.sanitiseAsBigInt(data.locations1_id);
 							params = [
 								locations1_id,
@@ -1343,7 +1346,7 @@ function Audit_UpdateProduct(data)
 						}
 						else if(!__.isUNB(data.productcategories_id))
 						{
-							sql = ' productcategories_id = $1 '
+							sql = ',productcategories_id = $1 '
 							productcategories_id = __.sanitiseAsBigInt(data.productcategories_id);
 							params = [
 								productcategories_id,
@@ -1352,9 +1355,10 @@ function Audit_UpdateProduct(data)
 							];
 
 						}
-						else if(!__.isUNB(data.status_id))
+
+						if(!__.isUNB(data.status_id))
 						{
-							sql = ' status_id = $1 '
+							sql = sql + ',status_id = $1 '
 							status_id = __.sanitiseAsBigInt(data.status_id);
 							params = [
 								status_id,
@@ -1367,7 +1371,7 @@ function Audit_UpdateProduct(data)
 						// let typeid = _.isNil(typeid)? '' : ''+typeid;
 						let updatesql = 
 								'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$2, '+
+								'SET datemodified=now(),usersmodified_id=$2 '+
 								 sql +
 								'WHERE id=$3 AND dateexpired is null returning id';
 
