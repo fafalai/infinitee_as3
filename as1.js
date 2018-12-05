@@ -2863,6 +2863,7 @@ function main()
     let product = {
       productid: req.body.productid,
       locations1_id: req.body.locations_id,
+      status_id:req.body.status_id,
       productcategories_id:req.body.productcategories_id,
       usermodified_id:999
     };
