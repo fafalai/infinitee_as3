@@ -126,7 +126,7 @@ function doGetBarcodeDetails(barcode)
 				}
 
 				let selectsql =
-						'select p1.id, p1.name,s1.name status,l1.name locations,c1.name category,p1.productcategories_id,p1.locations1_id, p1.serial_number,p1.description,p1.comments ' + 
+						'select p1.id, p1.name,s1.name status,l1.name locations,c1.name category,p1.productcategories_id,p1.locations1_id,p1.status_id, p1.serial_number,p1.description,p1.comments ' + 
 						'from scanapp_testing_products p1 '+
 						'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
 						'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
@@ -1208,7 +1208,14 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 								doUpdateAuditList(auditid).then(result => 
 								{
 									global.ConsoleLog(result);
-									resolve({errorcode:0,message:'audit successed',data:{datefinished:result}});							
+									if(result.status_id == 3)
+									{
+										reject({errorcode:4,message:'The scanned product is missing',data:result});								
+									}
+									else
+									{
+										resolve({errorcode:0,message:'audit successed',data:{datefinished:result}});							
+									}
 								})
 								.catch(err => 
 								{
@@ -1228,7 +1235,14 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 								global.ConsoleLog(result);
 								if(result.length > 0)
 								{
-									reject({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
+									if(result[0].status_id == 3)
+									{
+										reject({errorcode:5,message:'The scanned barcode is not in the to-be-audited list and missing',data:result});								
+									}	
+									else
+									{
+										reject({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
+									}
 								}
 								else
 								{
