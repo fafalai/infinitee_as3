@@ -81,7 +81,7 @@ function doUpdateAuditList(auditid)
 						'UPDATE scanapp_testing_audit ' + 
 						'SET datefinished=now() '+
 						'where id = $1 '+
-						'returning datefinished ';
+						'returning datefinished,products_id,status_id ';
 				let params = [
 					auditid	
 				];
@@ -97,9 +97,10 @@ function doUpdateAuditList(auditid)
 							console.error('Error committing transaction', err.stack);
 						} else {
 							global.ConsoleLog(result.rows[0]['datefinished']);
-							let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							global.ConsoleLog(datefinished);
-							resolve(datefinished);
+							result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// global.ConsoleLog(datefinished);
+							resolve(result.rows[0]);
 						}
 					});
 				});
@@ -156,7 +157,9 @@ function doGetBarcodeDetails(barcode)
 		);
 	});
 }
-
+/**
+ * 
+ */
 function doGetAuditScanned(data)
 {
 	global.ConsoleLog("doGetAuditScanned");
@@ -891,7 +894,7 @@ function CategoryEdit(cat) {
 	});
 }
 
-function AuditOnType(type, typeid) {
+function AuditOnType(data) {
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
 			global.cs,
@@ -921,10 +924,10 @@ function AuditOnType(type, typeid) {
 
 						// let typeid = _.isNil(typeid)? '' : ''+typeid;
 						let condition =
-							type.toUpperCase() == 'CATEGORY'
-								? ' AND productcategories_id=' + typeid
-								: type.toUpperCase() == 'LOCATION'
-								? ' AND locations1_id=' + typeid
+						data.type.toUpperCase() == 'CATEGORY'
+								? ' AND productcategories_id=' + data.typeid
+								: data.type.toUpperCase() == 'LOCATION'
+								? ' AND locations1_id=' + data.typeid
 								: '';
 						let insertSql =
 							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id) ' +
@@ -942,7 +945,7 @@ function AuditOnType(type, typeid) {
 									console.error('Error committing transaction', err.stack);
 								} else {
 									result.rows.length
-										? AuditGetList()
+										? AuditGetAll(data)
 												.then(result => {
 													resolve(result);
 												})
