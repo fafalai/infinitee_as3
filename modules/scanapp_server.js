@@ -967,7 +967,7 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 
 							if(!__.isUN(auditDetail.datefinished))
 							{
-								resolve({errorcode:0,data:auditDetail,message:'This barcode has been audited'});
+								reject({errorcode:3,data:auditDetail,message:'This barcode has been audited'});
 							}
 							else
 							{
@@ -976,26 +976,6 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 								{
 									global.ConsoleLog(result);
 									resolve({errorcode:0,message:'audit successed',data:{datefinished:result}});							
-									// resolve();	
-									// if(result.errorcode == 0)
-									// {
-									// 								
-									// }
-									// else
-									// {
-									// 	//the scaned barcode is not in the list, need to get all the details to the front end. 
-									// 	doGetBarcodeDetails(auditid).then(result => 
-									// 	{
-									// 		global.ConsoleLog(result);
-											
-									// 		resolve(result);								
-											
-									// 	})
-									// 	.catch(err => 
-									// 	{
-									// 		reject(err);
-									// 	})
-									// }
 								})
 								.catch(err => 
 								{
@@ -1015,11 +995,11 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 								global.ConsoleLog(result);
 								if(result.length > 0)
 								{
-									resolve({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
+									reject({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
 								}
 								else
 								{
-									resolve({errorcode:2,message:'The scanned product has not been registered'});
+									reject({errorcode:2,message:'The scanned product has not been registered'});
 								}
 								
 							})
