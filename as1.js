@@ -2813,20 +2813,80 @@ function main()
         res.status(500).send(err);
       }
     )
-  })
+  });
 
-  app.get('/scanapp_auditgetlist/:offset/:length?', function (req, res) {
+  app.post('/scanapp_auditgetall', function(req, res) {
     'use strict';
-    let length = req.params.length;
-    let offset = req.params.offset;
-    scanappserver.AuditGetList(length, offset).then(
+    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
+    let audit = {
+      length: req.body.length,
+      offset: req.body.offset,
+      userscreated_id:999
+    };
+
+    scanappserver.AuditGetAll(audit).then(
       result => {
         res.send(result);
       }
     ).catch(err => {
       res.status(500).send(err);
     })
-  })
+  });
+
+  app.post('/scanapp_auditgetscanned', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
+    let audit = {
+      length: req.body.length,
+      offset: req.body.offset,
+      userscreated_id:999
+    };
+
+    scanappserver.AuditGetScanned(audit).then(
+      result => {
+        res.send(result);
+      }
+    ).catch(err => {
+      res.status(500).send(err);
+    })
+  });
+
+  app.post('/scanapp_auditgetunscanned', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
+    let audit = {
+      length: req.body.length,
+      offset: req.body.offset,
+      userscreated_id:999
+    };
+
+    scanappserver.AuditGetUnscanned(audit).then(
+      result => {
+        res.send(result);
+      }
+    ).catch(err => {
+      res.status(500).send(err);
+    })
+  });
+
+
+  // app.get('/scanapp_auditgetlist/:offset/:length?', function (req, res) {
+  //   'use strict';
+  //   let audit = {
+  //     length:req.params.length,
+  //     offset:req.params.offset,
+  //     userscreated_id:999
+  //   };
+  //   let length = req.params.length;
+  //   let offset = req.params.offset;
+  //   scanappserver.AuditGetList(audit).then(
+  //     result => {
+  //       res.send(result);
+  //     }
+  //   ).catch(err => {
+  //     res.status(500).send(err);
+  //   })
+  // })
 
   app.get('/scanapp_auditscanbarcode/:barcode', function (req, res) {
     'use strict';

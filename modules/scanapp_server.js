@@ -157,6 +157,113 @@ function doGetBarcodeDetails(barcode)
 	});
 }
 
+function doGetAuditScanned(data)
+{
+	global.ConsoleLog("doGetAuditScanned");
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				let selectsql =
+					'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
+					'FROM scanapp_testing_audit a1 '+
+					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
+					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
+					'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
+					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
+					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is not null ORDER BY a1.id  ' +
+					'LIMIT $2 OFFSET $3';
+				let params = [
+					__.sanitiseAsBigInt(data.userscreated_id),
+					!__.isUNB(data.length) ? data.length : '10', 
+					!__.isUNB(data.offset) ? data.offset : '0'
+				];
+				client.query(selectsql, params, (err, result) => {
+					global.ConsoleLog(selectsql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					// global.ConsoleLog(result);
+
+					client.query('COMMIT', err => {
+						done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							// global.ConsoleLog(result.rows[0]['datefinished']);
+							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// global.ConsoleLog(datefinished);
+							let list  = result.rows;
+							for (var i = 0;i<list.length;i++)
+							{
+								list[i].datefinished = global.moment(list[i].datefinished).format('YYYY-MM-DD HH:mm');
+							}
+							global.ConsoleLog(list);
+							resolve(list);							
+						}
+					});
+				});
+			}
+		);
+	});
+}
+
+function doGetAuditUnscanned(data)
+{
+	global.ConsoleLog("doGetAuditUnscanned");
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				let selectsql =
+						'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
+						'FROM scanapp_testing_audit a1 '+
+						'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
+						'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
+						'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
+						'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
+						'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is null ORDER BY a1.id  ' +
+						'LIMIT $2 OFFSET $3';
+				let params = [
+					__.sanitiseAsBigInt(data.userscreated_id),
+					!__.isUNB(data.length) ? data.length : '10', 
+					!__.isUNB(data.offset) ? data.offset : '0'
+				];
+
+				client.query(selectsql, params, (err, result) => {
+					global.ConsoleLog(selectsql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+
+					client.query('COMMIT', err => {
+						done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							// global.ConsoleLog(result.rows[0]['datefinished']);
+							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// global.ConsoleLog(datefinished);
+							resolve(result.rows);							
+						}
+					});
+				});
+			}
+		);
+	});
+}
+
 
 
 // *******************************************************************************************************************************************************************************************
@@ -897,7 +1004,8 @@ function AuditDiscardList() {
 	});
 }
 
-function AuditGetList(length, offset) {
+function AuditGetAll(data) {
+	global.ConsoleLog(data);
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
 			global.cs,
@@ -908,26 +1016,148 @@ function AuditGetList(length, offset) {
 					return;
 				}
 
-				let sql =
-					'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,s1.name status,l1.name locations,c1.name category ' +
-					'FROM scanapp_testing_audit a1 '+
-					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
-					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
-					'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
-					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
-					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ORDER BY a1.id ' +
-					'LIMIT $2 OFFSET $3';
-				let params = ['999', !__.isUNB(length) ? length : '10', !__.isUNB(offset) ? offset : '0'];
-				global.ConsoleLog(sql);
-				global.ConsoleLog(params);
-				client.query(sql, params, (err, result) => {
+				else 
+				{
+					const shouldAbort = err => {
+						if (err) {
+							console.error('Error in transaction', err.stack);
+							client.query('ROLLBACK', err => {
+								if (err) {
+									console.error('Error rolling back client', err.stack);
+								}
+								// release the client back to the pool
+								done();
+							});
+							reject(err.message);
+						}
+						return !!err;
+					};
+
+					doGetAuditScanned(data).then(result => 
+					{
+						let scannedList = result;
+						global.ConsoleLog(scannedList);
+						
+						doGetAuditUnscanned(data).then(result => 
+						{
+							let unscannedList = result;
+							global.ConsoleLog(unscannedList);
+							resolve({scanned:scannedList,unscanned:unscannedList});
+							
+						})
+						.catch(err => 
+						{
+							reject(err);
+						})
+					})
+					.catch(err => 
+					{
+						reject(err);
+					})
+
+					
+				}
+
+				// let sql =
+				// 	'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
+				// 	'FROM scanapp_testing_audit a1 '+
+				// 	'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
+				// 	'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
+				// 	'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
+				// 	'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
+				// 	'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ORDER BY a1.id ' +
+				// 	'LIMIT $2 OFFSET $3';
+				// let params = [__.sanitiseAsBigInt(audit.userscreated_id),!__.isUNB(audit.length) ? audit.length : '10', !__.isUNB(audit.offset) ? audit.offset : '0'];
+				// global.ConsoleLog(sql);
+				// global.ConsoleLog(params);
+				// client.query(sql, params, (err, result) => {
+				// 	done();
+				// 	if (err) {
+				// 		reject('Error get audit list. ');
+				// 	} else {
+				// 		let audited = [];
+				// 		let unaudited = [];
+				// 		for (var i = 0;i<result.rows.length;i++)
+				// 		{
+				// 			if(!__.isUNB(result.rows[i].datefinished))
+				// 			{
+				// 				audited.push(result.rows[i]);
+				// 			}
+				// 			else
+				// 			{
+				// 				unaudited.push(result.rows[i]);
+				// 			}
+
+				// 		}
+				// 		global.ConsoleLog(audited);
+				// 		global.ConsoleLog(unaudited);
+				// 		resolve(result.rows);
+				// 	}
+				// 	// err ? reject('Error get audit list. ') : resolve(result.rows);
+				// });
+			}
+		);
+	});
+}
+
+function AuditGetScanned(data)
+{
+	global.ConsoleLog('AuditGetScanned');
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
 					done();
-					err ? reject('Error get audit list. ') : resolve(result.rows);
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				doGetAuditScanned(data).then(result => 
+				{
+					let scannedList = result;
+					global.ConsoleLog(scannedList);
+					resolve(result);
+					
+				})
+				.catch(err => 
+				{
+					reject(err);
 				});
 			}
 		);
 	});
 }
+
+function AuditGetUnscanned(data)
+{
+	global.ConsoleLog('AuditGetUnscanned');
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				doGetAuditUnscanned(data).then(result => 
+				{
+					let unscannedList = result;
+					global.ConsoleLog(unscannedList);
+					resolve(result);
+					
+				})
+				.catch(err => 
+				{
+					reject(err);
+				});
+			}
+		);
+	});
+}
+
 
 function Audit_Scan_Barcode(barcode,userscreated_id){
 	global.ConsoleLog("Audit Scan barcode");
@@ -1154,7 +1384,10 @@ function Audit_UpdateProduct(data)
 // *******************************************************************************************************************************************************************************************
 // Internal functions
 module.exports.doUpdateAuditList = doUpdateAuditList;
-module.exports.doUpdateAuditList = doUpdateAuditList
+module.exports.doUpdateAuditList = doUpdateAuditList;
+module.exports.doGetAuditScanned = doGetAuditScanned;
+module.exports.doGetAuditUnscanned = doGetAuditUnscanned;
+
 
 
 // *******************************************************************************************************************************************************************************************
@@ -1175,6 +1408,8 @@ module.exports.CategoryEdit = CategoryEdit;
 module.exports.StatusGetAll = StatusGetAll;
 module.exports.AuditOnType = AuditOnType;
 module.exports.AuditDiscardList = AuditDiscardList;
-module.exports.AuditGetList = AuditGetList;
+module.exports.AuditGetAll = AuditGetAll;
 module.exports.Audit_Scan_Barcode = Audit_Scan_Barcode;
 module.exports.Audit_UpdateProduct = Audit_UpdateProduct;
+module.exports.AuditGetScanned = AuditGetScanned;
+module.exports.AuditGetUnscanned = AuditGetUnscanned;
