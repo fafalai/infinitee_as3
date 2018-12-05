@@ -2834,7 +2834,7 @@ function main()
     let barcode = req.params.barcode;
     let userscreated_id = 999;
     scanappserver.Audit_Scan_Barcode(barcode,userscreated_id).then(
-      result => res.send(result,)
+      result => res.send(result)
     ).catch(err => {
       res.status(500).send(err);
     })
