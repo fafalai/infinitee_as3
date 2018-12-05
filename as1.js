@@ -2802,9 +2802,14 @@ function main()
   
   app.get('/scanapp_auditontype/:type/:typeid?', function(req, res){
     'use strict';
-    let type = req.params.type;
-    let typeid = req.params.typeid;
-    scanappserver.AuditOnType(type, typeid).then(
+    // let type = req.params.type;
+    // let typeid = req.params.typeid;
+    let data = {
+      type:req.params.type,
+      typeid:req.params.typeid,
+      userscreated_id:999
+    }
+    scanappserver.AuditOnType(data).then(
       result => {
         res.send(result);
       }
