@@ -967,7 +967,7 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 
 							if(!__.isUN(auditDetail.datefinished))
 							{
-								resolve({errorcode:0,data:auditDetail,message:'This barcode has been audited'});
+								reject({errorcode:3,data:auditDetail,message:'This barcode has been audited'});
 							}
 							else
 							{
@@ -976,26 +976,6 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 								{
 									global.ConsoleLog(result);
 									resolve({errorcode:0,message:'audit successed',data:{datefinished:result}});							
-									// resolve();	
-									// if(result.errorcode == 0)
-									// {
-									// 								
-									// }
-									// else
-									// {
-									// 	//the scaned barcode is not in the list, need to get all the details to the front end. 
-									// 	doGetBarcodeDetails(auditid).then(result => 
-									// 	{
-									// 		global.ConsoleLog(result);
-											
-									// 		resolve(result);								
-											
-									// 	})
-									// 	.catch(err => 
-									// 	{
-									// 		reject(err);
-									// 	})
-									// }
 								})
 								.catch(err => 
 								{
@@ -1015,11 +995,11 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 								global.ConsoleLog(result);
 								if(result.length > 0)
 								{
-									resolve({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
+									reject({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
 								}
 								else
 								{
-									resolve({errorcode:2,message:'The scanned product has not been registered'});
+									reject({errorcode:2,message:'The scanned product has not been registered'});
 								}
 								
 							})
@@ -1098,42 +1078,60 @@ function Audit_UpdateProduct(data)
 					client.query('BEGIN', err => {
 						if (shouldAbort(err)) return;
 
+						// global.ConsoleLog(data);
 						let sql = '';
-						let locations1_id = ''
-						let productcategories_id = ''
-						if(!__.isUN(data.locations1_id))
+						let locations1_id = null;
+						let productcategories_id = null;
+						let status_id = null;
+						let params = [];
+						if(!__.isUNB(data.locations1_id))
 						{
 							sql = ' locations1_id = $1 '
 							locations1_id = __.sanitiseAsBigInt(data.locations1_id);
+							params = [
+								locations1_id,
+								data.usermodified_id,
+								__.sanitiseAsBigInt(data.productid)
+							];
 						}
-						else if(!__.isUN(data.productcategories_id))
+						else if(!__.isUNB(data.productcategories_id))
 						{
-							sql = ' productcategories_id = $2 '
+							sql = ' productcategories_id = $1 '
 							productcategories_id = __.sanitiseAsBigInt(data.productcategories_id);
+							params = [
+								productcategories_id,
+								data.usermodified_id,
+								__.sanitiseAsBigInt(data.productid)
+							];
+
+						}
+						else if(!__.isUNB(data.status_id))
+						{
+							sql = ' status_id = $1 '
+							status_id = __.sanitiseAsBigInt(data.status_id);
+							params = [
+								status_id,
+								data.usermodified_id,
+								__.sanitiseAsBigInt(data.productid)
+							];
 
 						}
 
 						// let typeid = _.isNil(typeid)? '' : ''+typeid;
 						let updatesql = 
 								'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$3, '+
+								'SET datemodified=now(),usersmodified_id=$2, '+
 								 sql +
-								'WHERE id=$4 AND dateexpired is null returning id';
+								'WHERE id=$3 AND dateexpired is null returning id';
 
-						let params = [
-							locations1_id,
-							productcategories_id,
-							999,
-							__.sanitiseAsBigInt(data.productid)
-						];
 						global.ConsoleLog(params);
 						
 						client.query(updatesql,params, (err, result) => {
 							if (shouldAbort(err)) return;
-							global.ConsoleLog(updatesql);
-							global.ConsoleLog(params);
-							global.ConsoleLog(err);
-							global.ConsoleLog(result);
+							// global.ConsoleLog(updatesql);
+							// global.ConsoleLog(params);
+							// global.ConsoleLog(err);
+							// global.ConsoleLog(result);
 							// result.rows.length ? AuditGetList() : reject('Fail to create auditing list.');
 
 							client.query('COMMIT', err => {
@@ -1142,7 +1140,7 @@ function Audit_UpdateProduct(data)
 									console.error('Error committing transaction', err.stack);
 								} else {
 									global.ConsoleLog(result);
-									resolve({errorcode:0,message:'update successfully',data:result});
+									resolve({errorcode:0,message:'update successfully',data:result.rows});
 								}
 							});
 						});
