@@ -236,18 +236,39 @@ function doGetAuditUnscanned(client,data)
 						}
 					});
 				});
-		// global.pg.connect(
-		// 	global.cs,
-		// 	(err, client, done) => {
-		// 		if (err) {
-		// 			done();
-		// 			reject('Unable to connect server. ');
-		// 			return;
-		// 		}
+	});
+}
 
-				
-		// 	}
-		// );
+function doGetAuditDetail(client,tablename,id)
+{
+	global.ConsoleLog("doGetAuditDetail");
+	global.ConsoleLog(tablename);
+	return new Promise((resolve, reject) => {
+		let selectsql =
+				'select name from ' + tablename + ' where id = $1';
+		let params = [
+			__.sanitiseAsBigInt(id),
+		];
+
+		client.query(selectsql, params, (err, result) => {
+			global.ConsoleLog(selectsql);
+			global.ConsoleLog(params);
+			global.ConsoleLog(err);
+			global.ConsoleLog(result);
+
+			client.query('COMMIT', err => {
+				if (err) {
+					console.error('Error committing transaction', err.stack);
+					reject('Error committing transaction', err.stack);
+				} else {
+					// global.ConsoleLog(result.rows[0]['datefinished']);
+					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// global.ConsoleLog(datefinished);
+					global.ConsoleLog(result.rows[0]);
+					resolve(result.rows);							
+				}
+			});
+		});
 	});
 }
 
@@ -957,12 +978,14 @@ function AuditOnType(data) {
 										doGetAuditScanned(client,data).then(result => 
 										{
 											let scannedList = result;
+											global.ConsoleLog('scannedList');
 											global.ConsoleLog(scannedList);
 											
 											doGetAuditUnscanned(client,data).then(result => 
 											{
 												done();
 												let unscannedList = result;
+												global.ConsoleLog('unscannedList')
 												global.ConsoleLog(unscannedList);
 												resolve({scanned:scannedList,unscanned:unscannedList});
 												
@@ -1071,9 +1094,93 @@ function AuditGetAll(data) {
 						doGetAuditUnscanned(client,data).then(result => 
 						{
 							done();
+							let audit_type;
+							let audit_typeid ;
 							let unscannedList = result;
 							global.ConsoleLog(unscannedList);
-							resolve({scanned:scannedList,unscanned:unscannedList});
+							if(scannedList.length > 0)
+							{
+								audit_type = scannedList[0].audit_type;
+								audit_typeid = scannedList[0].audit_typeid;
+								global.ConsoleLog(audit_type);
+								global.ConsoleLog(audit_typeid);
+								if(audit_type == 1)
+								{
+									done();
+									resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'ALL',audit_name:''});
+								}
+								else 
+								{
+									var tablename = '';
+									var type = '';
+									switch(audit_type){
+										case "2":
+											tablename = 'scanapp_testing_productcategories';
+											type = 'Categories'
+											break;
+										case "3":
+											tablename = 'scanapp_testing_locations';
+											type = 'Locations'
+											break;
+										default:
+											tablename = '';
+									}
+									global.ConsoleLog(tablename);
+									global.ConsoleLog(type);
+									doGetAuditDetail(client,tablename,audit_typeid).then(result => 
+									{
+										done();
+										global.ConsoleLog(result);
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_type:type,audit_name:result[0].name});
+									})
+									.catch(err => 
+									{
+										reject(err);
+									})
+								}
+
+							}
+							else
+							{
+								audit_type = unscannedList[0].audit_type;
+								audit_typeid = unscannedList[0].audit_typeid;
+								global.ConsoleLog(audit_type);
+								global.ConsoleLog(audit_typeid);
+								if(audit_type == 1)
+								{
+									done();
+									resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'ALL',audit_name:''});
+								}
+								else 
+								{
+									var tablename = '';
+									var type = '';
+									switch(audit_type){
+										case "2":
+											tablename = 'scanapp_testing_productcategories';
+											type = 'Categories'
+											break;
+										case "3":
+											tablename = 'scanapp_testing_locations';
+											type = 'Locations'
+											break;
+										default:
+											tablename = '';
+									}
+									global.ConsoleLog(tablename);
+									global.ConsoleLog(type);
+									doGetAuditDetail(client,tablename,audit_typeid).then(result => 
+									{
+										done();
+										global.ConsoleLog(result);
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_type:type,audit_name:result[0].name});
+									})
+									.catch(err => 
+									{
+										reject(err);
+									})
+								}
+							}
 							
 						})
 						.catch(err => 
