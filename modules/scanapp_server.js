@@ -1318,61 +1318,95 @@ function Audit_UpdateProduct(data)
 						if (shouldAbort(err)) return;
 
 						// global.ConsoleLog(data);
-						let sql = '';
+						let params = [];
+						let updatesql = '';
 						let locations1_id = null;
 						let productcategories_id = null;
 						let status_id = null;
-						let params = [];
-						if(!__.isUNB(data.locations1_id))
+
+						if(data.errorcode == 1)
 						{
-							sql = ',locations1_id = $1 '
-							locations1_id = __.sanitiseAsBigInt(data.locations1_id);
+							//product is not in the audit list
+
+							if(!__.isUNB(data.locations1_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.usermodified_id,
+									__.sanitiseAsBigInt(data.productid),
+									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
+								];
+							}
+							else if (!__.isUNB(data.productcategories_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.usermodified_id,
+									__.sanitiseAsBigInt(data.productid),
+									__.sanitiseAsBigInt(data.productcategories_id),
+								];
+							}
+						}
+						else if (data.errorcode == 4)
+						{
+							//product is in the audit list, but it is missing, so only update the status id. 
+							updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,status_id = $3 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
 							params = [
-								locations1_id,
 								data.usermodified_id,
-								__.sanitiseAsBigInt(data.productid)
+								__.sanitiseAsBigInt(data.productid),
+								__.sanitiseAsBigInt(data.status_id),
 							];
 						}
-						else if(!__.isUNB(data.productcategories_id))
+						else if (data.errorcode == 5)
 						{
-							sql = ',productcategories_id = $1 '
-							productcategories_id = __.sanitiseAsBigInt(data.productcategories_id);
-							params = [
-								productcategories_id,
-								data.usermodified_id,
-								__.sanitiseAsBigInt(data.productid)
-							];
+							//product is not in the audit list,and it is missing, so update the status id and others. 
 
+							if(!__.isUNB(data.locations1_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3,status_id = $4 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.usermodified_id,
+									__.sanitiseAsBigInt(data.productid),
+									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
+									__.sanitiseAsBigInt(data.status_id),
+								];
+							}
+							else if (!__.isUNB(data.productcategories_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3,status_id = $4 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.usermodified_id,
+									__.sanitiseAsBigInt(data.productid),
+									__.sanitiseAsBigInt(data.productcategories_id),
+									__.sanitiseAsBigInt(data.status_id)
+								];
+							}
 						}
 
-						if(!__.isUNB(data.status_id))
-						{
-							sql = sql + ',status_id = $1 '
-							status_id = __.sanitiseAsBigInt(data.status_id);
-							params = [
-								status_id,
-								data.usermodified_id,
-								__.sanitiseAsBigInt(data.productid)
-							];
-
-						}
-
-						// let typeid = _.isNil(typeid)? '' : ''+typeid;
-						let updatesql = 
-								'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$2 '+
-								 sql +
-								'WHERE id=$3 AND dateexpired is null returning id';
-
+						global.ConsoleLog(updatesql);
 						global.ConsoleLog(params);
-						
+
 						client.query(updatesql,params, (err, result) => {
 							if (shouldAbort(err)) return;
-							// global.ConsoleLog(updatesql);
-							// global.ConsoleLog(params);
-							// global.ConsoleLog(err);
-							// global.ConsoleLog(result);
-							// result.rows.length ? AuditGetList() : reject('Fail to create auditing list.');
+							global.ConsoleLog(updatesql);
+							global.ConsoleLog(params);
+							global.ConsoleLog(err);
+							global.ConsoleLog(result);
 
 							client.query('COMMIT', err => {
 								done();
@@ -1384,6 +1418,32 @@ function Audit_UpdateProduct(data)
 								}
 							});
 						});
+
+
+						// if(!__.isUNB(data.locations1_id) && !__.isUNB(data.productcategories_id) && !__.isUNB(data.status_id))
+						// {
+						// 	updatesql = 
+						// 		'UPDATE scanapp_testing_products '+
+						// 		'SET datemodified=now(),usersmodified_id=$1,status_id = $3, '+
+						// 		'locations1_id = $4 ,productcategories_id = $5'+
+						// 		'WHERE id=$2 AND dateexpired is null returning id';
+
+						// 	params = [
+						// 		data.usermodified_id,
+						// 		__.sanitiseAsBigInt(data.productid),
+						// 		__.sanitiseAsBigInt(data.status_id),
+						// 		locations1_id = __.sanitiseAsBigInt(data.locations1_id),
+						// 		__.sanitiseAsBigInt(data.productcategories_id),
+						// 	];
+						// 	global.ConsoleLog(params);
+							
+
+						// }
+						// else 
+						// {
+						
+						// 	reject({message:'location,or category,or status cannot be empty'});
+						// }						
 					});
 				}
 			}
