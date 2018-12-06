@@ -18,162 +18,130 @@
 /**
  * This is the function to check whether the scanned barcode is in the audit list
  */
-function doCheckAuditList(barcode,userscreated_id)
+function doCheckAuditList(client,barcode,userscreated_id)
 {
 	global.ConsoleLog("doCheckAuditList");
 	return new Promise((resolve, reject) => {
-		global.pg.connect(
-			global.cs,
-			(err, client, done) => {
+		let selectsql =
+		'select a1.id,a1.products_id,a1.datefinished,p1.barcode ,p1.name,p1.comments,' +
+		'p1.description,p1.serial_number,p1.status_id,s1.name status,' + 
+		'p1.locations1_id,l1.name locations,'+
+		'p1.productcategories_id,c1.name category '+
+		'from scanapp_testing_audit a1 ' +
+		'left join scanapp_testing_products p1 on (p1.id = a1.products_id) ' + 
+		'left join scanapp_testing_productcategories c1 on (c1.id = p1.productcategories_id) '+
+		'left join scanapp_testing_locations l1 on (l1.id = p1.locations1_id) '+
+		'left join scanapp_testing_statuses s1 on (s1.id = p1.status_id) '+
+		'where p1.barcode = $1 '+
+		'and a1.dateexpired is null ' +
+		// 'and a1.datefinished is null ' +
+		'and a1.userscreated_id =$2';
+		let params = [
+			__.sanitiseAsString(barcode, 50),
+			userscreated_id,	
+		];
+		client.query(selectsql, params, (err, result) => {
+			// global.ConsoleLog(selectsql);
+			// global.ConsoleLog(params);
+			// global.ConsoleLog(err);
+			//global.ConsoleLog(result);
+
+			client.query('COMMIT', err => {
 				if (err) {
-					done();
-					reject('Unable to connect server. ');
-					return;
+					console.error('Error committing transaction', err.stack);
+				} else {
+					global.ConsoleLog(result.rows[0]);
+					resolve(result.rows);							
 				}
-
-				let selectsql =
-						'select a1.id,a1.products_id,a1.datefinished,p1.barcode from scanapp_testing_audit a1 left join scanapp_testing_products p1 on (p1.id = a1.products_id) ' + 
-						'where p1.barcode = $1 '+
-						'and a1.dateexpired is null ' +
-						// 'and a1.datefinished is null ' +
-						'and a1.userscreated_id =$2';
-				let params = [
-					__.sanitiseAsString(barcode, 50),
-					userscreated_id,	
-				];
-				client.query(selectsql, params, (err, result) => {
-					global.ConsoleLog(selectsql);
-					global.ConsoleLog(params);
-					global.ConsoleLog(err);
-					global.ConsoleLog(result);
-
-					client.query('COMMIT', err => {
-						done();
-						if (err) {
-							console.error('Error committing transaction', err.stack);
-						} else {
-							resolve(result.rows);							
-						}
-					});
-				});
-			}
-		);
+			});
+		});
 	});
 }
 
 /** 
  * This is the function called when the scanned barcode is in the audit list. Use this function to update the product in the audite list to be 'audited'
 */
-function doUpdateAuditList(auditid)
+function doUpdateAuditList(client,auditid)
 {
 	global.ConsoleLog("doUpdateAuditList");
 	return new Promise((resolve, reject) => {
-		global.pg.connect(
-			global.cs,
-			(err, client, done) => {
+		let updatesql =
+				'UPDATE scanapp_testing_audit ' + 
+				'SET datefinished=now() '+
+				'where id = $1 '+
+				'returning datefinished,products_id,status_id ';
+		let params = [
+			auditid	
+		];
+		client.query(updatesql, params, (err, result) => {
+			// global.ConsoleLog(updatesql);
+			// global.ConsoleLog(params);
+			// global.ConsoleLog(err);
+			// global.ConsoleLog(result);
+
+			client.query('COMMIT', err => {
+				// done();
 				if (err) {
-					done();
-					reject('Unable to connect server. ');
-					return;
+					console.error('Error committing transaction', err.stack);
+				} else {
+					global.ConsoleLog(result.rows[0]['datefinished']);
+					result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// global.ConsoleLog(datefinished);
+					resolve(result.rows[0]);
 				}
-
-				let updatesql =
-						'UPDATE scanapp_testing_audit ' + 
-						'SET datefinished=now() '+
-						'where id = $1 '+
-						'returning datefinished,products_id,status_id ';
-				let params = [
-					auditid	
-				];
-				client.query(updatesql, params, (err, result) => {
-					global.ConsoleLog(updatesql);
-					global.ConsoleLog(params);
-					global.ConsoleLog(err);
-					global.ConsoleLog(result);
-
-					client.query('COMMIT', err => {
-						done();
-						if (err) {
-							console.error('Error committing transaction', err.stack);
-						} else {
-							global.ConsoleLog(result.rows[0]['datefinished']);
-							result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// global.ConsoleLog(datefinished);
-							resolve(result.rows[0]);
-						}
-					});
-				});
-			}
-		);
+			});
+		});
 	});
 }
 
 /**
  * This is the function used when the scanned barcode is not in the to-be-audit list, and hasn't been audited before. Use it to get the product detail for next move. 
  */
-function doGetBarcodeDetails(barcode)
+function doGetBarcodeDetails(client,barcode)
 {
 	global.ConsoleLog("doGetBarcodeDetails");
 	return new Promise((resolve, reject) => {
-		global.pg.connect(
-			global.cs,
-			(err, client, done) => {
+		let selectsql =
+				'select p1.id products_id ,p1.name,p1.barcode,p1.status_id,s1.name status,'+
+				'p1.productcategories_id,c1.name category,p1.locations1_id,l1.name locations,'+
+				'p1.serial_number,p1.description,p1.comments ' + 
+				'from scanapp_testing_products p1 '+
+				'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
+				'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
+				'left join scanapp_testing_productcategories c1 on(c1.id = p1.productcategories_id) '+
+				'where barcode = $1'
+		let params = [
+			barcode	
+		];
+		client.query(selectsql, params, (err, result) => {
+			// global.ConsoleLog(selectsql);
+			// global.ConsoleLog(params);
+			// global.ConsoleLog(err);
+			// global.ConsoleLog(result);
+
+			client.query('COMMIT', err => {
+				// done();
 				if (err) {
-					done();
-					reject('Unable to connect server. ');
-					return;
+					console.error('Error committing transaction', err.stack);
+				} else {
+					// global.ConsoleLog(result.rows[0]['datefinished']);
+					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// global.ConsoleLog(datefinished);
+					resolve(result.rows);							
 				}
-
-				let selectsql =
-						'select p1.id, p1.name,s1.name status,l1.name locations,c1.name category,p1.productcategories_id,p1.locations1_id,p1.status_id, p1.serial_number,p1.description,p1.comments ' + 
-						'from scanapp_testing_products p1 '+
-						'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
-						'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
-						'left join scanapp_testing_productcategories c1 on(c1.id = p1.productcategories_id) '+
-						'where barcode = $1'
-				let params = [
-					barcode	
-				];
-				client.query(selectsql, params, (err, result) => {
-					global.ConsoleLog(selectsql);
-					global.ConsoleLog(params);
-					global.ConsoleLog(err);
-					global.ConsoleLog(result);
-
-					client.query('COMMIT', err => {
-						done();
-						if (err) {
-							console.error('Error committing transaction', err.stack);
-						} else {
-							// global.ConsoleLog(result.rows[0]['datefinished']);
-							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// global.ConsoleLog(datefinished);
-							resolve(result.rows);							
-						}
-					});
-				});
-			}
-		);
+			});
+		});
 	});
 }
 /**
  * 
  */
-function doGetAuditScanned(data)
+function doGetAuditScanned(client,data)
 {
 	global.ConsoleLog("doGetAuditScanned");
 	return new Promise((resolve, reject) => {
-		global.pg.connect(
-			global.cs,
-			(err, client, done) => {
-				if (err) {
-					done();
-					reject('Unable to connect server. ');
-					return;
-				}
-
-				let selectsql =
+		let selectsql =
 					'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
 					'FROM scanapp_testing_audit a1 '+
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
@@ -194,9 +162,10 @@ function doGetAuditScanned(data)
 					// global.ConsoleLog(result);
 
 					client.query('COMMIT', err => {
-						done();
+						//done();
 						if (err) {
 							console.error('Error committing transaction', err.stack);
+							//reject('Error committing transaction', err.stack);
 						} else {
 							// global.ConsoleLog(result.rows[0]['datefinished']);
 							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
@@ -211,25 +180,26 @@ function doGetAuditScanned(data)
 						}
 					});
 				});
-			}
-		);
+		// global.pg.connect(
+		// 	global.cs,
+		// 	(err, client, done) => {
+		// 		if (err) {
+		// 			done();
+		// 			reject('Unable to connect server. ');
+		// 			return;
+		// 		}
+
+				
+		// 	}
+		// );
 	});
 }
 
-function doGetAuditUnscanned(data)
+function doGetAuditUnscanned(client,data)
 {
 	global.ConsoleLog("doGetAuditUnscanned");
 	return new Promise((resolve, reject) => {
-		global.pg.connect(
-			global.cs,
-			(err, client, done) => {
-				if (err) {
-					done();
-					reject('Unable to connect server. ');
-					return;
-				}
-
-				let selectsql =
+		let selectsql =
 						'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
 						'FROM scanapp_testing_audit a1 '+
 						'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
@@ -251,19 +221,31 @@ function doGetAuditUnscanned(data)
 					global.ConsoleLog(result);
 
 					client.query('COMMIT', err => {
-						done();
+						//done();
 						if (err) {
 							console.error('Error committing transaction', err.stack);
+							reject('Error committing transaction', err.stack);
 						} else {
 							// global.ConsoleLog(result.rows[0]['datefinished']);
 							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
 							// global.ConsoleLog(datefinished);
+							global.ConsoleLog(result.rows[0]);
 							resolve(result.rows);							
 						}
 					});
 				});
-			}
-		);
+		// global.pg.connect(
+		// 	global.cs,
+		// 	(err, client, done) => {
+		// 		if (err) {
+		// 			done();
+		// 			reject('Unable to connect server. ');
+		// 			return;
+		// 		}
+
+				
+		// 	}
+		// );
 	});
 }
 
@@ -1036,12 +1018,13 @@ function AuditGetAll(data) {
 						return !!err;
 					};
 
-					doGetAuditScanned(data).then(result => 
+					doGetAuditScanned(client,data).then(result => 
 					{
+						
 						let scannedList = result;
 						global.ConsoleLog(scannedList);
 						
-						doGetAuditUnscanned(data).then(result => 
+						doGetAuditUnscanned(client,data).then(result => 
 						{
 							done();
 							let unscannedList = result;
@@ -1051,13 +1034,13 @@ function AuditGetAll(data) {
 						})
 						.catch(err => 
 						{
-							done();
+						
 							reject(err);
 						})
 					})
 					.catch(err => 
 					{
-						done();
+					
 						reject(err);
 					})
 
@@ -1119,7 +1102,7 @@ function AuditGetScanned(data)
 					return;
 				}
 
-				doGetAuditScanned(data).then(result => 
+				doGetAuditScanned(client,data).then(result => 
 				{
 					let scannedList = result;
 					global.ConsoleLog(scannedList);
@@ -1148,7 +1131,7 @@ function AuditGetUnscanned(data)
 					return;
 				}
 
-				doGetAuditUnscanned(data).then(result => 
+				doGetAuditUnscanned(client,data).then(result => 
 				{
 					let unscannedList = result;
 					global.ConsoleLog(unscannedList);
@@ -1192,36 +1175,42 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 						return !!err;
 					};
 
-					doCheckAuditList(barcode,userscreated_id).then(result => 
+					doCheckAuditList(client,barcode,userscreated_id).then(result => 
 					{
-						global.ConsoleLog(result);
+						// global.ConsoleLog(result);
 						if(result.length == 1)
 						{
 							let auditDetail = result[0]
 							let auditid = auditDetail.id;
-							global.ConsoleLog(auditDetail.datefinished);
+							// global.ConsoleLog(auditDetail.datefinished);
 
 							if(!__.isUN(auditDetail.datefinished))
 							{
-								reject({errorcode:3,data:auditDetail,message:'This barcode has been audited'});
+								done();
+								auditDetail.datefinished = global.moment(auditDetail.datefinished).format('YYYY-MM-DD HH:mm');
+								reject({errorcode:3,message:'This barcode has been audited',data:auditDetail,});
 							}
 							else
 							{
 								//Barcode is in the list but never been scanned before. 
-								doUpdateAuditList(auditid).then(result => 
+								doUpdateAuditList(client,auditid).then(result => 
 								{
-									global.ConsoleLog(result);
+									done();
+									// global.ConsoleLog(result);
+									auditDetail.datefinished = result.datefinished;
+									// global.ConsoleLog(auditDetail)
 									if(result.status_id == 3)
 									{
-										reject({errorcode:4,message:'The scanned product is missing',data:result});								
+										reject({errorcode:4,message:'The scanned product is missing',data:auditDetail});								
 									}
 									else
 									{
-										resolve({errorcode:0,message:'audit successed',data:{datefinished:result}});							
+										resolve({errorcode:0,message:'audit successed',data:auditDetail});							
 									}
 								})
 								.catch(err => 
 								{
+									done();
 									reject(err);
 								})
 							}
@@ -1233,18 +1222,18 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 							global.ConsoleLog("the scanned barcode is not in the list");
 							// resolve({errorcode:1,message:'The scanned barcode is not in the to-be-audit list'});	
 							// resolve("The scanned barcode is not in the to-be-audit list");
-							doGetBarcodeDetails(barcode).then(result => 
+							doGetBarcodeDetails(client,barcode).then(result => 
 							{
-								global.ConsoleLog(result);
+								// global.ConsoleLog(result);
 								if(result.length > 0)
 								{
 									if(result[0].status_id == 3)
 									{
-										reject({errorcode:5,message:'The scanned barcode is not in the to-be-audited list and missing',data:result});								
+										reject({errorcode:5,message:'The scanned barcode is not in the to-be-audit list and missing',data:result[0]});								
 									}	
 									else
 									{
-										reject({errorcode:1,message:'The scanned barcode is not in the to-be-audited list',data:result});								
+										reject({errorcode:1,message:'The scanned barcode is not in the to-be-audit list',data:result[0]});								
 									}
 								}
 								else
