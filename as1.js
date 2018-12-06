@@ -2930,7 +2930,8 @@ function main()
       locations1_id: req.body.locations_id,
       status_id:req.body.status_id,
       productcategories_id:req.body.productcategories_id,
-      usermodified_id:999
+      usermodified_id:999,
+      errorcode:req.body.errorcode,
     };
 
     scanappserver.Audit_UpdateProduct(product)
