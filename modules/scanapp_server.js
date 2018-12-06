@@ -142,7 +142,8 @@ function doGetAuditScanned(client,data)
 	global.ConsoleLog("doGetAuditScanned");
 	return new Promise((resolve, reject) => {
 		let selectsql =
-					'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
+					'SELECT a1.id audit_id, p1.id products_id , p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
+					'a1.audit_type,a1.audit_typeid '+
 					'FROM scanapp_testing_audit a1 '+
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
@@ -200,7 +201,8 @@ function doGetAuditUnscanned(client,data)
 	global.ConsoleLog("doGetAuditUnscanned");
 	return new Promise((resolve, reject) => {
 		let selectsql =
-						'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
+						'SELECT a1.id audit_id, p1.id products_id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
+						'a1.audit_type,a1.audit_typeid '+
 						'FROM scanapp_testing_audit a1 '+
 						'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 						'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
