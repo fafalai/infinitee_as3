@@ -142,7 +142,8 @@ function doGetAuditScanned(client,data)
 	global.ConsoleLog("doGetAuditScanned");
 	return new Promise((resolve, reject) => {
 		let selectsql =
-					'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
+					'SELECT a1.id audit_id, p1.id products_id , p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
+					'a1.audit_type,a1.audit_typeid '+
 					'FROM scanapp_testing_audit a1 '+
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
@@ -200,7 +201,8 @@ function doGetAuditUnscanned(client,data)
 	global.ConsoleLog("doGetAuditUnscanned");
 	return new Promise((resolve, reject) => {
 		let selectsql =
-						'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
+						'SELECT a1.id audit_id, p1.id products_id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
+						'a1.audit_type,a1.audit_typeid '+
 						'FROM scanapp_testing_audit a1 '+
 						'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 						'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
@@ -248,7 +250,6 @@ function doGetAuditUnscanned(client,data)
 		// );
 	});
 }
-
 
 
 // *******************************************************************************************************************************************************************************************
@@ -905,6 +906,24 @@ function AuditOnType(data) {
 						if (shouldAbort(err)) return;
 
 						// let typeid = _.isNil(typeid)? '' : ''+typeid;
+						let audit_type;
+						let audit_typeid;
+						
+						if(data.type.toUpperCase() == 'ALL')
+						{
+							audit_type = 1;
+							audit_typeid = null;
+						}
+						else if(data.type.toUpperCase() == 'CATEGORY')
+						{
+							audit_type = 2;
+							audit_typeid = data.typeid;
+						}
+						else if(data.type.toUpperCase() == 'LOCATION')
+						{
+							audit_type = 3;
+							audit_typeid = data.typeid;
+						}
 						let condition =
 						data.type.toUpperCase() == 'CATEGORY'
 								? ' AND productcategories_id=' + data.typeid
@@ -912,10 +931,12 @@ function AuditOnType(data) {
 								? ' AND locations1_id=' + data.typeid
 								: '';
 						let insertSql =
-							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id) ' +
-							'SELECT p1.id,p1.locations1_id,p1.status_id FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_type,audit_typeid) ' +
+							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_type+', ' +audit_typeid +' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 							condition +
 							' returning id';
+						//global.ConsoleLog(insertSql);
+						
 						client.query(insertSql, (err, result) => {
 							if (shouldAbort(err)) return;
 
@@ -925,16 +946,39 @@ function AuditOnType(data) {
 								done();
 								if (err) {
 									console.error('Error committing transaction', err.stack);
-								} else {
-									result.rows.length
-										? AuditGetAll(data)
-												.then(result => {
-													resolve(result);
-												})
-												.catch(err => {
-													reject(err);
-												})
-										: reject('No result. ');
+								} else 
+								{
+									if(result.rows.length == 0)
+									{
+										reject('No result. ');
+									}
+									else
+									{
+										doGetAuditScanned(client,data).then(result => 
+										{
+											let scannedList = result;
+											global.ConsoleLog(scannedList);
+											
+											doGetAuditUnscanned(client,data).then(result => 
+											{
+												done();
+												let unscannedList = result;
+												global.ConsoleLog(unscannedList);
+												resolve({scanned:scannedList,unscanned:unscannedList});
+												
+											})
+											.catch(err => 
+											{
+											
+												reject(err);
+											})
+										})
+										.catch(err => 
+										{
+										
+											reject(err);
+										})
+									}
 								}
 							});
 						});
