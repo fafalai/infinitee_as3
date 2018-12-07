@@ -1142,44 +1142,52 @@ function AuditGetAll(data) {
 							}
 							else
 							{
-								audit_type = unscannedList[0].audit_type;
-								audit_typeid = unscannedList[0].audit_typeid;
-								global.ConsoleLog(audit_type);
-								global.ConsoleLog(audit_typeid);
-								if(audit_type == 1)
+								if(unscannedList.length > 0)
 								{
-									done();
-									resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'ALL',audit_name:''});
-								}
-								else 
-								{
-									var tablename = '';
-									var type = '';
-									switch(audit_type){
-										case "2":
-											tablename = 'scanapp_testing_productcategories';
-											type = 'Categories'
-											break;
-										case "3":
-											tablename = 'scanapp_testing_locations';
-											type = 'Locations'
-											break;
-										default:
-											tablename = '';
-									}
-									global.ConsoleLog(tablename);
-									global.ConsoleLog(type);
-									doGetAuditDetail(client,tablename,audit_typeid).then(result => 
+									audit_type = unscannedList[0].audit_type;
+									audit_typeid = unscannedList[0].audit_typeid;
+									global.ConsoleLog(audit_type);
+									global.ConsoleLog(audit_typeid);
+									if(audit_type == 1)
 									{
 										done();
-										global.ConsoleLog(result);
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_type:type,audit_name:result[0].name});
-									})
-									.catch(err => 
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'ALL',audit_name:''});
+									}
+									else 
 									{
-										reject(err);
-									})
+										var tablename = '';
+										var type = '';
+										switch(audit_type){
+											case "2":
+												tablename = 'scanapp_testing_productcategories';
+												type = 'Categories'
+												break;
+											case "3":
+												tablename = 'scanapp_testing_locations';
+												type = 'Locations'
+												break;
+											default:
+												tablename = '';
+										}
+										global.ConsoleLog(tablename);
+										global.ConsoleLog(type);
+										doGetAuditDetail(client,tablename,audit_typeid).then(result => 
+										{
+											done();
+											global.ConsoleLog(result);
+											resolve({scanned:scannedList,unscanned:unscannedList,audit_type:type,audit_name:result[0].name});
+										})
+										.catch(err => 
+										{
+											reject(err);
+										})
+									}
 								}
+								else
+								{
+									resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'',audit_name:''});
+								}
+								
 							}
 							
 						})
