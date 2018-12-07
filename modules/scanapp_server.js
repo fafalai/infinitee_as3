@@ -23,7 +23,7 @@ function doCheckAuditList(client,barcode,userscreated_id)
 	global.ConsoleLog("doCheckAuditList");
 	return new Promise((resolve, reject) => {
 		let selectsql =
-		'select a1.id,a1.products_id,a1.datefinished,p1.barcode ,p1.name,p1.comments,' +
+		'select a1.id,a1.products_id,a1.audit_type,a1.audit_typeid,a1.datefinished,p1.barcode ,p1.name,p1.comments,' +
 		'p1.description,p1.serial_number,p1.status_id,s1.name status,' + 
 		'p1.locations1_id,l1.name locations,'+
 		'p1.productcategories_id,c1.name category '+
@@ -266,6 +266,45 @@ function doGetAuditDetail(client,tablename,id)
 					// global.ConsoleLog(datefinished);
 					global.ConsoleLog(result.rows[0]);
 					resolve(result.rows);							
+				}
+			});
+		});
+	});
+}
+
+/**
+ * This is for when an scanned product is not the audit list and the user decided to add it
+ * beside update the product's location/catogry, need to insert an row to the audit list, and 
+ * mark the datefinihsed to now()
+ */
+function doInsertAuditList(client,data)
+{
+	global.ConsoleLog("doUpdateAuditList");
+	return new Promise((resolve, reject) => {
+		let updatesql =
+				'UPDATE scanapp_testing_audit ' + 
+				'SET datefinished=now() '+
+				'where id = $1 '+
+				'returning datefinished,products_id,status_id ';
+		let params = [
+			auditid	
+		];
+		client.query(updatesql, params, (err, result) => {
+			// global.ConsoleLog(updatesql);
+			// global.ConsoleLog(params);
+			// global.ConsoleLog(err);
+			// global.ConsoleLog(result);
+
+			client.query('COMMIT', err => {
+				// done();
+				if (err) {
+					console.error('Error committing transaction', err.stack);
+				} else {
+					global.ConsoleLog(result.rows[0]['datefinished']);
+					result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// global.ConsoleLog(datefinished);
+					resolve(result.rows[0]);
 				}
 			});
 		});
@@ -1383,6 +1422,7 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 							// resolve("The scanned barcode is not in the to-be-audit list");
 							doGetBarcodeDetails(client,barcode).then(result => 
 							{
+								done();
 								// global.ConsoleLog(result);
 								if(result.length > 0)
 								{
@@ -1572,37 +1612,22 @@ function Audit_UpdateProduct(data)
 								if (err) {
 									console.error('Error committing transaction', err.stack);
 								} else {
-									global.ConsoleLog(result);
-									resolve({errorcode:0,message:'update successfully',data:result.rows});
+									//global.ConsoleLog(result);
+									doInsertAuditList(client,data).then(result => 
+									{
+										//let unscannedList = result;
+										global.ConsoleLog(result);
+										resolve(result);
+										
+									})
+									.catch(err => 
+									{
+										reject(err);
+									});
+									//resolve({errorcode:0,message:'update successfully',data:result.rows});
 								}
 							});
-						});
-
-
-						// if(!__.isUNB(data.locations1_id) && !__.isUNB(data.productcategories_id) && !__.isUNB(data.status_id))
-						// {
-						// 	updatesql = 
-						// 		'UPDATE scanapp_testing_products '+
-						// 		'SET datemodified=now(),usersmodified_id=$1,status_id = $3, '+
-						// 		'locations1_id = $4 ,productcategories_id = $5'+
-						// 		'WHERE id=$2 AND dateexpired is null returning id';
-
-						// 	params = [
-						// 		data.usermodified_id,
-						// 		__.sanitiseAsBigInt(data.productid),
-						// 		__.sanitiseAsBigInt(data.status_id),
-						// 		locations1_id = __.sanitiseAsBigInt(data.locations1_id),
-						// 		__.sanitiseAsBigInt(data.productcategories_id),
-						// 	];
-						// 	global.ConsoleLog(params);
-							
-
-						// }
-						// else 
-						// {
-						
-						// 	reject({message:'location,or category,or status cannot be empty'});
-						// }						
+						});						
 					});
 				}
 			}
@@ -1616,6 +1641,7 @@ module.exports.doUpdateAuditList = doUpdateAuditList;
 module.exports.doUpdateAuditList = doUpdateAuditList;
 module.exports.doGetAuditScanned = doGetAuditScanned;
 module.exports.doGetAuditUnscanned = doGetAuditUnscanned;
+module.exports.doInsertAuditList = doInsertAuditList;
 
 
 

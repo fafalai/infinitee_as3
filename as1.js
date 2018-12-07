@@ -2932,6 +2932,8 @@ function main()
       productcategories_id:req.body.productcategories_id,
       usermodified_id:999,
       errorcode:req.body.errorcode,
+      type:req.body.type,
+      typeid:req.body.typeid
     };
 
     scanappserver.Audit_UpdateProduct(product)
