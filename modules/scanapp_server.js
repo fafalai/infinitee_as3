@@ -279,29 +279,54 @@ function doGetAuditDetail(client,tablename,id)
  */
 function doInsertAuditList(client,data)
 {
-	global.ConsoleLog("doUpdateAuditList");
+	global.ConsoleLog("doInsertAuditList");
 	return new Promise((resolve, reject) => {
-		let updatesql =
-				'UPDATE scanapp_testing_audit ' + 
-				'SET datefinished=now() '+
-				'where id = $1 '+
-				'returning datefinished,products_id,status_id ';
+		let audit_type;
+		let audit_typeid;
+		
+		if(data.type.toUpperCase() == 'ALL')
+		{
+			audit_type = 1;
+			audit_typeid = null;
+		}
+		else if(data.type.toUpperCase() == 'CATEGORY')
+		{
+			audit_typeid = data.typeid;
+		}
+		else if(data.type.toUpperCase() == 'LOCATION')
+		{
+			audit_type = 3;
+			audit_typeid = data.typeid;
+		}
+		let condition =
+		data.type.toUpperCase() == 'CATEGORY'
+				? ' AND productcategories_id=' + data.typeid
+				: data.type.toUpperCase() == 'LOCATION'
+				? ' AND locations1_id=' + data.typeid
+				: '';
+		let insertSql =
+			'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_type,audit_typeid,datefinished) ' +
+			'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_type+', ' +audit_typeid +',now() FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+			' AND p1.id = $1' +
+			condition +
+			' returning id';
+
 		let params = [
-			auditid	
+			data.productid	
 		];
-		client.query(updatesql, params, (err, result) => {
+		global.ConsoleLog(insertSql);
+		client.query(insertSql, params, (err, result) => {
 			// global.ConsoleLog(updatesql);
 			// global.ConsoleLog(params);
 			// global.ConsoleLog(err);
 			// global.ConsoleLog(result);
-
 			client.query('COMMIT', err => {
 				// done();
 				if (err) {
 					console.error('Error committing transaction', err.stack);
 				} else {
-					global.ConsoleLog(result.rows[0]['datefinished']);
-					result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					//global.ConsoleLog(result.rows[0]['datefinished']);
+					//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
 					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
 					// global.ConsoleLog(datefinished);
 					resolve(result.rows[0]);
@@ -1443,6 +1468,7 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 							})
 							.catch(err => 
 							{
+								done();
 								reject(err);
 							})
 						}
@@ -1450,6 +1476,7 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 					})
 					.catch(err => 
 					{
+						done();
 						reject(err);
 					})
 
@@ -1608,23 +1635,32 @@ function Audit_UpdateProduct(data)
 							global.ConsoleLog(result);
 
 							client.query('COMMIT', err => {
-								done();
+								
 								if (err) {
+									done();
 									console.error('Error committing transaction', err.stack);
 								} else {
 									//global.ConsoleLog(result);
-									doInsertAuditList(client,data).then(result => 
+									if(data.errorcode == 4)
 									{
-										//let unscannedList = result;
-										global.ConsoleLog(result);
-										resolve(result);
-										
-									})
-									.catch(err => 
+										done();
+										resolve({errorcode:0,message:'update successfully',data:result.rows});
+									}
+									else
 									{
-										reject(err);
-									});
-									//resolve({errorcode:0,message:'update successfully',data:result.rows});
+										doInsertAuditList(client,data).then(result => 
+										{
+											done();
+											//let unscannedList = result;
+											global.ConsoleLog(result);
+											resolve({errorcode:0,message:'update successfully',data:result});
+										})
+										.catch(err => 
+										{
+											done();
+											reject(err);
+										});
+									}
 								}
 							});
 						});						
@@ -1635,6 +1671,12 @@ function Audit_UpdateProduct(data)
 	});
 }
 
+function LoginUser(username,pwd)
+{
+	return new Promise((resolve,reject) => {
+		
+	});
+}
 // *******************************************************************************************************************************************************************************************
 // Internal functions
 module.exports.doUpdateAuditList = doUpdateAuditList;
