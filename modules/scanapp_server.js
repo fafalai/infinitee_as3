@@ -1343,7 +1343,7 @@ function AuditOnType(data) {
 	});
 }
 
-function AuditDiscardList() {
+function AuditDiscardList(data) {
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
 			global.cs,
@@ -1370,7 +1370,7 @@ function AuditDiscardList() {
 
 					let sql =
 						'UPDATE scanapp_testing_audit SET dateexpired=now() WHERE dateexpired IS NULL AND userscreated_id=$1 returning id';
-					let params = ['999'];
+					let params = data.userid;
 					client.query(sql, params, (err, result) => {
 						if (shouldAbort(err)) return;
 
