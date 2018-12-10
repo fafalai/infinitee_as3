@@ -336,6 +336,129 @@ function doInsertAuditList(client,data)
 	});
 }
 
+function doGetUserAuthDetails(username)
+{
+	global.ConsoleLog("doGetUserAuthDetails");
+	return new Promise((resolve,reject) => {
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+
+		client.query('BEGIN', err =>{
+
+		});
+
+
+		let selectsql = 
+				'select ' +
+				'u1.id,' +
+				'u1.uid,' +
+				'u1.uuid,' +
+				'u1.email,' +
+				'u1.name uname,' +
+				'u1.isadmin,' +
+				'u1.isclient,' +
+				'u1.customers_id custid,' +
+				'u1.salt,' +
+				'u1.pwd,' +
+				'u1.avatar,' +
+				'u1.canvieworders,' +
+				'u1.cancreateorders,' +
+				'u1.canviewinvoices,' +
+				'u1.cancreateinvoices,' +
+				'u1.canviewproducts,' +
+				'u1.cancreateproducts,' +
+				'u1.canviewinventory,' +
+				'u1.cancreateinventory,' +
+				'u1.canviewpayroll,' +
+				'u1.cancreatepayroll,' +
+				'u1.canviewcodes,' +
+				'u1.cancreatecodes,' +
+				'u1.canviewclients,' +
+				'u1.cancreateclients,' +
+				'u1.canviewusers,' +
+				'u1.cancreateusers,' +
+				'u1.canviewbuilds,' +
+				'u1.cancreatebuilds,' +
+				'u1.canviewtemplates,' +
+				'u1.cancreatetemplates,' +
+				'u1.canviewbanking,' +
+				'u1.cancreatebanking,' +
+				'u1.canviewpurchasing,' +
+				'u1.cancreatepurchasing,' +
+				'u1.canviewalerts,' +
+				'u1.cancreatealerts,' +
+				'u1.canviewdashboard,' +
+				'u1.cancreatedashboard,' +
+				'u1.clients_id clientid ' +
+				'from ' +
+				'users u1 left join users u2 on (u1.userscreated_id=u2.id) ' +
+				'         left join users u3 on (u1.usersmodified_id=u3.id) ' +
+				'         left join customers c1 on (u1.customers_id=c1.id) ' +
+				'where ' +
+				'u1.uid=$1 ' +
+				'and ' +
+				'u1.dateexpired is null';
+		let params = [
+			username	
+		];
+		client.query(selectsql, params, (err, result) => {
+			// global.ConsoleLog(updatesql);
+			// global.ConsoleLog(params);
+			// global.ConsoleLog(err);
+			// global.ConsoleLog(result);
+			client.query('COMMIT', err => {
+				// done();
+				if (err) {
+					console.error('Error committing transaction', err.stack);
+				} else {
+					//global.ConsoleLog(result.rows[0]['datefinished']);
+					//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+					// global.ConsoleLog(datefinished);
+					if(result.rows.length == 1)
+					{
+						resolve(result.rows[0]);
+					}
+					else
+					{
+						reject({message:global.text_unablegetuserauthdetails});
+					}
+				}
+			});
+		});
+	});
+}
+
+function doAuthPassword(user,pwd)
+{
+	global.ConsoleLog("doGetUserAuthDetails");
+	return new Promise((resolve,reject) => {
+		var sha512 = new global.jssha('SHA-512','TEXT');
+		sha512.update(pwd + user.salt);
+		if(user.pwd == sha512.getHash('HEX'))
+		{
+			resolve(user);
+		}
+		else
+		{
+			reject({message:global.text_invalidlogin});
+		}
+	});
+}
 
 // *******************************************************************************************************************************************************************************************
 // Public functions
@@ -1171,7 +1294,7 @@ function AuditGetAll(data) {
 								if(audit_type == 1)
 								{
 									done();
-									resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'ALL',audit_name:''});
+									resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_type:1,audit_typeid:null});
 								}
 								else 
 								{
@@ -1195,7 +1318,7 @@ function AuditGetAll(data) {
 									{
 										done();
 										global.ConsoleLog(result);
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_type:type,audit_name:result[0].name});
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_typeid:scannedList[0].audit_typeid,audit_type:scannedList[0].audit_type});
 									})
 									.catch(err => 
 									{
@@ -1215,7 +1338,7 @@ function AuditGetAll(data) {
 									if(audit_type == 1)
 									{
 										done();
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'ALL',audit_name:''});
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_type:1,audit_typeid:null});
 									}
 									else 
 									{
@@ -1239,7 +1362,7 @@ function AuditGetAll(data) {
 										{
 											done();
 											global.ConsoleLog(result);
-											resolve({scanned:scannedList,unscanned:unscannedList,audit_type:type,audit_name:result[0].name});
+											resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_typeid:unscannedList[0].audit_typeid,audit_type:unscannedList[0].audit_type});
 										})
 										.catch(err => 
 										{
@@ -1674,7 +1797,55 @@ function Audit_UpdateProduct(data)
 function LoginUser(username,pwd)
 {
 	return new Promise((resolve,reject) => {
-		
+		global.pg.connect(
+			global.cs,
+			(err,client,done) => {
+				if(err){
+					done();
+					reject('Unable to connect server.');
+				}
+				else
+				{
+					const shouldAbort = err => {
+						if (err) {
+							console.error('Error in transaction', err.stack);
+							client.query('ROLLBACK', err => {
+								if (err) {
+									console.error('Error rolling back client', err.stack);
+								}
+								// release the client back to the pool
+								done();
+							});
+							reject(err.message);
+						}
+						return !!err;
+					};
+
+					doGetAuditDetail(username).then(result => 
+					{
+						let user = result;
+						doAuthPassword(user,pwd).then(result =>
+						{
+							if(result.length == 1)
+							{
+								resolve({error:0,uid:result.uid.toUpperCase(),id:result.id,message:"Log in successfully"});
+							}
+						})
+						.catch(err =>
+						{
+							done();
+							reject(err);
+						})
+					})
+					.catch(err => 
+					{
+						done();
+						reject(err);
+					})
+
+				}
+			}	
+		);
 	});
 }
 // *******************************************************************************************************************************************************************************************
@@ -1684,7 +1855,8 @@ module.exports.doUpdateAuditList = doUpdateAuditList;
 module.exports.doGetAuditScanned = doGetAuditScanned;
 module.exports.doGetAuditUnscanned = doGetAuditUnscanned;
 module.exports.doInsertAuditList = doInsertAuditList;
-
+module.exports.doGetUserAuthDetails = doGetUserAuthDetails;
+module.exports.doAuthPassword = doAuthPassword;
 
 
 // *******************************************************************************************************************************************************************************************
@@ -1710,3 +1882,4 @@ module.exports.Audit_Scan_Barcode = Audit_Scan_Barcode;
 module.exports.Audit_UpdateProduct = Audit_UpdateProduct;
 module.exports.AuditGetScanned = AuditGetScanned;
 module.exports.AuditGetUnscanned = AuditGetUnscanned;
+module.exports.LoginUser = LoginUser;
