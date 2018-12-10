@@ -273,46 +273,29 @@ function doGetAuditDetail(client,tablename,id)
 }
 
 /**
- * This is for when an scanned product is not the audit list and the user decided to add it
- * beside update the product's location/catogry, need to insert an row to the audit list, and 
- * mark the datefinihsed to now()
+ * This is for 
+ * 1. when an scanned product is not the audit list and the user decided to add it
+ * beside update the product's location/catogry, need to insert an row to the audit list, and mark the datefinihsed to now().
+ * 2. when an scanned product is in the auditing list, but it is missing.
+ * after the update the product's status, and expired the old audit details from the list 
+ * need to insert a new row to the audit list with this product with the new status id
  */
 function doInsertAuditList(client,data)
 {
 	global.ConsoleLog("doInsertAuditList");
+	global.ConsoleLog(data.audit_nameid);
+	global.ConsoleLog(data.audit_typeid);
 	return new Promise((resolve, reject) => {
-		let audit_nameid;
-		let audit_typeid;
-		
-		if(data.type.toUpperCase() == 'ALL')
-		{
-			audit_nameid = 1;
-			audit_typeid = null;
-		}
-		else if(data.type.toUpperCase() == 'CATEGORY')
-		{
-			audit_typeid = data.typeid;
-		}
-		else if(data.type.toUpperCase() == 'LOCATION')
-		{
-			audit_nameid = 3;
-			audit_typeid = data.typeid;
-		}
-		let condition =
-		data.type.toUpperCase() == 'CATEGORY'
-				? ' AND productcategories_id=' + data.typeid
-				: data.type.toUpperCase() == 'LOCATION'
-				? ' AND locations1_id=' + data.typeid
-				: '';
+	
 		let insertSql =
-			'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished) ' +
-			'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +',now() FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
-			' AND p1.id = $1' +
-			condition +
-			' returning id';
+			'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished,userscreated_id) ' +
+			'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+data.audit_nameid+', ' +data.audit_typeid +',now(),$2 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+			' AND p1.id = $1 '+
+			'returning id';
 
 		let params = [
-			data.productid	
+			data.productid,
+			data.user_id	
 		];
 		global.ConsoleLog(insertSql);
 		client.query(insertSql, params, (err, result) => {
@@ -336,16 +319,12 @@ function doInsertAuditList(client,data)
 	});
 }
 
+
 /**
  * This is the function when an scanned product is in the auditing list, but it is missing.
  * after the update the product's status, need to insert a new row to the audit list with this product
  * with the new status id, but need to expire the old audit list. 
  */
-function doUpdateAuditMissingProduct(client)
-{
-
-}
-
 function doexpiredAuditProduct(client,data)
 {
 	global.ConsoleLog("doexpiredAuditProduct");
@@ -373,12 +352,87 @@ function doexpiredAuditProduct(client,data)
 			}
 			else
 			{
-				let updatesql = 'UPDATE scanapp_testing_products '+
+				let updatesql = 'UPDATE scanapp_testing_audit '+
+								'SET dateexpired=now() '+
+								'WHERE dateexpired is null AND userscreated_id = $1 and products_id = $2 returning id';
+				let params = [
+					data.user_id,
+					__.sanitiseAsBigInt(data.productid),	
+				];
+				global.ConsoleLog(updatesql);
+				global.ConsoleLog(params);
+				client.query(updatesql, params, (err, result) => {
+					if (shouldAbort(err)) return;
+					global.ConsoleLog(updatesql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+					client.query('COMMIT', err => {
+						// done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							//global.ConsoleLog(result.rows[0]['datefinished']);
+							//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// global.ConsoleLog(datefinished);
+							global.ConsoleLog(result.rows)
+							if(result.rows.length == 0)
+							{
+								resolve({errorcode:0});
+							}
+							// else
+							// {
+							// 	reject({errorcode:1,message:global.text_unablegetuserauthdetails});
+							// }
+						}
+					});
+				});
+			}
+			
+		});
+	
+	});
+}
+
+/**
+ * This is the function when an scanned product is in the auditing list, but it is missing.
+ * after the update the product's status, and expired the old audit details from the list 
+ * need to insert a new row to the audit list with this product with the new status id
+ */
+function doUpdateAuditMissingProduct(client)
+{
+	global.ConsoleLog("doUpdateAuditMissingProduct");
+	return new Promise((resolve,reject) => {
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err =>{
+			if (shouldAbort(err)) 
+			{
+				return;
+			}
+			else
+			{
+				let updatesql = 'UPDATE scanapp_testing_audit '+
 								'SET dateexpired=now()'+
 								'WHERE dateexpired is null AND userscreated_id = $1 and products_id = $2 returning id';
 				let params = [
-
-					__.sanitiseAsBigInt(data.productid),	
+					data.userid,
+					__.sanitiseAsBigInt(data.products_id),	
 				];
 				global.ConsoleLog(updatesql);
 				global.ConsoleLog(params);
@@ -414,6 +468,7 @@ function doexpiredAuditProduct(client,data)
 	
 	});
 }
+
 
 function doGetUserAuthDetails(client,username)
 {
@@ -1773,7 +1828,7 @@ function Audit_UpdateProduct(data)
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 								params = [
-									data.usermodified_id,
+									data.user_id,
 									__.sanitiseAsBigInt(data.productid),
 									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
 								];
@@ -1785,7 +1840,7 @@ function Audit_UpdateProduct(data)
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 								params = [
-									data.usermodified_id,
+									data.user_id,
 									__.sanitiseAsBigInt(data.productid),
 									__.sanitiseAsBigInt(data.productcategories_id),
 								];
@@ -1799,7 +1854,7 @@ function Audit_UpdateProduct(data)
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 							params = [
-								data.usermodified_id,
+								data.user_id,
 								__.sanitiseAsBigInt(data.productid),
 								__.sanitiseAsBigInt(data.status_id),
 							];
@@ -1815,7 +1870,7 @@ function Audit_UpdateProduct(data)
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 								params = [
-									data.usermodified_id,
+									data.user_id,
 									__.sanitiseAsBigInt(data.productid),
 									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
 									__.sanitiseAsBigInt(data.status_id),
@@ -1828,7 +1883,7 @@ function Audit_UpdateProduct(data)
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 								params = [
-									data.usermodified_id,
+									data.user_id,
 									__.sanitiseAsBigInt(data.productid),
 									__.sanitiseAsBigInt(data.productcategories_id),
 									__.sanitiseAsBigInt(data.status_id)
@@ -1855,8 +1910,29 @@ function Audit_UpdateProduct(data)
 									//global.ConsoleLog(result);
 									if(data.errorcode == 4)
 									{
-										done();
-										resolve({errorcode:0,message:'update successfully',data:result.rows});
+										//done();
+										doexpiredAuditProduct(client,data).then(result =>
+										{
+											global.ConsoleLog(result);
+											doInsertAuditList(client,data).then(result => 
+											{
+												done();
+												//let unscannedList = result;
+												global.ConsoleLog(result);
+												resolve({errorcode:0,message:'update successfully',data:result});
+											})
+											.catch(err => 
+											{
+												done();
+												reject(err);
+											});
+										})
+										.catch(err =>
+										{
+											done();
+											reject(err);	
+										});
+										//resolve({errorcode:0,message:'update successfully',data:result.rows});
 									}
 									else
 									{
@@ -1948,6 +2024,7 @@ module.exports.doGetAuditScanned = doGetAuditScanned;
 module.exports.doGetAuditUnscanned = doGetAuditUnscanned;
 module.exports.doInsertAuditList = doInsertAuditList;
 module.exports.doGetUserAuthDetails = doGetUserAuthDetails;
+module.exports.doexpiredAuditProduct = doexpiredAuditProduct;
 module.exports.doAuthPassword = doAuthPassword;
 
 
