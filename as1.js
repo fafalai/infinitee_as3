@@ -2931,10 +2931,10 @@ function main()
       locations1_id: req.body.locations_id,
       status_id:req.body.status_id,
       productcategories_id:req.body.productcategories_id,
-      usermodified_id:999,
+      user_id:999,
       errorcode:req.body.errorcode,
       audit_nameid:req.body.audit_nameid,
-      typeid:req.body.audit_typeid
+      audit_typeid:req.body.audit_typeid
     };
 
     scanappserver.Audit_UpdateProduct(product)
@@ -2958,10 +2958,10 @@ function main()
       locations1_id: req.body.locations_id,
       status_id:req.body.status_id,
       productcategories_id:req.body.productcategories_id,
-      usermodified_id:999,
+      userid:999,
       errorcode:req.body.errorcode,
       audit_nameid:req.body.audit_nameid,
-      typeid:req.body.audit_typeid
+      audit_typeid:req.body.audit_typeid
     };
 
     scanappserver.Audit_UpdateProduct(product)
