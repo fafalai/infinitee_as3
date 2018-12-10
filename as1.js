@@ -2918,7 +2918,8 @@ function main()
   })
 
    /**
-   * During an audit, if the user scann a barcode which is not in the audit list,but has been registered, he can choose 'Add', 
+   * During an audit, if the user scann a barcode which is not in the audit list,but has been registered. 
+   * Or in the audit list, but it is missing he can choose 'Add', 
    * so this product will be changed to the current auditing location or category automatically
    * without changing to another page in the frontend. one-stop-saction. 
    */
@@ -2932,8 +2933,8 @@ function main()
       productcategories_id:req.body.productcategories_id,
       usermodified_id:999,
       errorcode:req.body.errorcode,
-      type:req.body.type,
-      typeid:req.body.typeid
+      type:req.body.audit_type,
+      typeid:req.body.audit_typeid
     };
 
     scanappserver.Audit_UpdateProduct(product)
@@ -2943,6 +2944,38 @@ function main()
       .catch(err => {
         res.status(500).send(err);
       });
+  });
+
+   /**
+   * During an audit, if the user scann a barcode which is not in the audit list,but has been registered, he can choose 'Edit', 
+   * so this product will be updated based all the info send from the front-end. 
+   */
+  app.post('/scanapp_auditproductedit', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
+    let product = {
+      productid: req.body.productid,
+      locations1_id: req.body.locations_id,
+      status_id:req.body.status_id,
+      productcategories_id:req.body.productcategories_id,
+      usermodified_id:999,
+      errorcode:req.body.errorcode,
+      type:req.body.audit_type,
+      typeid:req.body.audit_typeid
+    };
+
+    scanappserver.Audit_UpdateProduct(product)
+      .then(result => {
+        res.send(result);
+      })
+      .catch(err => {
+        res.status(500).send(err);
+      });
+  });
+
+  app.post('/scanapp_login',function(req,res){
+    'use strict';
+    
   });
   // This line is last for static files...
   app.use('/', express.static(__dirname + '/routes'));
