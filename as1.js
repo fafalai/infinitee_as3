@@ -2933,7 +2933,7 @@ function main()
       productcategories_id:req.body.productcategories_id,
       usermodified_id:999,
       errorcode:req.body.errorcode,
-      type:req.body.audit_type,
+      audit_nameid:req.body.audit_nameid,
       typeid:req.body.audit_typeid
     };
 
@@ -2960,7 +2960,7 @@ function main()
       productcategories_id:req.body.productcategories_id,
       usermodified_id:999,
       errorcode:req.body.errorcode,
-      type:req.body.audit_type,
+      audit_nameid:req.body.audit_nameid,
       typeid:req.body.audit_typeid
     };
 
@@ -2975,7 +2975,16 @@ function main()
 
   app.post('/scanapp_login',function(req,res){
     'use strict';
-    
+    let username = req.body.username;
+    let pwd = req.body.pwd;
+    scanappserver.LoginUser(username,pwd)
+      .then(result =>
+        {
+          res.send(result);
+        })
+        .catch(err =>{
+          res.status(500).send(err);
+        });
   });
   // This line is last for static files...
   app.use('/', express.static(__dirname + '/routes'));
