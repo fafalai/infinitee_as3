@@ -23,7 +23,7 @@ function doCheckAuditList(client,barcode,userscreated_id)
 	global.ConsoleLog("doCheckAuditList");
 	return new Promise((resolve, reject) => {
 		let selectsql =
-		'select a1.id,a1.products_id,a1.audit_type,a1.audit_typeid,a1.datefinished,p1.barcode ,p1.name,p1.comments,' +
+		'select a1.id,a1.products_id,a1.audit_nameid,a1.audit_typeid,a1.datefinished,p1.barcode ,p1.name,p1.comments,' +
 		'p1.description,p1.serial_number,p1.status_id,s1.name status,' + 
 		'p1.locations1_id,l1.name locations,'+
 		'p1.productcategories_id,c1.name category '+
@@ -143,7 +143,7 @@ function doGetAuditScanned(client,data)
 	return new Promise((resolve, reject) => {
 		let selectsql =
 					'SELECT a1.id audit_id, p1.id products_id , p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
-					'a1.audit_type,a1.audit_typeid '+
+					'a1.audit_nameid,a1.audit_typeid '+
 					'FROM scanapp_testing_audit a1 '+
 					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
@@ -202,7 +202,7 @@ function doGetAuditUnscanned(client,data)
 	return new Promise((resolve, reject) => {
 		let selectsql =
 						'SELECT a1.id audit_id, p1.id products_id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
-						'a1.audit_type,a1.audit_typeid '+
+						'a1.audit_nameid,a1.audit_typeid '+
 						'FROM scanapp_testing_audit a1 '+
 						'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
 						'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
@@ -281,12 +281,12 @@ function doInsertAuditList(client,data)
 {
 	global.ConsoleLog("doInsertAuditList");
 	return new Promise((resolve, reject) => {
-		let audit_type;
+		let audit_nameid;
 		let audit_typeid;
 		
 		if(data.type.toUpperCase() == 'ALL')
 		{
-			audit_type = 1;
+			audit_nameid = 1;
 			audit_typeid = null;
 		}
 		else if(data.type.toUpperCase() == 'CATEGORY')
@@ -295,7 +295,7 @@ function doInsertAuditList(client,data)
 		}
 		else if(data.type.toUpperCase() == 'LOCATION')
 		{
-			audit_type = 3;
+			audit_nameid = 3;
 			audit_typeid = data.typeid;
 		}
 		let condition =
@@ -305,8 +305,8 @@ function doInsertAuditList(client,data)
 				? ' AND locations1_id=' + data.typeid
 				: '';
 		let insertSql =
-			'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_type,audit_typeid,datefinished) ' +
-			'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_type+', ' +audit_typeid +',now() FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+			'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished) ' +
+			'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +',now() FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 			' AND p1.id = $1' +
 			condition +
 			' returning id';
@@ -336,7 +336,86 @@ function doInsertAuditList(client,data)
 	});
 }
 
-function doGetUserAuthDetails(username)
+/**
+ * This is the function when an scanned product is in the auditing list, but it is missing.
+ * after the update the product's status, need to insert a new row to the audit list with this product
+ * with the new status id, but need to expire the old audit list. 
+ */
+function doUpdateAuditMissingProduct(client)
+{
+
+}
+
+function doexpiredAuditProduct(client,data)
+{
+	global.ConsoleLog("doexpiredAuditProduct");
+	return new Promise((resolve,reject) => {
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err =>{
+			if (shouldAbort(err)) 
+			{
+				return;
+			}
+			else
+			{
+				let updatesql = 'UPDATE scanapp_testing_products '+
+								'SET dateexpired=now()'+
+								'WHERE dateexpired is null AND userscreated_id = $1 and products_id = $2 returning id';
+				let params = [
+
+					__.sanitiseAsBigInt(data.productid),	
+				];
+				global.ConsoleLog(updatesql);
+				global.ConsoleLog(params);
+				client.query(selectsql, params, (err, result) => {
+					if (shouldAbort(err)) return;
+					global.ConsoleLog(selectsql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+					client.query('COMMIT', err => {
+						// done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							//global.ConsoleLog(result.rows[0]['datefinished']);
+							//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// global.ConsoleLog(datefinished);
+							if(result.rows.length == 1)
+							{
+								resolve(result.rows[0]);
+							}
+							else
+							{
+								reject({errorcode:1,message:global.text_unablegetuserauthdetails});
+							}
+						}
+					});
+				});
+			}
+			
+		});
+	
+	});
+}
+
+function doGetUserAuthDetails(client,username)
 {
 	global.ConsoleLog("doGetUserAuthDetails");
 	return new Promise((resolve,reject) => {
@@ -356,13 +435,14 @@ function doGetUserAuthDetails(username)
 			return !!err;
 		};
 
-
 		client.query('BEGIN', err =>{
-
-		});
-
-
-		let selectsql = 
+			if (shouldAbort(err)) 
+			{
+				return;
+			}
+			else
+			{
+				let selectsql = 
 				'select ' +
 				'u1.id,' +
 				'u1.uid,' +
@@ -412,34 +492,43 @@ function doGetUserAuthDetails(username)
 				'u1.uid=$1 ' +
 				'and ' +
 				'u1.dateexpired is null';
-		let params = [
-			username	
-		];
-		client.query(selectsql, params, (err, result) => {
-			// global.ConsoleLog(updatesql);
-			// global.ConsoleLog(params);
-			// global.ConsoleLog(err);
-			// global.ConsoleLog(result);
-			client.query('COMMIT', err => {
-				// done();
-				if (err) {
-					console.error('Error committing transaction', err.stack);
-				} else {
-					//global.ConsoleLog(result.rows[0]['datefinished']);
-					//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// global.ConsoleLog(datefinished);
-					if(result.rows.length == 1)
-					{
-						resolve(result.rows[0]);
-					}
-					else
-					{
-						reject({message:global.text_unablegetuserauthdetails});
-					}
-				}
-			});
+				let params = [
+					username	
+				];
+				global.ConsoleLog(selectsql);
+				global.ConsoleLog(params);
+				client.query(selectsql, params, (err, result) => {
+					if (shouldAbort(err)) return;
+					global.ConsoleLog(selectsql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+					client.query('COMMIT', err => {
+						// done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							//global.ConsoleLog(result.rows[0]['datefinished']);
+							//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+							// global.ConsoleLog(datefinished);
+							if(result.rows.length == 1)
+							{
+								resolve(result.rows[0]);
+							}
+							else
+							{
+								reject({errorcode:1,message:global.text_unablegetuserauthdetails});
+							}
+						}
+					});
+				});
+			}
+			
 		});
+
+
+		
 	});
 }
 
@@ -455,7 +544,7 @@ function doAuthPassword(user,pwd)
 		}
 		else
 		{
-			reject({message:global.text_invalidlogin});
+			reject({errorcode:1,message:global.text_invalidlogin});
 		}
 	});
 }
@@ -1114,22 +1203,22 @@ function AuditOnType(data) {
 						if (shouldAbort(err)) return;
 
 						// let typeid = _.isNil(typeid)? '' : ''+typeid;
-						let audit_type;
+						let audit_nameid;
 						let audit_typeid;
 						
 						if(data.type.toUpperCase() == 'ALL')
 						{
-							audit_type = 1;
+							audit_nameid = 0;
 							audit_typeid = null;
-						}
-						else if(data.type.toUpperCase() == 'CATEGORY')
-						{
-							audit_type = 2;
-							audit_typeid = data.typeid;
 						}
 						else if(data.type.toUpperCase() == 'LOCATION')
 						{
-							audit_type = 3;
+							audit_nameid = 1;
+							audit_typeid = data.typeid;
+						}
+						else if(data.type.toUpperCase() == 'CATEGORY')
+						{
+							audit_nameid = 2;
 							audit_typeid = data.typeid;
 						}
 						let condition =
@@ -1139,8 +1228,8 @@ function AuditOnType(data) {
 								? ' AND locations1_id=' + data.typeid
 								: '';
 						let insertSql =
-							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_type,audit_typeid) ' +
-							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_type+', ' +audit_typeid +' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid) ' +
+							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 							condition +
 							' returning id';
 						//global.ConsoleLog(insertSql);
@@ -1281,33 +1370,33 @@ function AuditGetAll(data) {
 						doGetAuditUnscanned(client,data).then(result => 
 						{
 							done();
-							let audit_type;
+							let audit_nameid;
 							let audit_typeid ;
 							let unscannedList = result;
 							global.ConsoleLog(unscannedList);
 							if(scannedList.length > 0)
 							{
-								audit_type = scannedList[0].audit_type;
+								audit_nameid = scannedList[0].audit_nameid;
 								audit_typeid = scannedList[0].audit_typeid;
-								global.ConsoleLog(audit_type);
+								global.ConsoleLog(audit_nameid);
 								global.ConsoleLog(audit_typeid);
-								if(audit_type == 1)
+								if(audit_nameid == 0)
 								{
 									done();
-									resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_type:1,audit_typeid:null});
+									resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_nameid:1,audit_typeid:null});
 								}
 								else 
 								{
 									var tablename = '';
 									var type = '';
-									switch(audit_type){
+									switch(audit_nameid){
+										case "1":
+											tablename = 'scanapp_testing_locations';
+											type = 'Locations'
+											break;
 										case "2":
 											tablename = 'scanapp_testing_productcategories';
 											type = 'Categories'
-											break;
-										case "3":
-											tablename = 'scanapp_testing_locations';
-											type = 'Locations'
 											break;
 										default:
 											tablename = '';
@@ -1318,7 +1407,7 @@ function AuditGetAll(data) {
 									{
 										done();
 										global.ConsoleLog(result);
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_typeid:scannedList[0].audit_typeid,audit_type:scannedList[0].audit_type});
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_nameid:scannedList[0].audit_nameid,audit_typeid:scannedList[0].audit_typeid});
 									})
 									.catch(err => 
 									{
@@ -1331,27 +1420,27 @@ function AuditGetAll(data) {
 							{
 								if(unscannedList.length > 0)
 								{
-									audit_type = unscannedList[0].audit_type;
+									audit_nameid = unscannedList[0].audit_nameid;
 									audit_typeid = unscannedList[0].audit_typeid;
-									global.ConsoleLog(audit_type);
+									global.ConsoleLog(audit_nameid);
 									global.ConsoleLog(audit_typeid);
-									if(audit_type == 1)
+									if(audit_nameid == 0)
 									{
 										done();
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_type:1,audit_typeid:null});
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_nameid:1,audit_typeid:null});
 									}
 									else 
 									{
 										var tablename = '';
 										var type = '';
-										switch(audit_type){
+										switch(audit_nameid){
+											case "1":
+												tablename = 'scanapp_testing_locations';
+												type = 'Locations'
+												break;
 											case "2":
 												tablename = 'scanapp_testing_productcategories';
 												type = 'Categories'
-												break;
-											case "3":
-												tablename = 'scanapp_testing_locations';
-												type = 'Locations'
 												break;
 											default:
 												tablename = '';
@@ -1362,7 +1451,7 @@ function AuditGetAll(data) {
 										{
 											done();
 											global.ConsoleLog(result);
-											resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_typeid:unscannedList[0].audit_typeid,audit_type:unscannedList[0].audit_type});
+											resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_nameid:unscannedList[0].audit_nameid,audit_typeid:unscannedList[0].audit_typeid});
 										})
 										.catch(err => 
 										{
@@ -1372,7 +1461,7 @@ function AuditGetAll(data) {
 								}
 								else
 								{
-									resolve({scanned:scannedList,unscanned:unscannedList,audit_type:'',audit_name:''});
+									resolve({scanned:scannedList,unscanned:unscannedList,audit_nameid:'',audit_name:''});
 								}
 								
 							}
@@ -1796,6 +1885,9 @@ function Audit_UpdateProduct(data)
 
 function LoginUser(username,pwd)
 {
+	global.ConsoleLog("LoginUser");
+	global.ConsoleLog(username);
+	global.ConsoleLog(pwd);
 	return new Promise((resolve,reject) => {
 		global.pg.connect(
 			global.cs,
@@ -1821,15 +1913,15 @@ function LoginUser(username,pwd)
 						return !!err;
 					};
 
-					doGetAuditDetail(username).then(result => 
+					doGetUserAuthDetails(client,username).then(result => 
 					{
+						global.ConsoleLog(result);
 						let user = result;
 						doAuthPassword(user,pwd).then(result =>
 						{
-							if(result.length == 1)
-							{
-								resolve({error:0,uid:result.uid.toUpperCase(),id:result.id,message:"Log in successfully"});
-							}
+							global.ConsoleLog(result);
+							resolve({errorcode:0,uid:result.uid.toUpperCase(),id:result.id,message:"Log in successfully"});
+							
 						})
 						.catch(err =>
 						{
