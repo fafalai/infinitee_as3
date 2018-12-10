@@ -377,7 +377,7 @@ function doexpiredAuditProduct(client,data)
 							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
 							// global.ConsoleLog(datefinished);
 							global.ConsoleLog(result.rows)
-							if(result.rows.length == 0)
+							if(result.rows.length == 1)
 							{
 								resolve({errorcode:0});
 							}
@@ -385,80 +385,6 @@ function doexpiredAuditProduct(client,data)
 							// {
 							// 	reject({errorcode:1,message:global.text_unablegetuserauthdetails});
 							// }
-						}
-					});
-				});
-			}
-			
-		});
-	
-	});
-}
-
-/**
- * This is the function when an scanned product is in the auditing list, but it is missing.
- * after the update the product's status, and expired the old audit details from the list 
- * need to insert a new row to the audit list with this product with the new status id
- */
-function doUpdateAuditMissingProduct(client)
-{
-	global.ConsoleLog("doUpdateAuditMissingProduct");
-	return new Promise((resolve,reject) => {
-		const shouldAbort = err => {
-			if (err) {
-				console.error('Error in transaction', err.stack);
-				client.query('ROLLBACK', err => {
-					if (err) {
-						console.error('Error rolling back client', err.stack);
-					}
-					// release the client back to the pool
-					done();
-				});
-
-				reject(err.message);
-			}
-			return !!err;
-		};
-
-		client.query('BEGIN', err =>{
-			if (shouldAbort(err)) 
-			{
-				return;
-			}
-			else
-			{
-				let updatesql = 'UPDATE scanapp_testing_audit '+
-								'SET dateexpired=now()'+
-								'WHERE dateexpired is null AND userscreated_id = $1 and products_id = $2 returning id';
-				let params = [
-					data.userid,
-					__.sanitiseAsBigInt(data.products_id),	
-				];
-				global.ConsoleLog(updatesql);
-				global.ConsoleLog(params);
-				client.query(selectsql, params, (err, result) => {
-					if (shouldAbort(err)) return;
-					global.ConsoleLog(selectsql);
-					global.ConsoleLog(params);
-					global.ConsoleLog(err);
-					global.ConsoleLog(result);
-					client.query('COMMIT', err => {
-						// done();
-						if (err) {
-							console.error('Error committing transaction', err.stack);
-						} else {
-							//global.ConsoleLog(result.rows[0]['datefinished']);
-							//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// global.ConsoleLog(datefinished);
-							if(result.rows.length == 1)
-							{
-								resolve(result.rows[0]);
-							}
-							else
-							{
-								reject({errorcode:1,message:global.text_unablegetuserauthdetails});
-							}
 						}
 					});
 				});
