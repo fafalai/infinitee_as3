@@ -419,7 +419,7 @@ function doInsertAuditList(client,data)
 			{
 				let insertSql =
 						'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished,userscreated_id) ' +
-						'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+data.audit_nameid+', ' +data.audit_typeid +',now(),$2 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+						'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+data.audit_nameid+', ' + data.audit_typeid +',now(),$2 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 						' AND p1.id = $1 '+
 						'returning id';
 	

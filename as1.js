@@ -2811,7 +2811,7 @@ function main()
     //   userscreated_id:999
     // }
     let data = {
-      type:req.body.type,
+      type:req.body.name,
       typeid:req.body.typeid,
       user_id:req.body.userid
     }
@@ -2832,7 +2832,7 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      user_id:req.body.user_id
+      user_id:req.body.userid
     };
 
     scanappserver.AuditGetAll(audit).then(
@@ -2955,14 +2955,14 @@ function main()
     'use strict';
     // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
     let product = {
-      productid: req.body.productid,
+      productid: req.body.products_id,
       locations1_id: req.body.locations_id,
       status_id:req.body.status_id,
       productcategories_id:req.body.productcategories_id,
       user_id:req.body.userid,
       errorcode:req.body.errorcode,
       audit_nameid:req.body.audit_nameid,
-      audit_typeid:req.body.audit_typeid
+      audit_typeid:req.body.audit_typeid==''? null: req.body.audit_typeid
     };
 
     scanappserver.Audit_UpdateProduct(product)
