@@ -2800,10 +2800,16 @@ function main()
     });
   })
   
-  app.get('/scanapp_auditontype/:type/:typeid?', function(req, res){
+  // app.get('/scanapp_auditontype/:type/:typeid?', function(req, res){
+    app.post('/scanapp_auditontype', function(req, res) {
     'use strict';
     // let type = req.params.type;
     // let typeid = req.params.typeid;
+    // let data = {
+    //   type:req.params.type,
+    //   typeid:req.params.typeid,
+    //   userscreated_id:999
+    // }
     let data = {
       type:req.params.type,
       typeid:req.params.typeid,
@@ -2874,7 +2880,7 @@ function main()
     })
   });
 
-
+  
   // app.get('/scanapp_auditgetlist/:offset/:length?', function (req, res) {
   //   'use strict';
   //   let audit = {
@@ -2905,10 +2911,10 @@ function main()
     })
   })
 
-  app.get('/scanapp_auditdiscardlist', function (req, res){
+  app.post('/scanapp_auditdiscardlist', function (req, res){
     'use strict';
-
-    scanappserver.AuditDiscardList().then(
+    let data = req.body;
+    scanappserver.AuditDiscardList(data).then(
       result => {
         res.send(result);
       }
@@ -2916,6 +2922,17 @@ function main()
       res.status(500).send(err);
     })
   })
+  // app.get('/scanapp_auditdiscardlist', function (req, res){
+  //   'use strict';
+
+  //   scanappserver.AuditDiscardList().then(
+  //     result => {
+  //       res.send(result);
+  //     }
+  //   ).catch(err => {
+  //     res.status(500).send(err);
+  //   })
+  // })
 
    /**
    * During an audit, if the user scann a barcode which is not in the audit list,but has been registered. 
