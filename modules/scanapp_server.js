@@ -1209,13 +1209,13 @@ function AuditOnType(data) {
 								? ' AND locations1_id=' + data.typeid
 								: '';
 						let insertSql =
-							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid) ' +
-							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,userscreated_id) ' +
+							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +',$1 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 							condition +
 							' returning id';
 						//global.ConsoleLog(insertSql);
-						
-						client.query(insertSql, (err, result) => {
+						let params = [data.userscreated_id];
+						client.query(insertSql,params, (err, result) => {
 							if (shouldAbort(err)) return;
 
 							// result.rows.length ? AuditGetList() : reject('Fail to create auditing list.');

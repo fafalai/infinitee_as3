@@ -2810,7 +2810,11 @@ function main()
     //   typeid:req.params.typeid,
     //   userscreated_id:999
     // }
-    let data = req.body;
+    let data = {
+      type: req.body.typename,
+      typeid: req.body.nameid,
+      userscreated_id: req.body.userid
+    }
     scanappserver.AuditOnType(data).then(
       result => {
         res.send(result);
@@ -2828,7 +2832,7 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      userscreated_id:999
+      userscreated_id:req.body.userid
     };
 
     scanappserver.AuditGetAll(audit).then(
