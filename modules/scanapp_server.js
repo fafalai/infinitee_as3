@@ -18,7 +18,7 @@
 /**
  * This is the function to check whether the scanned barcode is in the audit list
  */
-function doCheckAuditList(client,barcode,userscreated_id)
+function doCheckAuditList(client,barcode,user_id)
 {
 	global.ConsoleLog("doCheckAuditList");
 	return new Promise((resolve, reject) => {
@@ -56,7 +56,7 @@ function doCheckAuditList(client,barcode,userscreated_id)
 				'and a1.userscreated_id =$2';
 			let params = [
 				__.sanitiseAsString(barcode, 50),
-				userscreated_id,	
+				user_id,	
 			];
 			client.query(selectsql, params, (err, result) => {
 				// global.ConsoleLog(selectsql);
@@ -1590,7 +1590,7 @@ function AuditGetAll(data) {
 								if(audit_nameid == 0)
 								{
 									done();
-									resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_nameid:1,audit_typeid:null});
+									resolve({scanned:scannedList,unscanned:unscannedList,audit_name:'ALL',audit_typename:'',audit_nameid:0,audit_typeid:null});
 								}
 								else 
 								{
@@ -1615,7 +1615,7 @@ function AuditGetAll(data) {
 										done();
 										let name = result.name;
 										global.ConsoleLog(name);
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:name,audit_nameid:scannedList[0].audit_nameid,audit_typeid:scannedList[0].audit_typeid});
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_name:type,audit_typename:name,audit_nameid:scannedList[0].audit_nameid,audit_typeid:scannedList[0].audit_typeid});
 									})
 									.catch(err => 
 									{
@@ -1636,7 +1636,7 @@ function AuditGetAll(data) {
 									if(audit_nameid == 0)
 									{
 										done();
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:'ALL',audit_name:'',audit_nameid:1,audit_typeid:null});
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_name:'ALL',audit_typename:'',audit_nameid:0,audit_typeid:null});
 									}
 									else 
 									{
@@ -1661,7 +1661,7 @@ function AuditGetAll(data) {
 											done();
 											let name = result.name;
 											global.ConsoleLog(name);
-											resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:name,audit_nameid:unscannedList[0].audit_nameid,audit_typeid:unscannedList[0].audit_typeid});
+											resolve({scanned:scannedList,unscanned:unscannedList,audit_name:type,audit_typename:name,audit_nameid:unscannedList[0].audit_nameid,audit_typeid:unscannedList[0].audit_typeid});
 										})
 										.catch(err => 
 										{
@@ -1757,7 +1757,7 @@ function AuditGetUnscanned(data)
 }
 
 
-function Audit_Scan_Barcode(barcode,userscreated_id){
+function Audit_Scan_Barcode(barcode,user_id){
 	global.ConsoleLog("Audit Scan barcode");
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
@@ -1769,7 +1769,7 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 				} 
 				else 
 				{
-					doCheckAuditList(client,barcode,userscreated_id).then(result => 
+					doCheckAuditList(client,barcode,user_id).then(result => 
 					{
 						// global.ConsoleLog(result);
 						if(result.length == 1)
@@ -1866,6 +1866,11 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 function Audit_UpdateProduct(data)
 {
 	return new Promise((resolve, reject) => {
+		// if ( __.isUNB(data.productid)) {
+		// 	reject('product ID can not be empty. ');
+		// 	return;
+		// }
+
 		global.pg.connect(
 			global.cs,
 			(err, client, done) => {
@@ -1984,12 +1989,11 @@ function Audit_UpdateProduct(data)
 							global.ConsoleLog(result);
 
 							client.query('COMMIT', err => {
-								
 								if (err) {
 									done();
 									console.error('Error committing transaction', err.stack);
 								} else {
-									//global.ConsoleLog(result);
+									global.ConsoleLog(result);
 									if(data.errorcode == 4)
 									{
 										//done();
@@ -2042,6 +2046,16 @@ function Audit_UpdateProduct(data)
 }
 
  /**
+ * During an audit, if the user scann a barcode which has not been registered, he can choose 'Register', 
+ * so this product will be changed to the current auditing location or category automatically
+ * without changing to another page in the frontend. one-stop-saction. 
+ */
+function Audit_RegisterProduct()
+{
+
+}
+
+ /**
  * During an audit, the user scann a barcode which is not in the audit list,but has been registered. 
  * Or it is in the audit list but it is missing. 
  * The user will be presented two options. 'Add' and 'Edit'. 
@@ -2052,6 +2066,10 @@ function Audit_EditProduct(data)
 {
 	global.ConsoleLog('Audit_EditProduct');
 	return new Promise((resolve, reject) => {
+		if ( __.isUNB(data.productid)) {
+			reject('product ID can not be empty. ');
+			return;
+		}
 		global.pg.connect(
 			global.cs,
 			(err, client, done) => {
