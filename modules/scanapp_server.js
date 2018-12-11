@@ -1296,7 +1296,7 @@ function AuditDiscardList(data) {
 
 					let sql =
 						'UPDATE scanapp_testing_audit SET dateexpired=now() WHERE dateexpired IS NULL AND userscreated_id=$1 returning id';
-					let params = data.userid;
+					let params = [data.userid];
 					client.query(sql, params, (err, result) => {
 						if (shouldAbort(err)) return;
 

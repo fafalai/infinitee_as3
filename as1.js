@@ -2790,7 +2790,7 @@ function main()
 
   app.get('/scanapp_statusgetall', function (req, res) {
     'use strict';
-
+    
     scanappserver.StatusGetAll()
     .then(results => {
       res.send(results);
@@ -2812,7 +2812,7 @@ function main()
     // }
     let data = {
       type: req.body.typename,
-      typeid: req.body.nameid,
+      typeid: req.body.typeid,
       userscreated_id: req.body.userid
     }
     scanappserver.AuditOnType(data).then(
@@ -2850,7 +2850,7 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      userscreated_id:999
+      userscreated_id: req.body.userid
     };
 
     scanappserver.AuditGetScanned(audit).then(
@@ -2868,7 +2868,7 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      userscreated_id:999
+      userscreated_id: req.body.userid
     };
 
     scanappserver.AuditGetUnscanned(audit).then(
@@ -2899,18 +2899,28 @@ function main()
   //   })
   // })
 
-  app.get('/scanapp_auditscanbarcode/:barcode', function (req, res) {
-    'use strict';
+  // app.get('/scanapp_auditscanbarcode/:barcode', function (req, res) {
+  //   'use strict';
 
-    let barcode = req.params.barcode;
-    let userscreated_id = 999;
+  //   let barcode = req.params.barcode;
+  //   let userscreated_id = 999;
+  //   scanappserver.Audit_Scan_Barcode(barcode,userscreated_id).then(
+  //     result => res.send(result)
+  //   ).catch(err => {
+  //     res.status(500).send(err);
+  //   })
+  // })
+  app.post('/scanapp_auditscanbarcode', function (req, res) {
+    'use strict'
+
+    let barcode = req.body.barcode;
+    let userscreated_id = req.body.userid;
     scanappserver.Audit_Scan_Barcode(barcode,userscreated_id).then(
-      result => res.send(result)
-    ).catch(err => {
-      res.status(500).send(err);
-    })
+          result => res.send(result)
+        ).catch(err => {
+          res.status(500).send(err);
+        })
   })
-
   app.post('/scanapp_auditdiscardlist', function (req, res){
     'use strict';
     let data = req.body;
