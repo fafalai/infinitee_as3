@@ -22,40 +22,60 @@ function doCheckAuditList(client,barcode,userscreated_id)
 {
 	global.ConsoleLog("doCheckAuditList");
 	return new Promise((resolve, reject) => {
-		let selectsql =
-		'select a1.id,a1.products_id,a1.audit_nameid,a1.audit_typeid,a1.datefinished,p1.barcode ,p1.name,p1.comments,' +
-		'p1.description,p1.serial_number,p1.status_id,s1.name status,' + 
-		'p1.locations1_id,l1.name locations,'+
-		'p1.productcategories_id,c1.name category '+
-		'from scanapp_testing_audit a1 ' +
-		'left join scanapp_testing_products p1 on (p1.id = a1.products_id) ' + 
-		'left join scanapp_testing_productcategories c1 on (c1.id = p1.productcategories_id) '+
-		'left join scanapp_testing_locations l1 on (l1.id = p1.locations1_id) '+
-		'left join scanapp_testing_statuses s1 on (s1.id = p1.status_id) '+
-		'where p1.barcode = $1 '+
-		'and a1.dateexpired is null ' +
-		// 'and a1.datefinished is null ' +
-		'and a1.userscreated_id =$2';
-		let params = [
-			__.sanitiseAsString(barcode, 50),
-			userscreated_id,	
-		];
-		client.query(selectsql, params, (err, result) => {
-			// global.ConsoleLog(selectsql);
-			// global.ConsoleLog(params);
-			// global.ConsoleLog(err);
-			//global.ConsoleLog(result);
-
-			client.query('COMMIT', err => {
-				if (err) {
-					console.error('Error committing transaction', err.stack);
-				} else {
-					global.ConsoleLog(result.rows[0]);
-					resolve(result.rows);							
-				}
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+	
+				reject(err.message);
+			}
+			return !!err;
+		};
+	
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			let selectsql =
+				'select a1.id,a1.products_id,a1.audit_nameid,a1.audit_typeid,a1.datefinished,p1.barcode ,p1.name,p1.comments,' +
+				'p1.description,p1.serial_number,p1.status_id,s1.name status,' + 
+				'p1.locations1_id,l1.name locations,'+
+				'p1.productcategories_id,c1.name category '+
+				'from scanapp_testing_audit a1 ' +
+				'left join scanapp_testing_products p1 on (p1.id = a1.products_id) ' + 
+				'left join scanapp_testing_productcategories c1 on (c1.id = p1.productcategories_id) '+
+				'left join scanapp_testing_locations l1 on (l1.id = p1.locations1_id) '+
+				'left join scanapp_testing_statuses s1 on (s1.id = p1.status_id) '+
+				'where p1.barcode = $1 '+
+				'and a1.dateexpired is null ' +
+				// 'and a1.datefinished is null ' +
+				'and a1.userscreated_id =$2';
+			let params = [
+				__.sanitiseAsString(barcode, 50),
+				userscreated_id,	
+			];
+			client.query(selectsql, params, (err, result) => {
+				// global.ConsoleLog(selectsql);
+				// global.ConsoleLog(params);
+				// global.ConsoleLog(err);
+				// global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
+				client.query('COMMIT', err => {
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						global.ConsoleLog(result.rows[0]);
+						resolve(result.rows);							
+					}
+				});
 			});
 		});
 	});
+
 }
 
 /** 
@@ -65,31 +85,51 @@ function doUpdateAuditList(client,auditid)
 {
 	global.ConsoleLog("doUpdateAuditList");
 	return new Promise((resolve, reject) => {
-		let updatesql =
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			let updatesql =
 				'UPDATE scanapp_testing_audit ' + 
 				'SET datefinished=now() '+
 				'where id = $1 '+
 				'returning datefinished,products_id,status_id ';
-		let params = [
-			auditid	
-		];
-		client.query(updatesql, params, (err, result) => {
-			// global.ConsoleLog(updatesql);
-			// global.ConsoleLog(params);
-			// global.ConsoleLog(err);
-			// global.ConsoleLog(result);
+			let params = [
+				auditid	
+			];
+			client.query(updatesql, params, (err, result) => {
+				global.ConsoleLog(updatesql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
 
-			client.query('COMMIT', err => {
-				// done();
-				if (err) {
-					console.error('Error committing transaction', err.stack);
-				} else {
-					global.ConsoleLog(result.rows[0]['datefinished']);
-					result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// global.ConsoleLog(datefinished);
-					resolve(result.rows[0]);
-				}
+				client.query('COMMIT', err => {
+					// done();
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						global.ConsoleLog(result.rows[0]['datefinished']);
+						result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+						// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+						// global.ConsoleLog(datefinished);
+						resolve(result.rows[0]);
+					}
+				});
 			});
 		});
 	});
@@ -102,34 +142,54 @@ function doGetBarcodeDetails(client,barcode)
 {
 	global.ConsoleLog("doGetBarcodeDetails");
 	return new Promise((resolve, reject) => {
-		let selectsql =
-				'select p1.id products_id ,p1.name,p1.barcode,p1.status_id,s1.name status,'+
-				'p1.productcategories_id,c1.name category,p1.locations1_id,l1.name locations,'+
-				'p1.serial_number,p1.description,p1.comments ' + 
-				'from scanapp_testing_products p1 '+
-				'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
-				'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
-				'left join scanapp_testing_productcategories c1 on(c1.id = p1.productcategories_id) '+
-				'where barcode = $1'
-		let params = [
-			barcode	
-		];
-		client.query(selectsql, params, (err, result) => {
-			// global.ConsoleLog(selectsql);
-			// global.ConsoleLog(params);
-			// global.ConsoleLog(err);
-			// global.ConsoleLog(result);
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
 
-			client.query('COMMIT', err => {
-				// done();
-				if (err) {
-					console.error('Error committing transaction', err.stack);
-				} else {
-					// global.ConsoleLog(result.rows[0]['datefinished']);
-					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// global.ConsoleLog(datefinished);
-					resolve(result.rows);							
-				}
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			let selectsql =
+					'select p1.id products_id ,p1.name,p1.barcode,p1.status_id,s1.name status,'+
+					'p1.productcategories_id,c1.name category,p1.locations1_id,l1.name locations,'+
+					'p1.serial_number,p1.description,p1.comments ' + 
+					'from scanapp_testing_products p1 '+
+					'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
+					'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
+					'left join scanapp_testing_productcategories c1 on(c1.id = p1.productcategories_id) '+
+					'where barcode = $1'
+			let params = [
+				barcode	
+			];
+			client.query(selectsql, params, (err, result) => {
+				global.ConsoleLog(selectsql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
+
+				client.query('COMMIT', err => {
+					// done();
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						// global.ConsoleLog(result.rows[0]['datefinished']);
+						// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+						// global.ConsoleLog(datefinished);
+						resolve(result.rows);							
+					}
+				});
 			});
 		});
 	});
@@ -141,7 +201,25 @@ function doGetAuditScanned(client,data)
 {
 	global.ConsoleLog("doGetAuditScanned");
 	return new Promise((resolve, reject) => {
-		let selectsql =
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			let selectsql =
 					'SELECT a1.id audit_id, p1.id products_id , p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
 					'a1.audit_nameid,a1.audit_typeid '+
 					'FROM scanapp_testing_audit a1 '+
@@ -151,48 +229,38 @@ function doGetAuditScanned(client,data)
 					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
 					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is not null ORDER BY a1.id  ' +
 					'LIMIT $2 OFFSET $3';
-				let params = [
-					__.sanitiseAsBigInt(data.userscreated_id),
-					!__.isUNB(data.length) ? data.length : '10', 
-					!__.isUNB(data.offset) ? data.offset : '0'
-				];
-				client.query(selectsql, params, (err, result) => {
-					global.ConsoleLog(selectsql);
-					global.ConsoleLog(params);
-					global.ConsoleLog(err);
-					// global.ConsoleLog(result);
+			let params = [
+				__.sanitiseAsBigInt(data.user_id),
+				!__.isUNB(data.length) ? data.length : '10', 
+				!__.isUNB(data.offset) ? data.offset : '0'
+			];
+			client.query(selectsql, params, (err, result) => {
+				global.ConsoleLog(selectsql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
 
-					client.query('COMMIT', err => {
-						//done();
-						if (err) {
-							console.error('Error committing transaction', err.stack);
-							//reject('Error committing transaction', err.stack);
-						} else {
-							// global.ConsoleLog(result.rows[0]['datefinished']);
-							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// global.ConsoleLog(datefinished);
-							let list  = result.rows;
-							for (var i = 0;i<list.length;i++)
-							{
-								list[i].datefinished = global.moment(list[i].datefinished).format('YYYY-MM-DD HH:mm');
-							}
-							global.ConsoleLog(list);
-							resolve(list);							
+				client.query('COMMIT', err => {
+					//done();
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+						//reject('Error committing transaction', err.stack);
+					} else {
+						// global.ConsoleLog(result.rows[0]['datefinished']);
+						// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+						// global.ConsoleLog(datefinished);
+						let list  = result.rows;
+						for (var i = 0;i<list.length;i++)
+						{
+							list[i].datefinished = global.moment(list[i].datefinished).format('YYYY-MM-DD HH:mm');
 						}
-					});
+						global.ConsoleLog(list);
+						resolve(list);							
+					}
 				});
-		// global.pg.connect(
-		// 	global.cs,
-		// 	(err, client, done) => {
-		// 		if (err) {
-		// 			done();
-		// 			reject('Unable to connect server. ');
-		// 			return;
-		// 		}
-
-				
-		// 	}
-		// );
+			});
+		});
 	});
 }
 
@@ -200,42 +268,61 @@ function doGetAuditUnscanned(client,data)
 {
 	global.ConsoleLog("doGetAuditUnscanned");
 	return new Promise((resolve, reject) => {
-		let selectsql =
-						'SELECT a1.id audit_id, p1.id products_id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
-						'a1.audit_nameid,a1.audit_typeid '+
-						'FROM scanapp_testing_audit a1 '+
-						'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
-						'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
-						'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
-						'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
-						'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is null ORDER BY a1.id  ' +
-						'LIMIT $2 OFFSET $3';
-				let params = [
-					__.sanitiseAsBigInt(data.userscreated_id),
-					!__.isUNB(data.length) ? data.length : '10', 
-					!__.isUNB(data.offset) ? data.offset : '0'
-				];
-
-				client.query(selectsql, params, (err, result) => {
-					global.ConsoleLog(selectsql);
-					global.ConsoleLog(params);
-					global.ConsoleLog(err);
-					global.ConsoleLog(result);
-
-					client.query('COMMIT', err => {
-						//done();
-						if (err) {
-							console.error('Error committing transaction', err.stack);
-							reject('Error committing transaction', err.stack);
-						} else {
-							// global.ConsoleLog(result.rows[0]['datefinished']);
-							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// global.ConsoleLog(datefinished);
-							global.ConsoleLog(result.rows[0]);
-							resolve(result.rows);							
-						}
-					});
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
 				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			let selectsql =
+					'SELECT a1.id audit_id, p1.id products_id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category, ' +
+					'a1.audit_nameid,a1.audit_typeid '+
+					'FROM scanapp_testing_audit a1 '+
+					'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
+					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
+					'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
+					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
+					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is null ORDER BY a1.id  ' +
+					'LIMIT $2 OFFSET $3';
+			let params = [
+				__.sanitiseAsBigInt(data.user_id),
+				!__.isUNB(data.length) ? data.length : '10', 
+				!__.isUNB(data.offset) ? data.offset : '0'
+			];
+			client.query(selectsql, params, (err, result) => {
+				global.ConsoleLog(selectsql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
+
+				client.query('COMMIT', err => {
+					//done();
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+						reject('Error committing transaction', err.stack);
+					} else {
+						// global.ConsoleLog(result.rows[0]['datefinished']);
+						// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+						// global.ConsoleLog(datefinished);
+						global.ConsoleLog(result.rows[0]);
+						resolve(result.rows);							
+					}
+				});
+			});
+		});
 	});
 }
 
@@ -244,29 +331,49 @@ function doGetAuditDetail(client,tablename,id)
 	global.ConsoleLog("doGetAuditDetail");
 	global.ConsoleLog(tablename);
 	return new Promise((resolve, reject) => {
-		let selectsql =
+
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			let selectsql =
 				'select name from ' + tablename + ' where id = $1';
-		let params = [
-			__.sanitiseAsBigInt(id),
-		];
+			let params = [
+				__.sanitiseAsBigInt(id),
+			];
+			client.query(selectsql, params, (err, result) => {
+				global.ConsoleLog(selectsql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
 
-		client.query(selectsql, params, (err, result) => {
-			global.ConsoleLog(selectsql);
-			global.ConsoleLog(params);
-			global.ConsoleLog(err);
-			global.ConsoleLog(result);
-
-			client.query('COMMIT', err => {
-				if (err) {
-					console.error('Error committing transaction', err.stack);
-					reject('Error committing transaction', err.stack);
-				} else {
-					// global.ConsoleLog(result.rows[0]['datefinished']);
-					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// global.ConsoleLog(datefinished);
-					global.ConsoleLog(result.rows[0]);
-					resolve(result.rows);							
-				}
+				client.query('COMMIT', err => {
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+						reject('Error committing transaction', err.stack);
+					} else {
+						// global.ConsoleLog(result.rows[0]['datefinished']);
+						// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
+						// global.ConsoleLog(datefinished);
+						global.ConsoleLog(result.rows[0]);
+						resolve(result.rows[0]);		
+					}
+				});
 			});
 		});
 	});
@@ -286,35 +393,59 @@ function doInsertAuditList(client,data)
 	global.ConsoleLog(data.audit_nameid);
 	global.ConsoleLog(data.audit_typeid);
 	return new Promise((resolve, reject) => {
-	
-		let insertSql =
-			'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished,userscreated_id) ' +
-			'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+data.audit_nameid+', ' +data.audit_typeid +',now(),$2 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
-			' AND p1.id = $1 '+
-			'returning id';
 
-		let params = [
-			data.productid,
-			data.user_id	
-		];
-		global.ConsoleLog(insertSql);
-		client.query(insertSql, params, (err, result) => {
-			// global.ConsoleLog(updatesql);
-			// global.ConsoleLog(params);
-			// global.ConsoleLog(err);
-			// global.ConsoleLog(result);
-			client.query('COMMIT', err => {
-				// done();
-				if (err) {
-					console.error('Error committing transaction', err.stack);
-				} else {
-					//global.ConsoleLog(result.rows[0]['datefinished']);
-					//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-					// global.ConsoleLog(datefinished);
-					resolve(result.rows[0]);
-				}
-			});
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err =>{
+			if (shouldAbort(err)) 
+			{
+				return;
+			}
+			else
+			{
+				let insertSql =
+						'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished,userscreated_id) ' +
+						'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+data.audit_nameid+', ' +data.audit_typeid +',now(),$2 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+						' AND p1.id = $1 '+
+						'returning id';
+	
+				let params = [
+					data.productid,
+					data.user_id	
+				];
+				global.ConsoleLog(insertSql);
+				global.ConsoleLog(params);
+				client.query(insertSql, params, (err, result) => {
+					if (shouldAbort(err)) return;
+					global.ConsoleLog(insertSql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+					client.query('COMMIT', err => {
+						// done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+						} else {
+							resolve(result.rows[0]);
+						}
+					});
+				});
+			}
+			
 		});
 	});
 }
@@ -325,9 +456,9 @@ function doInsertAuditList(client,data)
  * after the update the product's status, need to insert a new row to the audit list with this product
  * with the new status id, but need to expire the old audit list. 
  */
-function doexpiredAuditProduct(client,data)
+function doExpiredAuditProduct(client,data)
 {
-	global.ConsoleLog("doexpiredAuditProduct");
+	global.ConsoleLog("doExpiredAuditProduct");
 	return new Promise((resolve,reject) => {
 		const shouldAbort = err => {
 			if (err) {
@@ -489,10 +620,6 @@ function doGetUserAuthDetails(client,username)
 						if (err) {
 							console.error('Error committing transaction', err.stack);
 						} else {
-							//global.ConsoleLog(result.rows[0]['datefinished']);
-							//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// let datefinished = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
-							// global.ConsoleLog(datefinished);
 							if(result.rows.length == 1)
 							{
 								resolve(result.rows[0]);
@@ -527,6 +654,119 @@ function doAuthPassword(user,pwd)
 		{
 			reject({errorcode:1,message:global.text_invalidlogin});
 		}
+	});
+}
+
+function doGetProductById(client,data)
+{
+	return new Promise((resolve, reject) => {
+		if (__.isUNB(data.name) || __.isUNB(data.productid)) {
+			reject('Name or ID can not be empty. ');
+			return;
+		}
+
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			global.ConsoleLog(data.serial_number);
+			let sql =
+				'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,p1.status_id,p1.productcategories_id,p1.comments ' +
+				'FROM scanapp_testing_products p1 ' +
+				'WHERE p1.id=$1';
+			let params = [
+				__.sanitiseAsBigInt(data.productid)
+			];
+			client.query(sql, params, (err, result) => {
+				global.ConsoleLog(sql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
+
+				client.query('COMMIT', err => {
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						resolve(result.rows[0]);
+					}
+				});
+			});
+		});
+	});
+}
+
+function doUpdateProductById(client,data)
+{
+	return new Promise((resolve, reject) => {
+		if (__.isUNB(data.name) || __.isUNB(data.productid)) {
+			reject('Name or ID can not be empty. ');
+			return;
+		}
+
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			global.ConsoleLog(data.serial_number);
+			let sql =
+				'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6,comments=$7,description=$8 WHERE id=$9 AND dateexpired is null returning name';
+			let params = [
+				__.sanitiseAsString(data.name, 50),
+				__.sanitiseAsString(data.serial_number, 50),
+				// data.serial_number,
+				__.sanitiseAsBigInt(data.locations1_id),
+				__.sanitiseAsBigInt(data.categoryid),
+				__.sanitiseAsBigInt(data.status_id),
+				data.user_id,
+				__.sanitiseAsString(data.comments),
+				__.sanitiseAsString(data.description),
+				__.sanitiseAsBigInt(data.productid)
+			];
+			client.query(sql, params, (err, result) => {
+				global.ConsoleLog(sql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
+
+				client.query('COMMIT', err => {
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						resolve(result.rows[0]);
+					}
+				});
+			});
+		});
 	});
 }
 
@@ -1210,12 +1450,13 @@ function AuditOnType(data) {
 								: '';
 						let insertSql =
 							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,userscreated_id) ' +
-							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +',$1 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +', '+data.user_id + 
+							' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 							condition +
 							' returning id';
-						//global.ConsoleLog(insertSql);
-						let params = [data.userscreated_id];
-						client.query(insertSql,params, (err, result) => {
+						global.ConsoleLog(insertSql);
+						
+						client.query(insertSql, (err, result) => {
 							if (shouldAbort(err)) return;
 
 							// result.rows.length ? AuditGetList() : reject('Fail to create auditing list.');
@@ -1327,21 +1568,6 @@ function AuditGetAll(data) {
 
 				else 
 				{
-					const shouldAbort = err => {
-						if (err) {
-							console.error('Error in transaction', err.stack);
-							client.query('ROLLBACK', err => {
-								if (err) {
-									console.error('Error rolling back client', err.stack);
-								}
-								// release the client back to the pool
-								done();
-							});
-							reject(err.message);
-						}
-						return !!err;
-					};
-
 					doGetAuditScanned(client,data).then(result => 
 					{
 						
@@ -1350,7 +1576,7 @@ function AuditGetAll(data) {
 						
 						doGetAuditUnscanned(client,data).then(result => 
 						{
-							done();
+							// done();
 							let audit_nameid;
 							let audit_typeid ;
 							let unscannedList = result;
@@ -1387,11 +1613,13 @@ function AuditGetAll(data) {
 									doGetAuditDetail(client,tablename,audit_typeid).then(result => 
 									{
 										done();
-										global.ConsoleLog(result);
-										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_nameid:scannedList[0].audit_nameid,audit_typeid:scannedList[0].audit_typeid});
+										let name = result.name;
+										global.ConsoleLog(name);
+										resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:name,audit_nameid:scannedList[0].audit_nameid,audit_typeid:scannedList[0].audit_typeid});
 									})
 									.catch(err => 
 									{
+										done();
 										reject(err);
 									})
 								}
@@ -1431,17 +1659,21 @@ function AuditGetAll(data) {
 										doGetAuditDetail(client,tablename,audit_typeid).then(result => 
 										{
 											done();
-											global.ConsoleLog(result);
-											resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:result[0].name,audit_nameid:unscannedList[0].audit_nameid,audit_typeid:unscannedList[0].audit_typeid});
+											let name = result.name;
+											global.ConsoleLog(name);
+											resolve({scanned:scannedList,unscanned:unscannedList,audit_typename:type,audit_name:name,audit_nameid:unscannedList[0].audit_nameid,audit_typeid:unscannedList[0].audit_typeid});
 										})
 										.catch(err => 
 										{
+											done();
 											reject(err);
+											
 										})
 									}
 								}
 								else
 								{
+									done();
 									resolve({scanned:scannedList,unscanned:unscannedList,audit_nameid:'',audit_name:''});
 								}
 								
@@ -1450,56 +1682,17 @@ function AuditGetAll(data) {
 						})
 						.catch(err => 
 						{
-						
+							done();
 							reject(err);
+							
 						})
 					})
 					.catch(err => 
 					{
-					
+						done();
 						reject(err);
-					})
-
-					
+					});
 				}
-
-				// let sql =
-				// 	'SELECT p1.id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description,a1.datefinished,s1.name status,l1.name locations,c1.name category ' +
-				// 	'FROM scanapp_testing_audit a1 '+
-				// 	'LEFT JOIN scanapp_testing_products p1 on(p1.id=a1.products_id) ' +
-				// 	'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
-				// 	'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
-				// 	'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
-				// 	'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 ORDER BY a1.id ' +
-				// 	'LIMIT $2 OFFSET $3';
-				// let params = [__.sanitiseAsBigInt(audit.userscreated_id),!__.isUNB(audit.length) ? audit.length : '10', !__.isUNB(audit.offset) ? audit.offset : '0'];
-				// global.ConsoleLog(sql);
-				// global.ConsoleLog(params);
-				// client.query(sql, params, (err, result) => {
-				// 	done();
-				// 	if (err) {
-				// 		reject('Error get audit list. ');
-				// 	} else {
-				// 		let audited = [];
-				// 		let unaudited = [];
-				// 		for (var i = 0;i<result.rows.length;i++)
-				// 		{
-				// 			if(!__.isUNB(result.rows[i].datefinished))
-				// 			{
-				// 				audited.push(result.rows[i]);
-				// 			}
-				// 			else
-				// 			{
-				// 				unaudited.push(result.rows[i]);
-				// 			}
-
-				// 		}
-				// 		global.ConsoleLog(audited);
-				// 		global.ConsoleLog(unaudited);
-				// 		resolve(result.rows);
-				// 	}
-				// 	// err ? reject('Error get audit list. ') : resolve(result.rows);
-				// });
 			}
 		);
 	});
@@ -1576,21 +1769,6 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 				} 
 				else 
 				{
-					const shouldAbort = err => {
-						if (err) {
-							console.error('Error in transaction', err.stack);
-							client.query('ROLLBACK', err => {
-								if (err) {
-									console.error('Error rolling back client', err.stack);
-								}
-								// release the client back to the pool
-								done();
-							});
-							reject(err.message);
-						}
-						return !!err;
-					};
-
 					doCheckAuditList(client,barcode,userscreated_id).then(result => 
 					{
 						// global.ConsoleLog(result);
@@ -1617,7 +1795,7 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 									// global.ConsoleLog(auditDetail)
 									if(result.status_id == 3)
 									{
-										reject({errorcode:4,message:'The scanned product is missing',data:auditDetail});								
+										reject({errorcode:4,message:'The scanned product is in the audit list but it is missing',data:auditDetail});								
 									}
 									else
 									{
@@ -1676,28 +1854,6 @@ function Audit_Scan_Barcode(barcode,userscreated_id){
 					
 				}
 		}
-		);
-	});
-}
-
-function StatusGetAll() {
-	return new Promise((resolve, reject) => {
-		global.pg.connect(
-			global.cs,
-			(err, client, done) => {
-				if (err) {
-					done();
-					reject('Unable to connect server. ');
-					return;
-				}
-
-				let sql =
-					'SELECT s1.id,s1.name FROM scanapp_testing_statuses s1 where dateexpired is null order by id asc';
-				client.query(sql, (err, result) => {
-					done();
-					err ? reject(err.message) : resolve(result.rows);
-				});
-			}
 		);
 	});
 }
@@ -1837,7 +1993,7 @@ function Audit_UpdateProduct(data)
 									if(data.errorcode == 4)
 									{
 										//done();
-										doexpiredAuditProduct(client,data).then(result =>
+										doExpiredAuditProduct(client,data).then(result =>
 										{
 											global.ConsoleLog(result);
 											doInsertAuditList(client,data).then(result => 
@@ -1878,6 +2034,103 @@ function Audit_UpdateProduct(data)
 								}
 							});
 						});						
+					});
+				}
+			}
+		);
+	});
+}
+
+ /**
+ * During an audit, the user scann a barcode which is not in the audit list,but has been registered. 
+ * Or it is in the audit list but it is missing. 
+ * The user will be presented two options. 'Add' and 'Edit'. 
+ * If choose 'Edit', this function will be used. 
+ * User can modify any infomation of this product and update all together. 
+ */
+function Audit_EditProduct(data)
+{
+	global.ConsoleLog('Audit_EditProduct');
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server.');
+				} else {
+
+					doUpdateProductById(client,data).then(result =>
+					{
+						if(data.errorcode == 4 && data.status_id != 3)
+						{
+							doExpiredAuditProduct(client,data).then(result =>
+							{
+								global.ConsoleLog(result);
+								doInsertAuditList(client,data).then(result => 
+								{
+									done();
+									//let unscannedList = result;
+									global.ConsoleLog(result);
+									resolve({errorcode:0,message:'update successfully',data:result});
+								})
+								.catch(err => 
+								{
+									done();
+									reject(err);
+								});
+							})
+							.catch(err =>
+							{
+								done();
+								reject(err);
+							});
+						}
+						else if(data.errorcode == 1 || data.errorcode == 5)
+						{
+							let insert = false;
+							if(data.audit_nameid == 0)
+							{
+								insert = true;
+							}
+							else if(data.audit_nameid == 1 && data.audit_typeid == data.locations1_id)
+							{
+								insert = true;
+							}
+							else if(data.audit_nameid == 2 && data.audit_typeid == data.categoryid)
+							{
+								insert = true;
+							}
+
+							if(insert)
+							{
+								doInsertAuditList(client,data).then(result => 
+								{
+									done();
+									//let unscannedList = result;
+									global.ConsoleLog(result);
+									resolve({errorcode:0,message:'update successfully',data:result});
+								})
+								.catch(err => 
+								{
+									done();
+									reject(err);
+								});
+							}
+							else
+							{
+								done();
+								//let unscannedList = result;
+								global.ConsoleLog(result);
+								resolve({errorcode:0,message:'update successfully',data:result});
+							}
+
+						}
+					})
+					.catch(err =>
+					{
+						done();
+						reject(err);
 					});
 				}
 			}
@@ -1942,6 +2195,29 @@ function LoginUser(username,pwd)
 		);
 	});
 }
+
+
+function StatusGetAll() {
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server. ');
+					return;
+				}
+
+				let sql =
+					'SELECT s1.id,s1.name FROM scanapp_testing_statuses s1 where dateexpired is null order by id asc';
+				client.query(sql, (err, result) => {
+					done();
+					err ? reject(err.message) : resolve(result.rows);
+				});
+			}
+		);
+	});
+}
 // *******************************************************************************************************************************************************************************************
 // Internal functions
 module.exports.doUpdateAuditList = doUpdateAuditList;
@@ -1950,7 +2226,7 @@ module.exports.doGetAuditScanned = doGetAuditScanned;
 module.exports.doGetAuditUnscanned = doGetAuditUnscanned;
 module.exports.doInsertAuditList = doInsertAuditList;
 module.exports.doGetUserAuthDetails = doGetUserAuthDetails;
-module.exports.doexpiredAuditProduct = doexpiredAuditProduct;
+module.exports.doExpiredAuditProduct = doExpiredAuditProduct;
 module.exports.doAuthPassword = doAuthPassword;
 
 
@@ -1975,6 +2251,7 @@ module.exports.AuditDiscardList = AuditDiscardList;
 module.exports.AuditGetAll = AuditGetAll;
 module.exports.Audit_Scan_Barcode = Audit_Scan_Barcode;
 module.exports.Audit_UpdateProduct = Audit_UpdateProduct;
+module.exports.Audit_EditProduct = Audit_EditProduct;
 module.exports.AuditGetScanned = AuditGetScanned;
 module.exports.AuditGetUnscanned = AuditGetUnscanned;
 module.exports.LoginUser = LoginUser;
