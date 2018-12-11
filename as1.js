@@ -2807,7 +2807,7 @@ function main()
     let data = {
       type:req.params.type,
       typeid:req.params.typeid,
-      userscreated_id:999
+      user_id:999
     }
     scanappserver.AuditOnType(data).then(
       result => {
@@ -2826,7 +2826,7 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      userscreated_id:999
+      user_id:req.body.user_id
     };
 
     scanappserver.AuditGetAll(audit).then(
@@ -2844,7 +2844,7 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      userscreated_id:999
+      user_id:req.body.user_id
     };
 
     scanappserver.AuditGetScanned(audit).then(
@@ -2862,7 +2862,7 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      userscreated_id:999
+      user_id:req.body.user_id
     };
 
     scanappserver.AuditGetUnscanned(audit).then(
@@ -2955,16 +2955,21 @@ function main()
     // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
     let product = {
       productid: req.body.productid,
-      locations1_id: req.body.locations_id,
-      status_id:req.body.status_id,
+      name : req.body.name,
       productcategories_id:req.body.productcategories_id,
-      userid:999,
+      user_id:999,
       errorcode:req.body.errorcode,
       audit_nameid:req.body.audit_nameid,
-      audit_typeid:req.body.audit_typeid
+      audit_typeid:req.body.audit_typeid,
+      serial_number: req.body.serial_number,
+      locations1_id: req.body.locationid,
+      categoryid: req.body.categoryid,
+      status_id:req.body.statusid,
+      comments:req.body.comments,
+      description:req.body.description,
     };
 
-    scanappserver.Audit_UpdateProduct(product)
+    scanappserver.Audit_EditProduct(product)
       .then(result => {
         res.send(result);
       })
