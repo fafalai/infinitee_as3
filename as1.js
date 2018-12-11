@@ -2811,8 +2811,8 @@ function main()
     //   userscreated_id:999
     // }
     let data = {
-      type:req.params.type,
-      typeid:req.params.typeid,
+      type:req.body.type,
+      typeid:req.body.typeid,
       user_id:req.body.userid
     }
     scanappserver.AuditOnType(data).then(
@@ -2914,10 +2914,9 @@ function main()
   // })
   app.post('/scanapp_auditscanbarcode', function (req, res) {
     'use strict'
-
     let barcode = req.body.barcode;
-    let userscreated_id = req.body.userid;
-    scanappserver.Audit_Scan_Barcode(barcode,userscreated_id).then(
+    let user_id = req.body.userid;
+    scanappserver.Audit_Scan_Barcode(barcode,user_id).then(
           result => res.send(result)
         ).catch(err => {
           res.status(500).send(err);
@@ -2960,7 +2959,7 @@ function main()
       locations1_id: req.body.locations_id,
       status_id:req.body.status_id,
       productcategories_id:req.body.productcategories_id,
-      user_id:999,
+      user_id:req.body.userid,
       errorcode:req.body.errorcode,
       audit_nameid:req.body.audit_nameid,
       audit_typeid:req.body.audit_typeid
@@ -2999,6 +2998,34 @@ function main()
     };
 
     scanappserver.Audit_EditProduct(product)
+      .then(result => {
+        res.send(result);
+      })
+      .catch(err => {
+        res.status(500).send(err);
+      });
+  });
+
+  app.post('/scanapp_auditproductregister', function(req, res) {
+    'use strict';
+    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
+    let product = {
+      productid: req.body.productid,
+      name : req.body.name,
+      productcategories_id:req.body.productcategories_id,
+      user_id:999,
+      errorcode:req.body.errorcode,
+      audit_nameid:req.body.audit_nameid,
+      audit_typeid:req.body.audit_typeid,
+      serial_number: req.body.serial_number,
+      locations1_id: req.body.locationid,
+      categoryid: req.body.categoryid,
+      status_id:req.body.statusid,
+      comments:req.body.comments,
+      description:req.body.description,
+    };
+
+    scanappserver.Audit_RegisterProduct(product)
       .then(result => {
         res.send(result);
       })
