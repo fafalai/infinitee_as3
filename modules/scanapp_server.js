@@ -16,7 +16,7 @@
 // Internal functions
 // *******************************************************************************************************************************************************************************************
 
-function doRegisterProduct(data)
+function doRegisterProduct(client,data)
 {
 	return new Promise((resolve, reject) => {
 		const shouldAbort = err => {
@@ -45,20 +45,19 @@ function doRegisterProduct(data)
 				data.barcode.toUpperCase(),
 				__.sanitiseAsString(data.serial_number, 50),
 				__.sanitiseAsString(data.description),
-				__.sanitiseAsBigInt(data.locationid),
+				__.sanitiseAsBigInt(data.locations1_id),
 				__.sanitiseAsBigInt(data.categoryid),
-				__.sanitiseAsBigInt(data.statusid),
+				__.sanitiseAsBigInt(data.status_id),
 				__.sanitiseAsString(data.comments),
 				__.sanitiseAsString(data.user_id),
 			];
 			client.query(sql, params, (err, result) => {
 				if (shouldAbort(err)) return;
 				client.query('COMMIT', err => {
-					done();
 					if (err) {
 						console.error('Error committing transaction', err.stack);
 					} else {
-						resolve(data.name + ' saved. ');
+						resolve(result.rows[0]);
 					}
 				});
 			});
@@ -2110,166 +2109,51 @@ function Audit_RegisterProduct(data)
 					done();
 					reject('Unable to connect server.');
 				} else {
-					const shouldAbort = err => {
-						if (err) {
-							console.error('Error in transaction', err.stack);
-							client.query('ROLLBACK', err => {
-								if (err) {
-									console.error('Error rolling back client', err.stack);
-								}
-								// release the client back to the pool
+					doRegisterProduct(client,data).then(result =>
+					{
+						data.productid = result.id;
+						global.ConsoleLog(data.productid);
+						let insert = false;
+						if(data.audit_nameid == 0)
+						{
+							insert = true;
+						}
+						else if(data.audit_nameid == 1 && data.audit_typeid == data.locations1_id)
+						{
+							insert = true;
+						}
+						else if(data.audit_nameid == 2 && data.audit_typeid == data.categoryid)
+						{
+							insert = true;
+						}
+
+						if(insert)
+						{
+							doInsertAuditList(client,data).then(result => 
+							{
 								done();
+								//let unscannedList = result;
+								global.ConsoleLog(result);
+								resolve({errorcode:0,message:'register product successfully',data:result});
+							})
+							.catch(err => 
+							{
+								done();
+								reject(err);
 							});
-
-							reject(err.message);
 						}
-						return !!err;
-					};
-
-					client.query('BEGIN', err => {
-						if (shouldAbort(err)) return;
-
-						// global.ConsoleLog(data);
-						let params = [];
-						let updatesql = '';
-						let locations1_id = null;
-						let productcategories_id = null;
-						let status_id = null;
-
-						if(data.errorcode == 1)
+						else
 						{
-							//product is not in the audit list
-
-							if(!__.isUNB(data.locations1_id))
-							{
-								updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3 '+
-								'WHERE id=$2 AND dateexpired is null returning id';
-
-								params = [
-									data.user_id,
-									__.sanitiseAsBigInt(data.productid),
-									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
-								];
-							}
-							else if (!__.isUNB(data.productcategories_id))
-							{
-								updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3 '+
-								'WHERE id=$2 AND dateexpired is null returning id';
-
-								params = [
-									data.user_id,
-									__.sanitiseAsBigInt(data.productid),
-									__.sanitiseAsBigInt(data.productcategories_id),
-								];
-							}
-						}
-						else if (data.errorcode == 4)
-						{
-							//product is in the audit list, but it is missing, so only update the status id. 
-							updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,status_id = 1 '+
-								'WHERE id=$2 AND dateexpired is null returning id';
-
-							params = [
-								data.user_id,
-								__.sanitiseAsBigInt(data.productid),
-								// __.sanitiseAsBigInt(data.status_id),
-							];
-						}
-						else if (data.errorcode == 5)
-						{
-							//product is not in the audit list,and it is missing, so update the status id and others. 
-
-							if(!__.isUNB(data.locations1_id))
-							{
-								updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3,status_id = 1 '+
-								'WHERE id=$2 AND dateexpired is null returning id';
-
-								params = [
-									data.user_id,
-									__.sanitiseAsBigInt(data.productid),
-									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
-									// __.sanitiseAsBigInt(data.status_id),
-								];
-							}
-							else if (!__.isUNB(data.productcategories_id))
-							{
-								updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3,status_id = 1 '+
-								'WHERE id=$2 AND dateexpired is null returning id';
-
-								params = [
-									data.user_id,
-									__.sanitiseAsBigInt(data.productid),
-									__.sanitiseAsBigInt(data.productcategories_id),
-									// __.sanitiseAsBigInt(data.status_id)
-								];
-							}
-						}
-
-						global.ConsoleLog(updatesql);
-						global.ConsoleLog(params);
-
-						client.query(updatesql,params, (err, result) => {
-							if (shouldAbort(err)) return;
-							global.ConsoleLog(updatesql);
-							global.ConsoleLog(params);
-							global.ConsoleLog(err);
+							done();
+							//let unscannedList = result;
 							global.ConsoleLog(result);
-
-							client.query('COMMIT', err => {
-								if (err) {
-									done();
-									console.error('Error committing transaction', err.stack);
-								} else {
-									global.ConsoleLog(result);
-									if(data.errorcode == 4)
-									{
-										//done();
-										doExpiredAuditProduct(client,data).then(result =>
-										{
-											global.ConsoleLog(result);
-											doInsertAuditList(client,data).then(result => 
-											{
-												done();
-												//let unscannedList = result;
-												global.ConsoleLog(result);
-												resolve({errorcode:0,message:'update successfully',data:result});
-											})
-											.catch(err => 
-											{
-												done();
-												reject(err);
-											});
-										})
-										.catch(err =>
-										{
-											done();
-											reject(err);	
-										});
-										//resolve({errorcode:0,message:'update successfully',data:result.rows});
-									}
-									else
-									{
-										doInsertAuditList(client,data).then(result => 
-										{
-											done();
-											//let unscannedList = result;
-											global.ConsoleLog(result);
-											resolve({errorcode:0,message:'update successfully',data:result});
-										})
-										.catch(err => 
-										{
-											done();
-											reject(err);
-										});
-									}
-								}
-							});
-						});						
+							resolve({errorcode:0,message:'register product successfully',data:result});
+						}
+					})
+					.catch(err =>
+					{
+						done();
+						reject(err);
 					});
 				}
 			}
