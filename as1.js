@@ -2934,18 +2934,6 @@ function main()
       res.status(500).send(err);
     })
   })
-  // app.get('/scanapp_auditdiscardlist', function (req, res){
-  //   'use strict';
-
-  //   scanappserver.AuditDiscardList().then(
-  //     result => {
-  //       res.send(result);
-  //     }
-  //   ).catch(err => {
-  //     res.status(500).send(err);
-  //   })
-  // })
-
    /**
    * During an audit, if the user scann a barcode which is not in the audit list,but has been registered. 
    * Or in the audit list, but it is missing he can choose 'Add', 
@@ -3734,6 +3722,8 @@ function main()
       addListener('substart',                             'substart',                             global.modsubway.SubwayStarted,                        []);
       addListener('subfinish',                            'subfinish',                            global.modsubway.SubwayFinished,                       []);
       addListener('subdelivered',                         'subdelivered',                         global.modsubway.SubwayDelivered,                      []);
+
+      addListener('downloadproductscurrent',              'downloadproductscurrent',              global.scanappserver.DownloadCurrentProducts,          ['*productexports']);
 
       // *******************************************************************************************************************************************************************************************
       // MDM events...

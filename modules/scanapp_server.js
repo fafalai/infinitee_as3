@@ -820,6 +820,61 @@ function doUpdateProductById(client,data)
 	});
 }
 
+function doGetAllProducts(client,data)
+{
+	return new Promise((resolve, reject) => {
+
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			global.ConsoleLog(data.serial_number);
+			let sql =
+				'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6,comments=$7,description=$8 WHERE id=$9 AND dateexpired is null returning name';
+			let params = [
+				__.sanitiseAsString(data.name, 50),
+				__.sanitiseAsString(data.serial_number, 50),
+				// data.serial_number,
+				__.sanitiseAsBigInt(data.locations1_id),
+				__.sanitiseAsBigInt(data.categoryid),
+				__.sanitiseAsBigInt(data.status_id),
+				data.user_id,
+				__.sanitiseAsString(data.comments),
+				__.sanitiseAsString(data.description),
+				__.sanitiseAsBigInt(data.productid)
+			];
+			client.query(sql, params, (err, result) => {
+				global.ConsoleLog(sql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
+
+				client.query('COMMIT', err => {
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						resolve(result.rows[0]);
+					}
+				});
+			});
+		});
+	});
+}
 
 // *******************************************************************************************************************************************************************************************
 // Public functions
