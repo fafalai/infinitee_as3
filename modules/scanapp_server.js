@@ -14,6 +14,57 @@
 
 // *******************************************************************************************************************************************************************************************
 // Internal functions
+// *******************************************************************************************************************************************************************************************
+
+function doRegisterProduct(data)
+{
+	return new Promise((resolve, reject) => {
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					done();
+				});
+	
+				reject(err.message);
+			}
+			return !!err;
+		};
+	
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+
+			let sql =
+				'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9) returning id';
+			let params = [
+				__.sanitiseAsString(data.name, 50),
+				data.barcode.toUpperCase(),
+				__.sanitiseAsString(data.serial_number, 50),
+				__.sanitiseAsString(data.description),
+				__.sanitiseAsBigInt(data.locationid),
+				__.sanitiseAsBigInt(data.categoryid),
+				__.sanitiseAsBigInt(data.statusid),
+				__.sanitiseAsString(data.comments),
+				__.sanitiseAsString(data.user_id),
+			];
+			client.query(sql, params, (err, result) => {
+				if (shouldAbort(err)) return;
+				client.query('COMMIT', err => {
+					done();
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						resolve(data.name + ' saved. ');
+					}
+				});
+			});
+		});
+	});
+}
 
 /**
  * This is the function to check whether the scanned barcode is in the audit list
@@ -770,8 +821,11 @@ function doUpdateProductById(client,data)
 	});
 }
 
+
 // *******************************************************************************************************************************************************************************************
 // Public functions
+// *******************************************************************************************************************************************************************************************
+
 function GetAllProducts() {
 	// return new Promise((resolve, reject) => {
 	// 	let sql = 'SELECT p1.id,p1.name, p1.barcode, p1.location FROM products p1';
@@ -893,7 +947,7 @@ function Product_Register(data) {
 									if (shouldAbort(err)) return;
 
 									let sql =
-										'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8) returning id';
+										'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9) returning id';
 									let params = [
 										__.sanitiseAsString(data.name, 50),
 										data.barcode.toUpperCase(),
@@ -903,26 +957,17 @@ function Product_Register(data) {
 										__.sanitiseAsBigInt(data.categoryid),
 										__.sanitiseAsBigInt(data.statusid),
 										__.sanitiseAsString(data.comments),
+										__.sanitiseAsString(data.user_id),
 									];
-
 									client.query(sql, params, (err, result) => {
 										if (shouldAbort(err)) return;
-
-										let productid = result.rows[0].id;
-										let sql2 =
-											'INSERT INTO scanapp_testing_inventory(products_id,locations_id,status_id,datecreated) VALUES($1,$2,$3,now())';
-										let params2 = [productid, data.locationid, data.statusid];
-										client.query(sql2, params2, (err, result2) => {
-											if (shouldAbort(err)) return;
-
-											client.query('COMMIT', err => {
-												done();
-												if (err) {
-													console.error('Error committing transaction', err.stack);
-												} else {
-													resolve(data.name + ' saved. ');
-												}
-											});
+										client.query('COMMIT', err => {
+											done();
+											if (err) {
+												console.error('Error committing transaction', err.stack);
+											} else {
+												resolve(data.name + ' saved. ');
+											}
 										});
 									});
 								});
@@ -1866,10 +1911,10 @@ function Audit_Scan_Barcode(barcode,user_id){
 function Audit_UpdateProduct(data)
 {
 	return new Promise((resolve, reject) => {
-		// if ( __.isUNB(data.productid)) {
-		// 	reject('product ID can not be empty. ');
-		// 	return;
-		// }
+		if ( __.isUNB(data.productid)) {
+			reject('product ID can not be empty. ');
+			return;
+		}
 
 		global.pg.connect(
 			global.cs,
@@ -2046,13 +2091,190 @@ function Audit_UpdateProduct(data)
 }
 
  /**
- * During an audit, if the user scann a barcode which has not been registered, he can choose 'Register', 
- * so this product will be changed to the current auditing location or category automatically
- * without changing to another page in the frontend. one-stop-saction. 
+ * During an audit, if the user scan a barcode which has not been registered, he can choose 'Register', 
+ * so this product will be registered to the database. If it is audit 'All', or if the registered location or category is 
+ * matched with the audited condition, this product will be added to the audit list automatically. 
  */
-function Audit_RegisterProduct()
+function Audit_RegisterProduct(data)
 {
+	return new Promise((resolve, reject) => {
+		if (__.isUNB(data.name) || __.isUNB(data.barcode) || __.isUNB(data.locations1_id)){
+			reject('Name, Barcode or Location can not be empty. ');
+			return;
+		}
 
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server.');
+				} else {
+					const shouldAbort = err => {
+						if (err) {
+							console.error('Error in transaction', err.stack);
+							client.query('ROLLBACK', err => {
+								if (err) {
+									console.error('Error rolling back client', err.stack);
+								}
+								// release the client back to the pool
+								done();
+							});
+
+							reject(err.message);
+						}
+						return !!err;
+					};
+
+					client.query('BEGIN', err => {
+						if (shouldAbort(err)) return;
+
+						// global.ConsoleLog(data);
+						let params = [];
+						let updatesql = '';
+						let locations1_id = null;
+						let productcategories_id = null;
+						let status_id = null;
+
+						if(data.errorcode == 1)
+						{
+							//product is not in the audit list
+
+							if(!__.isUNB(data.locations1_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.user_id,
+									__.sanitiseAsBigInt(data.productid),
+									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
+								];
+							}
+							else if (!__.isUNB(data.productcategories_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.user_id,
+									__.sanitiseAsBigInt(data.productid),
+									__.sanitiseAsBigInt(data.productcategories_id),
+								];
+							}
+						}
+						else if (data.errorcode == 4)
+						{
+							//product is in the audit list, but it is missing, so only update the status id. 
+							updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,status_id = 1 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+							params = [
+								data.user_id,
+								__.sanitiseAsBigInt(data.productid),
+								// __.sanitiseAsBigInt(data.status_id),
+							];
+						}
+						else if (data.errorcode == 5)
+						{
+							//product is not in the audit list,and it is missing, so update the status id and others. 
+
+							if(!__.isUNB(data.locations1_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3,status_id = 1 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.user_id,
+									__.sanitiseAsBigInt(data.productid),
+									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
+									// __.sanitiseAsBigInt(data.status_id),
+								];
+							}
+							else if (!__.isUNB(data.productcategories_id))
+							{
+								updatesql = 'UPDATE scanapp_testing_products '+
+								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3,status_id = 1 '+
+								'WHERE id=$2 AND dateexpired is null returning id';
+
+								params = [
+									data.user_id,
+									__.sanitiseAsBigInt(data.productid),
+									__.sanitiseAsBigInt(data.productcategories_id),
+									// __.sanitiseAsBigInt(data.status_id)
+								];
+							}
+						}
+
+						global.ConsoleLog(updatesql);
+						global.ConsoleLog(params);
+
+						client.query(updatesql,params, (err, result) => {
+							if (shouldAbort(err)) return;
+							global.ConsoleLog(updatesql);
+							global.ConsoleLog(params);
+							global.ConsoleLog(err);
+							global.ConsoleLog(result);
+
+							client.query('COMMIT', err => {
+								if (err) {
+									done();
+									console.error('Error committing transaction', err.stack);
+								} else {
+									global.ConsoleLog(result);
+									if(data.errorcode == 4)
+									{
+										//done();
+										doExpiredAuditProduct(client,data).then(result =>
+										{
+											global.ConsoleLog(result);
+											doInsertAuditList(client,data).then(result => 
+											{
+												done();
+												//let unscannedList = result;
+												global.ConsoleLog(result);
+												resolve({errorcode:0,message:'update successfully',data:result});
+											})
+											.catch(err => 
+											{
+												done();
+												reject(err);
+											});
+										})
+										.catch(err =>
+										{
+											done();
+											reject(err);	
+										});
+										//resolve({errorcode:0,message:'update successfully',data:result.rows});
+									}
+									else
+									{
+										doInsertAuditList(client,data).then(result => 
+										{
+											done();
+											//let unscannedList = result;
+											global.ConsoleLog(result);
+											resolve({errorcode:0,message:'update successfully',data:result});
+										})
+										.catch(err => 
+										{
+											done();
+											reject(err);
+										});
+									}
+								}
+							});
+						});						
+					});
+				}
+			}
+		);
+	});
 }
 
  /**
@@ -2256,6 +2478,7 @@ module.exports.AuditGetAll = AuditGetAll;
 module.exports.Audit_Scan_Barcode = Audit_Scan_Barcode;
 module.exports.Audit_UpdateProduct = Audit_UpdateProduct;
 module.exports.Audit_EditProduct = Audit_EditProduct;
+module.exports.Audit_RegisterProduct = Audit_RegisterProduct;
 module.exports.AuditGetScanned = AuditGetScanned;
 module.exports.AuditGetUnscanned = AuditGetUnscanned;
 module.exports.LoginUser = LoginUser;
