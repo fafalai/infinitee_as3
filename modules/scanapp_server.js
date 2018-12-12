@@ -555,55 +555,55 @@ function doGetUserAuthDetails(client,username)
 			else
 			{
 				let selectsql = 
-				'select ' +
-				'u1.id,' +
-				'u1.uid,' +
-				'u1.uuid,' +
-				'u1.email,' +
-				'u1.name uname,' +
-				'u1.isadmin,' +
-				'u1.isclient,' +
-				'u1.customers_id custid,' +
-				'u1.salt,' +
-				'u1.pwd,' +
-				'u1.avatar,' +
-				'u1.canvieworders,' +
-				'u1.cancreateorders,' +
-				'u1.canviewinvoices,' +
-				'u1.cancreateinvoices,' +
-				'u1.canviewproducts,' +
-				'u1.cancreateproducts,' +
-				'u1.canviewinventory,' +
-				'u1.cancreateinventory,' +
-				'u1.canviewpayroll,' +
-				'u1.cancreatepayroll,' +
-				'u1.canviewcodes,' +
-				'u1.cancreatecodes,' +
-				'u1.canviewclients,' +
-				'u1.cancreateclients,' +
-				'u1.canviewusers,' +
-				'u1.cancreateusers,' +
-				'u1.canviewbuilds,' +
-				'u1.cancreatebuilds,' +
-				'u1.canviewtemplates,' +
-				'u1.cancreatetemplates,' +
-				'u1.canviewbanking,' +
-				'u1.cancreatebanking,' +
-				'u1.canviewpurchasing,' +
-				'u1.cancreatepurchasing,' +
-				'u1.canviewalerts,' +
-				'u1.cancreatealerts,' +
-				'u1.canviewdashboard,' +
-				'u1.cancreatedashboard,' +
-				'u1.clients_id clientid ' +
-				'from ' +
-				'users u1 left join users u2 on (u1.userscreated_id=u2.id) ' +
-				'         left join users u3 on (u1.usersmodified_id=u3.id) ' +
-				'         left join customers c1 on (u1.customers_id=c1.id) ' +
-				'where ' +
-				'u1.uid=$1 ' +
-				'and ' +
-				'u1.dateexpired is null';
+					'select ' +
+					'u1.id,' +
+					'u1.uid,' +
+					'u1.uuid,' +
+					'u1.email,' +
+					'u1.name uname,' +
+					'u1.isadmin,' +
+					'u1.isclient,' +
+					'u1.customers_id custid,' +
+					'u1.salt,' +
+					'u1.pwd,' +
+					'u1.avatar,' +
+					'u1.canvieworders,' +
+					'u1.cancreateorders,' +
+					'u1.canviewinvoices,' +
+					'u1.cancreateinvoices,' +
+					'u1.canviewproducts,' +
+					'u1.cancreateproducts,' +
+					'u1.canviewinventory,' +
+					'u1.cancreateinventory,' +
+					'u1.canviewpayroll,' +
+					'u1.cancreatepayroll,' +
+					'u1.canviewcodes,' +
+					'u1.cancreatecodes,' +
+					'u1.canviewclients,' +
+					'u1.cancreateclients,' +
+					'u1.canviewusers,' +
+					'u1.cancreateusers,' +
+					'u1.canviewbuilds,' +
+					'u1.cancreatebuilds,' +
+					'u1.canviewtemplates,' +
+					'u1.cancreatetemplates,' +
+					'u1.canviewbanking,' +
+					'u1.cancreatebanking,' +
+					'u1.canviewpurchasing,' +
+					'u1.cancreatepurchasing,' +
+					'u1.canviewalerts,' +
+					'u1.cancreatealerts,' +
+					'u1.canviewdashboard,' +
+					'u1.cancreatedashboard,' +
+					'u1.clients_id clientid ' +
+					'from ' +
+					'users u1 left join users u2 on (u1.userscreated_id=u2.id) ' +
+					'         left join users u3 on (u1.usersmodified_id=u3.id) ' +
+					'         left join customers c1 on (u1.customers_id=c1.id) ' +
+					'where ' +
+					'u1.uid=$1 ' +
+					'and ' +
+					'u1.dateexpired is null';
 				let params = [
 					username	
 				];
@@ -1937,13 +1937,13 @@ function Audit_UpdateProduct(data)
 						{
 							//product is in the audit list, but it is missing, so only update the status id. 
 							updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,status_id = $3 '+
+								'SET datemodified=now(),usersmodified_id=$1,status_id = 1 '+
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 							params = [
 								data.user_id,
 								__.sanitiseAsBigInt(data.productid),
-								__.sanitiseAsBigInt(data.status_id),
+								// __.sanitiseAsBigInt(data.status_id),
 							];
 						}
 						else if (data.errorcode == 5)
@@ -1953,27 +1953,27 @@ function Audit_UpdateProduct(data)
 							if(!__.isUNB(data.locations1_id))
 							{
 								updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3,status_id = $4 '+
+								'SET datemodified=now(),usersmodified_id=$1,locations1_id = $3,status_id = 1 '+
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 								params = [
 									data.user_id,
 									__.sanitiseAsBigInt(data.productid),
 									locations1_id = __.sanitiseAsBigInt(data.locations1_id),
-									__.sanitiseAsBigInt(data.status_id),
+									// __.sanitiseAsBigInt(data.status_id),
 								];
 							}
 							else if (!__.isUNB(data.productcategories_id))
 							{
 								updatesql = 'UPDATE scanapp_testing_products '+
-								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3,status_id = $4 '+
+								'SET datemodified=now(),usersmodified_id=$1,productcategories_id = $3,status_id = 1 '+
 								'WHERE id=$2 AND dateexpired is null returning id';
 
 								params = [
 									data.user_id,
 									__.sanitiseAsBigInt(data.productid),
 									__.sanitiseAsBigInt(data.productcategories_id),
-									__.sanitiseAsBigInt(data.status_id)
+									// __.sanitiseAsBigInt(data.status_id)
 								];
 							}
 						}
@@ -2171,27 +2171,13 @@ function LoginUser(username,pwd)
 				}
 				else
 				{
-					const shouldAbort = err => {
-						if (err) {
-							console.error('Error in transaction', err.stack);
-							client.query('ROLLBACK', err => {
-								if (err) {
-									console.error('Error rolling back client', err.stack);
-								}
-								// release the client back to the pool
-								done();
-							});
-							reject(err.message);
-						}
-						return !!err;
-					};
-
 					doGetUserAuthDetails(client,username).then(result => 
 					{
 						global.ConsoleLog(result);
 						let user = result;
 						doAuthPassword(user,pwd).then(result =>
 						{
+							done();
 							global.ConsoleLog(result);
 							resolve({errorcode:0,uid:result.uid.toUpperCase(),id:result.id,message:"Log in successfully"});
 							
