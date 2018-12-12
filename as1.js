@@ -2603,6 +2603,7 @@ function main()
         categoryid: req.body.categoryid,
         statusid:req.body.statusid,
         comments:req.body.comments,
+        user_id:req.body.userid
       }
 
       scanappserver.Product_Register(newproduct).then(
@@ -3015,7 +3016,7 @@ function main()
       productid: req.body.productid,
       name : req.body.name,
       productcategories_id:req.body.productcategories_id,
-      user_id:999,
+      user_id:req.body.userid,
       errorcode:req.body.errorcode,
       audit_nameid:req.body.audit_nameid,
       audit_typeid:req.body.audit_typeid,
