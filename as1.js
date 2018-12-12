@@ -2951,6 +2951,7 @@ function main()
    * so this product will be changed to the current auditing location or category automatically
    * without changing to another page in the frontend. one-stop-saction. 
    */
+  //Add button
   app.post('/scanapp_auditupdateproduct', function(req, res) {
     'use strict';
     // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
@@ -2978,14 +2979,15 @@ function main()
    * During an audit, if the user scann a barcode which is not in the audit list,but has been registered, he can choose 'Edit', 
    * so this product will be updated based all the info send from the front-end. 
    */
+  //Edit button
   app.post('/scanapp_auditproductedit', function(req, res) {
     'use strict';
     // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
     let product = {
-      productid: req.body.productid,
+      productid: req.body.id,
       name : req.body.name,
       productcategories_id:req.body.productcategories_id,
-      user_id:999,
+      user_id:req.body.userid,
       errorcode:req.body.errorcode,
       audit_nameid:req.body.audit_nameid,
       audit_typeid:req.body.audit_typeid,
