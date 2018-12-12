@@ -144,6 +144,8 @@
   <script type="text/javascript" src="tab-discountcode.js"></script>
   <script type="text/javascript" src="tab-listpricecode.js"></script>
 
+  <script type="text/javascript" src="dlg-data-export-products.js"></script>
+
   <!-- ************************************************************************************************************************************************************************** -->
   <!-- Provectus specific dialogs... -->
   <script type="text/javascript" src="dlg-pv-depositadd.js"></script>
@@ -3118,6 +3120,16 @@
     </div>
   </div>
 
+  <div id="dlgDataExportProducts" class="easyui-dialog" title="Export Products" style="width: 450px; height: 320px;" data-options="resizable: false, modal: true, closable: false, closed: true">
+    <table>
+      <tr>
+        <td>Current Product List:</td>
+        <td><a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-print'" onClick="doDownloadCurrent()" style="width:120px">Download</a>
+        </td>
+      </tr>
+    </table>
+  </div>
+
   <!-- ************************************************************************************************************************************************************************** -->
   <!-- Provectus specific dialogs... -->
   <div id="dlgPVDepositAdd" class="easyui-dialog" title="Add Deposit" style="width: 450px; height: 320px;" data-options="resizable: false, modal: true, closable: false, closed: true">
@@ -3552,6 +3564,7 @@
             <div data-options="iconCls: 'icon-barcode'" onClick="doDlgDataImportProducts()">Product Barcodes</div>
           </div>
         </div>
+        <div data-options="iconCls: 'icon-cashregister'" onClick="doDlgDataExportProducts()">Products</div>
       </div>
     </div>
   </div>

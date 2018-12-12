@@ -2663,6 +2663,78 @@ function doPrimus()
     doAddPrimusListener('userweather');
     doAddPrimusListener('newpoll');
 
+
+    //Product Data Exports
+    doAddPrimusListener
+    (
+      'downloadproductscurrent',
+      function(eventname, data)
+      {
+        console.log(data);
+        let url = '';
+
+        if (!_.isUN(data.rs))
+        {
+          console.log(data.rs.fullpath);
+          console.log(data.rs.basename);
+          if(data.rs.length > 0)
+          {
+            console.log('one quote');
+            if(!_.isUN(data.rs[0]))
+            {
+              url = '/dq?no=' + data.rs[0].quoteno + '&fguid=' + fguid;
+              console.log(url);
+              let w = window.open(url, '_blank');
+              if(w)
+              {
+                w.print();
+              }
+            }
+            else 
+            {
+              doShowError('Could not convert to pdf for now, please go to Maintenance-Settings set the Export as PDF to false');
+            }
+            
+          }
+          else 
+          {
+            console.log('all quotes');
+            if(!_.isUN(data.rs.quoteno))
+            {
+              url = '/dq?no=' + data.rs.quoteno + '&fguid=' + fguid;
+              console.log(url);
+              let w = window.open(url, '_blank');
+              if(w)
+              {
+                w.print();
+              }
+            }
+            else
+            {
+              doShowError('Could not convert to pdf for now, please go to Maintenance-Settings set the Export as PDF to false');
+            }
+
+            
+          }
+          
+          
+
+          // data.rs.forEach
+          // (
+          //   function(f)
+          //   {
+          //     var url = '/dq?no=' + f.quoteno + '&fguid=' + fguid;
+              
+          //     var w = window.open(url, '_blank');
+
+          //     if (w)
+          //       w.print();
+          //   }
+          // );
+        }
+      }
+    );
+
     console.log('***** Primus initialised...');
   }
 

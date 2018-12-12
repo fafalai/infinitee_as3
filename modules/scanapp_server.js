@@ -1757,6 +1757,7 @@ function AuditGetScanned(data)
 
 				doGetAuditScanned(client,data).then(result => 
 				{
+					done();
 					let scannedList = result;
 					global.ConsoleLog(scannedList);
 					resolve(result);
@@ -1786,6 +1787,7 @@ function AuditGetUnscanned(data)
 
 				doGetAuditUnscanned(client,data).then(result => 
 				{
+					done();
 					let unscannedList = result;
 					global.ConsoleLog(unscannedList);
 					resolve(result);
@@ -1795,9 +1797,9 @@ function AuditGetUnscanned(data)
 				{
 					reject(err);
 				});
-			}
-		);
-	});
+		}
+	);
+});
 }
 
 
@@ -2328,6 +2330,11 @@ function StatusGetAll() {
 		);
 	});
 }
+
+function DownloadCurrentProducts(data)
+{
+	global.ConsoleLog(data);
+}
 // *******************************************************************************************************************************************************************************************
 // Internal functions
 module.exports.doUpdateAuditList = doUpdateAuditList;
@@ -2338,6 +2345,7 @@ module.exports.doInsertAuditList = doInsertAuditList;
 module.exports.doGetUserAuthDetails = doGetUserAuthDetails;
 module.exports.doExpiredAuditProduct = doExpiredAuditProduct;
 module.exports.doAuthPassword = doAuthPassword;
+module.exports.DownloadCurrentProducts = DownloadCurrentProducts;
 
 
 // *******************************************************************************************************************************************************************************************
