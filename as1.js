@@ -3014,6 +3014,7 @@ function main()
     // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
     let product = {
       productid: req.body.productid,
+      barcode: req.body.barcode,
       name : req.body.name,
       productcategories_id:req.body.productcategories_id,
       user_id:req.body.userid,
