@@ -1,7 +1,7 @@
 function doDownloadCurrent()
 {
-    noty({text: 'Want to download the current product list', type: 'info', timeout: 4000});
-    doServerDataMessage('downloadproductscurrent', {quotes: [row.id]}, {type: 'refresh'});
+    // noty({text: 'Want to download the current product list', type: 'info', timeout: 4000});
+    doServerDataMessage('downloadproductscurrent', {type: 'refresh'});
 }
 
 

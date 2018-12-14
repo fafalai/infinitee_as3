@@ -27,9 +27,8 @@ function doRegisterProduct(client,data)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
-	
 				reject(err.message);
 			}
 			return !!err;
@@ -39,7 +38,7 @@ function doRegisterProduct(client,data)
 			if (shouldAbort(err)) return;
 
 			let sql =
-				'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9) returning id';
+				'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id,customers_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9,$10) returning id';
 			let params = [
 				__.sanitiseAsString(data.name, 50),
 				data.barcode.toUpperCase(),
@@ -50,12 +49,14 @@ function doRegisterProduct(client,data)
 				__.sanitiseAsBigInt(data.status_id),
 				__.sanitiseAsString(data.comments),
 				__.sanitiseAsString(data.user_id),
+				__.sanitiseAsString(data.customers_id),
 			];
 			client.query(sql, params, (err, result) => {
 				if (shouldAbort(err)) return;
 				client.query('COMMIT', err => {
 					if (err) {
 						console.error('Error committing transaction', err.stack);
+						reject(err);
 					} else {
 						resolve(result.rows[0]);
 					}
@@ -80,7 +81,7 @@ function doCheckAuditList(client,barcode,user_id)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					// done();
 				});
 	
 				reject(err.message);
@@ -143,7 +144,7 @@ function doUpdateAuditList(client,auditid)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -200,7 +201,7 @@ function doGetBarcodeDetails(client,barcode)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -259,7 +260,7 @@ function doGetAuditScanned(client,data)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -326,7 +327,7 @@ function doGetAuditUnscanned(client,data)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -390,7 +391,7 @@ function doGetAuditDetail(client,tablename,id)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -452,7 +453,7 @@ function doInsertAuditList(client,data)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -489,6 +490,7 @@ function doInsertAuditList(client,data)
 						// done();
 						if (err) {
 							console.error('Error committing transaction', err.stack);
+							reject(err);
 						} else {
 							resolve(result.rows[0]);
 						}
@@ -518,7 +520,7 @@ function doExpiredAuditProduct(client,data)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -552,6 +554,7 @@ function doExpiredAuditProduct(client,data)
 						// done();
 						if (err) {
 							console.error('Error committing transaction', err.stack);
+							reject(err);
 						} else {
 							//global.ConsoleLog(result.rows[0]['datefinished']);
 							//result.rows[0]['datefinished'] = global.moment(result.rows[0]['datefinished']).format('YYYY-MM-DD HH:mm');
@@ -589,7 +592,7 @@ function doGetUserAuthDetails(client,username)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -669,6 +672,7 @@ function doGetUserAuthDetails(client,username)
 						// done();
 						if (err) {
 							console.error('Error committing transaction', err.stack);
+							reject(err);
 						} else {
 							if(result.rows.length == 1)
 							{
@@ -763,11 +767,6 @@ function doGetProductById(client,data)
 function doUpdateProductById(client,data)
 {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(data.name) || __.isUNB(data.productid)) {
-			reject('Name or ID can not be empty. ');
-			return;
-		}
-
 		const shouldAbort = err => {
 			if (err) {
 				console.error('Error in transaction', err.stack);
@@ -776,7 +775,7 @@ function doUpdateProductById(client,data)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
 
 				reject(err.message);
@@ -786,7 +785,6 @@ function doUpdateProductById(client,data)
 
 		client.query('BEGIN', err => {
 			if (shouldAbort(err)) return;
-			global.ConsoleLog(data.serial_number);
 			let sql =
 				'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6,comments=$7,description=$8 WHERE id=$9 AND dateexpired is null returning name';
 			let params = [
@@ -811,6 +809,7 @@ function doUpdateProductById(client,data)
 				client.query('COMMIT', err => {
 					if (err) {
 						console.error('Error committing transaction', err.stack);
+						reject(err);
 					} else {
 						resolve(result.rows[0]);
 					}
@@ -820,10 +819,10 @@ function doUpdateProductById(client,data)
 	});
 }
 
-function doGetAllProducts(client,data)
+function doGetCustomerID(client,userid)
 {
-	return new Promise((resolve, reject) => {
-
+	global.ConsoleLog("doGetCustomerID");
+	return new Promise((resolve,reject) => {
 		const shouldAbort = err => {
 			if (err) {
 				console.error('Error in transaction', err.stack);
@@ -832,46 +831,57 @@ function doGetAllProducts(client,data)
 						console.error('Error rolling back client', err.stack);
 					}
 					// release the client back to the pool
-					done();
+					//done();
 				});
-
 				reject(err.message);
 			}
 			return !!err;
 		};
-
-		client.query('BEGIN', err => {
-			if (shouldAbort(err)) return;
-			global.ConsoleLog(data.serial_number);
-			let sql =
-				'UPDATE scanapp_testing_products SET name=$1,serial_number=$2,locations1_id=$3,productcategories_id=$4,status_id=$5,datemodified=now(),usersmodified_id=$6,comments=$7,description=$8 WHERE id=$9 AND dateexpired is null returning name';
-			let params = [
-				__.sanitiseAsString(data.name, 50),
-				__.sanitiseAsString(data.serial_number, 50),
-				// data.serial_number,
-				__.sanitiseAsBigInt(data.locations1_id),
-				__.sanitiseAsBigInt(data.categoryid),
-				__.sanitiseAsBigInt(data.status_id),
-				data.user_id,
-				__.sanitiseAsString(data.comments),
-				__.sanitiseAsString(data.description),
-				__.sanitiseAsBigInt(data.productid)
-			];
-			client.query(sql, params, (err, result) => {
-				global.ConsoleLog(sql);
+		client.query('BEGIN', err =>{
+			if (shouldAbort(err)) 
+			{
+				return;
+			}
+			else
+			{
+				let selectsql = 
+					'select ' +
+					'u1.customers_id custid ' +
+					'from ' +
+					'users u1 ' +
+					'where ' +
+					'u1.id=$1 ' +
+					'and ' +
+					'u1.dateexpired is null';
+				let params = [
+					userid	
+				];
+				global.ConsoleLog(selectsql);
 				global.ConsoleLog(params);
-				global.ConsoleLog(err);
-				global.ConsoleLog(result);
-				if (shouldAbort(err)) return;
-
-				client.query('COMMIT', err => {
-					if (err) {
-						console.error('Error committing transaction', err.stack);
-					} else {
-						resolve(result.rows[0]);
-					}
+				client.query(selectsql, params, (err, result) => {
+					if (shouldAbort(err)) return;
+					global.ConsoleLog(selectsql);
+					global.ConsoleLog(params);
+					global.ConsoleLog(err);
+					global.ConsoleLog(result);
+					client.query('COMMIT', err => {
+						// done();
+						if (err) {
+							console.error('Error committing transaction', err.stack);
+							reject(err);
+						} else {
+							if(result.rows.length == 1)
+							{
+								resolve(result.rows[0]);
+							}
+							else
+							{
+								reject({errorcode:1,message:global.text_unablegetuserauthdetails});
+							}
+						}
+					});
 				});
-			});
+			}
 		});
 	});
 }
@@ -997,34 +1007,44 @@ function Product_Register(data) {
 									return !!err;
 								};
 
-								client.query('BEGIN', err => {
-									if (shouldAbort(err)) return;
-
-									let sql =
-										'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9) returning id';
-									let params = [
-										__.sanitiseAsString(data.name, 50),
-										data.barcode.toUpperCase(),
-										__.sanitiseAsString(data.serial_number, 50),
-										__.sanitiseAsString(data.description),
-										__.sanitiseAsBigInt(data.locationid),
-										__.sanitiseAsBigInt(data.categoryid),
-										__.sanitiseAsBigInt(data.statusid),
-										__.sanitiseAsString(data.comments),
-										__.sanitiseAsString(data.user_id),
-									];
-									client.query(sql, params, (err, result) => {
+								doGetCustomerID(client,data.user_id).then(result =>{
+									global.ConsoleLog(result.custid);
+									client.query('BEGIN', err => {
 										if (shouldAbort(err)) return;
-										client.query('COMMIT', err => {
-											done();
-											if (err) {
-												console.error('Error committing transaction', err.stack);
-											} else {
-												resolve(data.name + ' saved. ');
-											}
+	
+										let sql =
+											'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id,customers_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9,$10) returning id';
+										let params = [
+											__.sanitiseAsString(data.name, 50),
+											data.barcode.toUpperCase(),
+											__.sanitiseAsString(data.serial_number, 50),
+											__.sanitiseAsString(data.description),
+											__.sanitiseAsBigInt(data.locationid),
+											__.sanitiseAsBigInt(data.categoryid),
+											__.sanitiseAsBigInt(data.statusid),
+											__.sanitiseAsString(data.comments),
+											__.sanitiseAsString(data.user_id),
+											__.sanitiseAsString(result.custid),
+										];
+										client.query(sql, params, (err, result) => {
+											if (shouldAbort(err)) return;
+											client.query('COMMIT', err => {
+												done();
+												if (err) {
+													console.error('Error committing transaction', err.stack);
+												} else {
+													resolve(data.name + ' saved. ');
+												}
+											});
 										});
 									});
-								});
+
+								}).catch(err =>
+								{
+									done();
+									reject(err);
+								}) 
+								
 							}
 						}
 					);
@@ -1568,6 +1588,7 @@ function AuditOnType(data) {
 								{
 									if(result.rows.length == 0)
 									{
+										done();
 										reject('No result. ');
 									}
 									else
@@ -1589,13 +1610,13 @@ function AuditOnType(data) {
 											})
 											.catch(err => 
 											{
-											
+												done();
 												reject(err);
 											})
 										})
 										.catch(err => 
 										{
-										
+											done();
 											reject(err);
 										})
 									}
@@ -1669,7 +1690,6 @@ function AuditGetAll(data) {
 				{
 					doGetAuditScanned(client,data).then(result => 
 					{
-						
 						let scannedList = result;
 						global.ConsoleLog(scannedList);
 						
@@ -1820,6 +1840,7 @@ function AuditGetScanned(data)
 				})
 				.catch(err => 
 				{
+					done();
 					reject(err);
 				});
 			}
@@ -1850,6 +1871,7 @@ function AuditGetUnscanned(data)
 				})
 				.catch(err => 
 				{
+					done();
 					reject(err);
 				});
 		}
@@ -2093,6 +2115,7 @@ function Audit_UpdateProduct(data)
 								if (err) {
 									done();
 									console.error('Error committing transaction', err.stack);
+									reject(err.message);
 								} else {
 									global.ConsoleLog(result);
 									if(data.errorcode == 4)
@@ -2166,52 +2189,60 @@ function Audit_RegisterProduct(data)
 					done();
 					reject('Unable to connect server.');
 				} else {
-					doRegisterProduct(client,data).then(result =>
-					{
-						data.productid = result.id;
-						global.ConsoleLog(data.productid);
-						let insert = false;
-						if(data.audit_nameid == 0)
+					doGetCustomerID(client,data.user_id).then(result =>{
+						data.customers_id = result.custid;
+						doRegisterProduct(client,data).then(result =>
 						{
-							insert = true;
-						}
-						else if(data.audit_nameid == 1 && data.audit_typeid == data.locations1_id)
-						{
-							insert = true;
-						}
-						else if(data.audit_nameid == 2 && data.audit_typeid == data.categoryid)
-						{
-							insert = true;
-						}
-
-						if(insert)
-						{
-							doInsertAuditList(client,data).then(result => 
+							data.productid = result.id;
+							global.ConsoleLog(data.productid);
+							let insert = false;
+							if(data.audit_nameid == 0)
+							{
+								insert = true;
+							}
+							else if(data.audit_nameid == 1 && data.audit_typeid == data.locations1_id)
+							{
+								insert = true;
+							}
+							else if(data.audit_nameid == 2 && data.audit_typeid == data.categoryid)
+							{
+								insert = true;
+							}
+	
+							if(insert)
+							{
+								doInsertAuditList(client,data).then(result => 
+								{
+									done();
+									//let unscannedList = result;
+									global.ConsoleLog(result);
+									resolve({errorcode:0,message:'register product successfully',data:result});
+								})
+								.catch(err => 
+								{
+									done();
+									reject(err);
+								});
+							}
+							else
 							{
 								done();
 								//let unscannedList = result;
 								global.ConsoleLog(result);
 								resolve({errorcode:0,message:'register product successfully',data:result});
-							})
-							.catch(err => 
-							{
-								done();
-								reject(err);
-							});
-						}
-						else
+							}
+						})
+						.catch(err =>
 						{
 							done();
-							//let unscannedList = result;
-							global.ConsoleLog(result);
-							resolve({errorcode:0,message:'register product successfully',data:result});
-						}
+							reject(err);
+						});
 					})
 					.catch(err =>
 					{
 						done();
 						reject(err);
-					});
+					})
 				}
 			}
 		);
@@ -2342,7 +2373,7 @@ function LoginUser(username,pwd)
 						{
 							done();
 							global.ConsoleLog(result);
-							resolve({errorcode:0,uid:result.uid.toUpperCase(),id:result.id,message:"Log in successfully"});
+							resolve({errorcode:0,uid:result.uid.toUpperCase(),id:result.id,custid:result.custid,message:"Log in successfully"});
 							
 						})
 						.catch(err =>
@@ -2386,10 +2417,6 @@ function StatusGetAll() {
 	});
 }
 
-function DownloadCurrentProducts(data)
-{
-	global.ConsoleLog(data);
-}
 // *******************************************************************************************************************************************************************************************
 // Internal functions
 module.exports.doUpdateAuditList = doUpdateAuditList;
@@ -2400,7 +2427,7 @@ module.exports.doInsertAuditList = doInsertAuditList;
 module.exports.doGetUserAuthDetails = doGetUserAuthDetails;
 module.exports.doExpiredAuditProduct = doExpiredAuditProduct;
 module.exports.doAuthPassword = doAuthPassword;
-module.exports.DownloadCurrentProducts = DownloadCurrentProducts;
+
 
 
 // *******************************************************************************************************************************************************************************************
