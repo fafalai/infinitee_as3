@@ -1085,303 +1085,300 @@ function doGenOrders(tx, type,custid, header, details, uname,orderstotal,world)
         
          if(accumulatedOrders == orderstotal)
          {
-           
-           //global.ConsoleLog(now);
-           //global.ConsoleLog(totalOrderList);
-         
-  
-          global.ConsoleLog("we have all the orders in the list, can put them in the workbook");
-          ensureFolderExists
-          (
-             foldername,
-             0775,
-             function(err)
-             {
-               if (!err)
-               {
-                 
-                   //need to create the order xlsx first
-                   var workbook = new global.exceljs.Workbook();
-                   var worksheet = workbook.addWorksheet('All Orders');
-                   worksheet.views = [{state:'normal'}];
-                   worksheet.pageSetup.orientation = 'landscape';
-                   worksheet.pageSetup.fitToPage = true;
-                   worksheet.pageSetup.pageOrder = 'overThenDown';
-                   worksheet.pageSetup.printTitlesRow = '1:37';
-                   worksheet.pageSetup.fitToPage = true;
-                   worksheet.pageSetup.fitToHeight = 5;
-                   worksheet.pageSetup.fitToWidth = 4;
-                   worksheet.pageSetup.paperSize = 9;
-                   //worksheet.properties.defaultRowHeight = 34;
-                  //  worksheet.pageSetup.showGridLines = true;
-                  //  worksheet.views.showGridLines = true;
-                   worksheet.views = [{state: 'frozen', xSplit: 2, ySplit: 2}];
-                   worksheet.mergeCells('AB1', 'AK1');
-                   worksheet.mergeCells('A1','A2');
-                   worksheet.mergeCells('B1','B2');
-                   worksheet.mergeCells('C1','C2');
-                   worksheet.mergeCells('D1','D2');
-                   worksheet.mergeCells('E1','E2');
-                   worksheet.mergeCells('F1','F2');
-                   worksheet.mergeCells('G1','G2');
-                   worksheet.mergeCells('H1','H2');
-                   worksheet.mergeCells('I1','I2');
-                   worksheet.mergeCells('J1','J2');
-                   worksheet.mergeCells('K1','K2');
-                   worksheet.mergeCells('L1','L2');
-                   worksheet.mergeCells('M1','M2');
-                   worksheet.mergeCells('N1','N2');
-                   worksheet.mergeCells('O1','O2');
-                   worksheet.mergeCells('P1','P2');
-                   worksheet.mergeCells('Q1','Q2');
-                   worksheet.mergeCells('R1','R2');
-                   worksheet.mergeCells('S1','S2');
-                   worksheet.mergeCells('T1','T2');
-                   worksheet.mergeCells('U1','U2');
-                   worksheet.mergeCells('V1','V2');
-                   worksheet.mergeCells('W1','W2');
-                   worksheet.mergeCells('X1','X2');
-                   worksheet.mergeCells('Y1','Y2');
-                   worksheet.mergeCells('Z1','Z2');
-                   worksheet.mergeCells('AA1','AA2');
-                   worksheet.mergeCells('AL1','AL2');
-                   worksheet.mergeCells('AM1','AM2');
-                   worksheet.mergeCells('AN1','AN2');
-                   worksheet.mergeCells('AO1','AO2');
-                   worksheet.mergeCells('AP1','AP2');
-                   worksheet.mergeCells('AQ1','AQ2');
-                   worksheet.mergeCells('AR1','AR2');
-                   worksheet.mergeCells('AS1','AS2');
-                   worksheet.mergeCells('AT1','AT2');
+            //global.ConsoleLog(now);
+            //global.ConsoleLog(totalOrderList);
+            global.ConsoleLog("we have all the orders in the list, can put them in the workbook");
+            ensureFolderExists
+            (
+              foldername,
+              0775,
+              function(err)
+              {
+                if (!err)
+                {
                   
-                   
-  
-                   worksheet.columns = [
-                     {header: 'Order Invoice No',key:'orderinvoiceno',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Order No',key:'orderorderno',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Custpo',key:'custpo',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Order Invoice Date',key:'orderinvoicedate',width:22,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Order Start Date',key:'orderstartdate',width:22,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                    //need to create the order xlsx first
+                    var workbook = new global.exceljs.Workbook();
+                    var worksheet = workbook.addWorksheet('All Orders');
+                    worksheet.views = [{state:'normal'}];
+                    worksheet.pageSetup.orientation = 'landscape';
+                    worksheet.pageSetup.fitToPage = true;
+                    worksheet.pageSetup.pageOrder = 'overThenDown';
+                    worksheet.pageSetup.printTitlesRow = '1:37';
+                    worksheet.pageSetup.fitToPage = true;
+                    worksheet.pageSetup.fitToHeight = 5;
+                    worksheet.pageSetup.fitToWidth = 4;
+                    worksheet.pageSetup.paperSize = 9;
+                    //worksheet.properties.defaultRowHeight = 34;
+                    //  worksheet.pageSetup.showGridLines = true;
+                    //  worksheet.views.showGridLines = true;
+                    worksheet.views = [{state: 'frozen', xSplit: 2, ySplit: 2}];
+                    worksheet.mergeCells('AB1', 'AK1');
+                    worksheet.mergeCells('A1','A2');
+                    worksheet.mergeCells('B1','B2');
+                    worksheet.mergeCells('C1','C2');
+                    worksheet.mergeCells('D1','D2');
+                    worksheet.mergeCells('E1','E2');
+                    worksheet.mergeCells('F1','F2');
+                    worksheet.mergeCells('G1','G2');
+                    worksheet.mergeCells('H1','H2');
+                    worksheet.mergeCells('I1','I2');
+                    worksheet.mergeCells('J1','J2');
+                    worksheet.mergeCells('K1','K2');
+                    worksheet.mergeCells('L1','L2');
+                    worksheet.mergeCells('M1','M2');
+                    worksheet.mergeCells('N1','N2');
+                    worksheet.mergeCells('O1','O2');
+                    worksheet.mergeCells('P1','P2');
+                    worksheet.mergeCells('Q1','Q2');
+                    worksheet.mergeCells('R1','R2');
+                    worksheet.mergeCells('S1','S2');
+                    worksheet.mergeCells('T1','T2');
+                    worksheet.mergeCells('U1','U2');
+                    worksheet.mergeCells('V1','V2');
+                    worksheet.mergeCells('W1','W2');
+                    worksheet.mergeCells('X1','X2');
+                    worksheet.mergeCells('Y1','Y2');
+                    worksheet.mergeCells('Z1','Z2');
+                    worksheet.mergeCells('AA1','AA2');
+                    worksheet.mergeCells('AL1','AL2');
+                    worksheet.mergeCells('AM1','AM2');
+                    worksheet.mergeCells('AN1','AN2');
+                    worksheet.mergeCells('AO1','AO2');
+                    worksheet.mergeCells('AP1','AP2');
+                    worksheet.mergeCells('AQ1','AQ2');
+                    worksheet.mergeCells('AR1','AR2');
+                    worksheet.mergeCells('AS1','AS2');
+                    worksheet.mergeCells('AT1','AT2');
+                    
+                    
     
-                     {header: 'Name',key:'custname',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Code',key:'custvendorcode',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Contact 1',key:'custcontact1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Contact 2',key:'custcontact2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Ship Notes',key:'custshipnotes',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                    worksheet.columns = [
+                      {header: 'Order Invoice No',key:'orderinvoiceno',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Order No',key:'orderorderno',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Custpo',key:'custpo',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Order Invoice Date',key:'orderinvoicedate',width:22,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Order Start Date',key:'orderstartdate',width:22,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+      
+                      {header: 'Name',key:'custname',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Code',key:'custvendorcode',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Contact 1',key:'custcontact1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Contact 2',key:'custcontact2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Ship Notes',key:'custshipnotes',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+      
+                      {header: 'Address 1',key:'custaddress1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Address 2',key:'custaddress2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'City',key:'custcity',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Postcode',key:'custpostcode',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'State',key:'custstate',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Country',key:'custcountry',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+      
     
-                     {header: 'Address 1',key:'custaddress1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Address 2',key:'custaddress2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'City',key:'custcity',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Postcode',key:'custpostcode',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'State',key:'custstate',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Country',key:'custcountry',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Shipping Address 1',key:'custshipaddress1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Shipping Address 2',key:'custshipaddress2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Shipping City',key:'custshipcity',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Shipping Postcode',key:'custshippostcode',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Shipping State',key:'custshipstate',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Shipping Country',key:'custshipcountry',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
     
-  
-                     {header: 'Shipping Address 1',key:'custshipaddress1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Shipping Address 2',key:'custshipaddress2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Shipping City',key:'custshipcity',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Shipping Postcode',key:'custshippostcode',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Shipping State',key:'custshipstate',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Shipping Country',key:'custshipcountry',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-  
-                     {header: 'ACN',key:'custacn',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'ABN',key:'custabn',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'custhscode',key:'custhscode',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'custcustcode1',key:'custcustcode1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'custcustcode2',key:'custcustcode2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'ACN',key:'custacn',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'ABN',key:'custabn',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'custhscode',key:'custhscode',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'custcustcode1',key:'custcustcode1',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'custcustcode2',key:'custcustcode2',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+      
+                      //  {header: 'Products',key:'product',width:50,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
     
-                    //  {header: 'Products',key:'product',width:50,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-  
-                     {header: 'lineno',key:'lineno',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'code',key:'code',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'name',key:'name',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'price',key:'price',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'gst',key:'gst',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'qty',key:'qty',width:12,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'#,##0.00_);[Red](#,##0.00)'}},
-  
-                     {header: 'discount',key:'discount',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'expressfee',key:'expressfee',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'subtotal',key:'subtotal',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'subtotalgst',key:'subtotalgst',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-  
-                     {header: 'Total',key:'ordertotal',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'Dilvery Fee',key:'orderdeliveryfee',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'GST Amount',key:'ordergstamount',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'Included GST',key:'orderincgst',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-                     {header: 'Applied',key:'orderapplied',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Grand Total',key:'ordergrandtotal',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
-  
-                     {header: 'Prepared By',key:'prepearedby',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Version',key:'orderrevno',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-                     {header: 'Date',key:'orderrevdate',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
-  
-  
-  
-                   ];
-  
-                  //  worksheet.getRow(1).style = {font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}};
-  
-                   worksheet.getRow(1).eachCell({includeEmpty:true},function(cell,colNumber){
-                       //console.log('Column ' + colNumber + ' = ' + JSON.stringify(cell.value));
-                       cell.font = {name: 'Arial Black' };
-                       cell.alignment = {wrapText:true,vertical:'middle',horizontal:'center'};
-                   });
-                    worksheet.getCell('AB1').value = 'Product';
-                    worksheet.getCell('AB1').style = { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}};
-                    worksheet.getCell('AB2').value = 'lieno';
-                    worksheet.getCell('AB2').border = {
-                      top: {style:'thin'},
-                      left: {style:'thin'},
-                      bottom: {style:'thin'},
-                      right: {style:'thin'}
-                    };
-                  worksheet.getCell('AC2').value = 'code';
-                  worksheet.getCell('AD2').value = 'name';
-                  worksheet.getCell('AE2').value= 'price';
-                  worksheet.getCell('AF2').value = 'gst';
-                  worksheet.getCell('AG2').value = 'qty';
-                  worksheet.getCell('AH2').value = 'discount';
-                  worksheet.getCell('AI2').value= 'expressfee';
-                  worksheet.getCell('AJ2').value= 'subtotal';
-                  worksheet.getCell('AK2').value = 'subtotalgst';               
-                  worksheet.addRows(totalOrderList);
-                  worksheet.eachRow({ includeEmpty: true }, function(row, rowNumber) {
-                        //console.log('Row ' + rowNumber + ' = ' + JSON.stringify(row.values));
-                        row.height = 34;
-                        if(rowNumber > 2)
-                        {
-                          row.font = {name:'Comic Sans MS',family:2,size:10,bold:false};
-                          row.alignment = {wrapText:true,vertical:'middle',horizontal:'center'};
-                          // row.style = {font: {name:'Comic Sans MS',family:2,size:10,bold:false},alignment:{wrapText:true,vertical:'middle',horizontal:'center'}};
-                        }
-  
-                        if(rowNumber == 2)
-                        {
-                          row.eachCell({ includeEmpty: true },function(cell,colNumber){
-                            //console.log('Cell ' + colNumber + ' = ' + cell.value);
-                            if (colNumber > 27 && colNumber < 38){
-                              cell.border = {
-                                top: {style:'thin'},
-                                left: {style:'thin'},
-                                bottom: {style:'thin'},
-                                right: {style:'thin'}
+                      {header: 'lineno',key:'lineno',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'code',key:'code',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'name',key:'name',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'price',key:'price',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'gst',key:'gst',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'qty',key:'qty',width:12,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'#,##0.00_);[Red](#,##0.00)'}},
+    
+                      {header: 'discount',key:'discount',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'expressfee',key:'expressfee',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'subtotal',key:'subtotal',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'subtotalgst',key:'subtotalgst',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+    
+                      {header: 'Total',key:'ordertotal',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'Dilvery Fee',key:'orderdeliveryfee',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'GST Amount',key:'ordergstamount',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'Included GST',key:'orderincgst',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+                      {header: 'Applied',key:'orderapplied',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Grand Total',key:'ordergrandtotal',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'},numFmt:'"$"#,##0.00;[Red]\-"$"#,##0.00'}},
+    
+                      {header: 'Prepared By',key:'prepearedby',width:15,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Version',key:'orderrevno',width:10,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+                      {header: 'Date',key:'orderrevdate',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+    
+    
+    
+                    ];
+    
+                    //  worksheet.getRow(1).style = {font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}};
+    
+                    worksheet.getRow(1).eachCell({includeEmpty:true},function(cell,colNumber){
+                        //console.log('Column ' + colNumber + ' = ' + JSON.stringify(cell.value));
+                        cell.font = {name: 'Arial Black' };
+                        cell.alignment = {wrapText:true,vertical:'middle',horizontal:'center'};
+                    });
+                      worksheet.getCell('AB1').value = 'Product';
+                      worksheet.getCell('AB1').style = { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}};
+                      worksheet.getCell('AB2').value = 'lieno';
+                      worksheet.getCell('AB2').border = {
+                        top: {style:'thin'},
+                        left: {style:'thin'},
+                        bottom: {style:'thin'},
+                        right: {style:'thin'}
+                      };
+                    worksheet.getCell('AC2').value = 'code';
+                    worksheet.getCell('AD2').value = 'name';
+                    worksheet.getCell('AE2').value= 'price';
+                    worksheet.getCell('AF2').value = 'gst';
+                    worksheet.getCell('AG2').value = 'qty';
+                    worksheet.getCell('AH2').value = 'discount';
+                    worksheet.getCell('AI2').value= 'expressfee';
+                    worksheet.getCell('AJ2').value= 'subtotal';
+                    worksheet.getCell('AK2').value = 'subtotalgst';               
+                    worksheet.addRows(totalOrderList);
+                    worksheet.eachRow({ includeEmpty: true }, function(row, rowNumber) {
+                          //console.log('Row ' + rowNumber + ' = ' + JSON.stringify(row.values));
+                          row.height = 34;
+                          if(rowNumber > 2)
+                          {
+                            row.font = {name:'Comic Sans MS',family:2,size:10,bold:false};
+                            row.alignment = {wrapText:true,vertical:'middle',horizontal:'center'};
+                            // row.style = {font: {name:'Comic Sans MS',family:2,size:10,bold:false},alignment:{wrapText:true,vertical:'middle',horizontal:'center'}};
+                          }
+    
+                          if(rowNumber == 2)
+                          {
+                            row.eachCell({ includeEmpty: true },function(cell,colNumber){
+                              //console.log('Cell ' + colNumber + ' = ' + cell.value);
+                              if (colNumber > 27 && colNumber < 38){
+                                cell.border = {
+                                  top: {style:'thin'},
+                                  left: {style:'thin'},
+                                  bottom: {style:'thin'},
+                                  right: {style:'thin'}
+                                }
                               }
-                            }
-                          });
-                        }
-                        else
-                        {
-                          row.eachCell({ includeEmpty: true },function(cell,colNumber){
-                            //console.log('Cell ' + colNumber + ' = ' + cell.value);
-                              cell.border = {
-                                top: {style:'thin'},
-                                left: {style:'thin'},
-                                bottom: {style:'thin'},
-                                right: {style:'thin'}
-                              }
-                          });
-                        }
-                        
-                  });
-                  //global.ConsoleLog(order_productstotal);
-                  var beginingrow = 3;
-                  var beginingindex = 0;
-                  var orderinvoicenoCol = worksheet.getColumn('orderinvoiceno');
-                  var ordernoCol = worksheet.getColumn('orderorderno');
-                  ordernoCol.eachCell({ includeEmpty: true },function(cell,rowNumber){
-                    //global.ConsoleLog('rowNumber ' + rowNumber);
-                    // global.ConsoleLog('beginingindex ' + beginingindex);
-                    if(rowNumber >= 3)
-                    {
-                      if(beginingrow == rowNumber)
-                      {
-                        //global.ConsoleLog("beining row " + beginingrow);
-                        if(order_productstotal[beginingindex] > 1)
-                        {
-                          var endingrow = beginingrow + (order_productstotal[beginingindex] - 1);
-                          //global.ConsoleLog("ending row " + endingrow);
-                          global.ConsoleLog('merge: B' + beginingrow + ':B' + endingrow);
-                          worksheet.mergeCells('A' + beginingrow + ':A' + endingrow);
-                          worksheet.mergeCells('B' + beginingrow + ':B' + endingrow);
-                          worksheet.mergeCells('C' + beginingrow + ':C' + endingrow);
-                          worksheet.mergeCells('D' + beginingrow + ':D' + endingrow);
-                          worksheet.mergeCells('E' + beginingrow + ':E' + endingrow);
-                          worksheet.mergeCells('F' + beginingrow + ':F' + endingrow);
-                          worksheet.mergeCells('G' + beginingrow + ':G' + endingrow);
-                          worksheet.mergeCells('H' + beginingrow + ':H' + endingrow);
-                          worksheet.mergeCells('I' + beginingrow + ':I' + endingrow);
-                          worksheet.mergeCells('J' + beginingrow + ':J' + endingrow);
-                          worksheet.mergeCells('K' + beginingrow + ':K' + endingrow);
-                          worksheet.mergeCells('L' + beginingrow + ':L' + endingrow);
-                          worksheet.mergeCells('M' + beginingrow + ':M' + endingrow);
-                          worksheet.mergeCells('N' + beginingrow + ':N' + endingrow);
-                          worksheet.mergeCells('O' + beginingrow + ':O' + endingrow);
-                          worksheet.mergeCells('P' + beginingrow + ':P' + endingrow);
-                          worksheet.mergeCells('Q' + beginingrow + ':Q' + endingrow);
-                          worksheet.mergeCells('R' + beginingrow + ':R' + endingrow);
-                          worksheet.mergeCells('S' + beginingrow + ':S' + endingrow);
-                          worksheet.mergeCells('T' + beginingrow + ':T' + endingrow);
-                          worksheet.mergeCells('U' + beginingrow + ':U' + endingrow);
-                          worksheet.mergeCells('V' + beginingrow + ':V' + endingrow);
-                          worksheet.mergeCells('W' + beginingrow + ':W' + endingrow);
-                          worksheet.mergeCells('X' + beginingrow + ':X' + endingrow);
-                          worksheet.mergeCells('Y' + beginingrow + ':Y' + endingrow);
-                          worksheet.mergeCells('Z' + beginingrow + ':Z' + endingrow);
-                          worksheet.mergeCells('AA' + beginingrow + ':AA' + endingrow);
-                          worksheet.mergeCells('AL' + beginingrow + ':AL' + endingrow);
-                          worksheet.mergeCells('AM' + beginingrow + ':AM' + endingrow);
-                          worksheet.mergeCells('AN' + beginingrow + ':AN' + endingrow);
-                          worksheet.mergeCells('AO' + beginingrow + ':AO' + endingrow);
-                          worksheet.mergeCells('AP' + beginingrow + ':AP' + endingrow);
-                          worksheet.mergeCells('AQ' + beginingrow + ':AQ' + endingrow);
-                          worksheet.mergeCells('AR' + beginingrow + ':AR' + endingrow);
-                          worksheet.mergeCells('AS' + beginingrow + ':AS' + endingrow);
-                          worksheet.mergeCells('AT' + beginingrow + ':AT' + endingrow);
+                            });
+                          }
+                          else
+                          {
+                            row.eachCell({ includeEmpty: true },function(cell,colNumber){
+                              //console.log('Cell ' + colNumber + ' = ' + cell.value);
+                                cell.border = {
+                                  top: {style:'thin'},
+                                  left: {style:'thin'},
+                                  bottom: {style:'thin'},
+                                  right: {style:'thin'}
+                                }
+                            });
+                          }
                           
-                          beginingrow = beginingrow + order_productstotal[beginingindex];
-                          beginingindex ++;
-                          //global.ConsoleLog("merge, the next beining row " + beginingrow);
+                    });
+                    //global.ConsoleLog(order_productstotal);
+                    var beginingrow = 3;
+                    var beginingindex = 0;
+                    var orderinvoicenoCol = worksheet.getColumn('orderinvoiceno');
+                    var ordernoCol = worksheet.getColumn('orderorderno');
+                    ordernoCol.eachCell({ includeEmpty: true },function(cell,rowNumber){
+                      //global.ConsoleLog('rowNumber ' + rowNumber);
+                      // global.ConsoleLog('beginingindex ' + beginingindex);
+                      if(rowNumber >= 3)
+                      {
+                        if(beginingrow == rowNumber)
+                        {
+                          //global.ConsoleLog("beining row " + beginingrow);
+                          if(order_productstotal[beginingindex] > 1)
+                          {
+                            var endingrow = beginingrow + (order_productstotal[beginingindex] - 1);
+                            //global.ConsoleLog("ending row " + endingrow);
+                            global.ConsoleLog('merge: B' + beginingrow + ':B' + endingrow);
+                            worksheet.mergeCells('A' + beginingrow + ':A' + endingrow);
+                            worksheet.mergeCells('B' + beginingrow + ':B' + endingrow);
+                            worksheet.mergeCells('C' + beginingrow + ':C' + endingrow);
+                            worksheet.mergeCells('D' + beginingrow + ':D' + endingrow);
+                            worksheet.mergeCells('E' + beginingrow + ':E' + endingrow);
+                            worksheet.mergeCells('F' + beginingrow + ':F' + endingrow);
+                            worksheet.mergeCells('G' + beginingrow + ':G' + endingrow);
+                            worksheet.mergeCells('H' + beginingrow + ':H' + endingrow);
+                            worksheet.mergeCells('I' + beginingrow + ':I' + endingrow);
+                            worksheet.mergeCells('J' + beginingrow + ':J' + endingrow);
+                            worksheet.mergeCells('K' + beginingrow + ':K' + endingrow);
+                            worksheet.mergeCells('L' + beginingrow + ':L' + endingrow);
+                            worksheet.mergeCells('M' + beginingrow + ':M' + endingrow);
+                            worksheet.mergeCells('N' + beginingrow + ':N' + endingrow);
+                            worksheet.mergeCells('O' + beginingrow + ':O' + endingrow);
+                            worksheet.mergeCells('P' + beginingrow + ':P' + endingrow);
+                            worksheet.mergeCells('Q' + beginingrow + ':Q' + endingrow);
+                            worksheet.mergeCells('R' + beginingrow + ':R' + endingrow);
+                            worksheet.mergeCells('S' + beginingrow + ':S' + endingrow);
+                            worksheet.mergeCells('T' + beginingrow + ':T' + endingrow);
+                            worksheet.mergeCells('U' + beginingrow + ':U' + endingrow);
+                            worksheet.mergeCells('V' + beginingrow + ':V' + endingrow);
+                            worksheet.mergeCells('W' + beginingrow + ':W' + endingrow);
+                            worksheet.mergeCells('X' + beginingrow + ':X' + endingrow);
+                            worksheet.mergeCells('Y' + beginingrow + ':Y' + endingrow);
+                            worksheet.mergeCells('Z' + beginingrow + ':Z' + endingrow);
+                            worksheet.mergeCells('AA' + beginingrow + ':AA' + endingrow);
+                            worksheet.mergeCells('AL' + beginingrow + ':AL' + endingrow);
+                            worksheet.mergeCells('AM' + beginingrow + ':AM' + endingrow);
+                            worksheet.mergeCells('AN' + beginingrow + ':AN' + endingrow);
+                            worksheet.mergeCells('AO' + beginingrow + ':AO' + endingrow);
+                            worksheet.mergeCells('AP' + beginingrow + ':AP' + endingrow);
+                            worksheet.mergeCells('AQ' + beginingrow + ':AQ' + endingrow);
+                            worksheet.mergeCells('AR' + beginingrow + ':AR' + endingrow);
+                            worksheet.mergeCells('AS' + beginingrow + ':AS' + endingrow);
+                            worksheet.mergeCells('AT' + beginingrow + ':AT' + endingrow);
+                            
+                            beginingrow = beginingrow + order_productstotal[beginingindex];
+                            beginingindex ++;
+                            //global.ConsoleLog("merge, the next beining row " + beginingrow);
+                          }
+                          else
+                          {
+                            beginingrow = beginingrow + 1;
+                            beginingindex ++;
+                            //global.ConsoleLog("no merge, the next beining row " + beginingrow);
+                          }
+                          
+                        }
+                      }
+                        
+                    });
+                    //global.ConsoleLog("the total number of rows: " + worksheet.rowCount);
+                    workbook.xlsx.writeFile(path).then(function(){
+                        global.ConsoleLog("write file succeed,reset variables");
+                        
+                        totalOrderList = [];
+                        orderProductTotal = 0;
+                        accumulatedOrders = 0;
+                        order_productstotal = [];
+
+                        let result = {orderno: header.orderno, invoiceno: header.invoiceno,quoteno: header.quoteno, basename: filename, fullpath: foldername + '/' + filename,completed:1};
+                        // resolve({orderno: header.orderno, invoiceno: header.invoiceno, basename: filename, fullpath: foldername + '/' + filename});
+
+                        if (world.custconfig.exportaspdf)
+                        {
+                          world.spark.emit(global.eventinfo, {rc: global.errcode_none, msg: 'Output generated, now converting to PDF', pdata: world.pdata});
+                          return doExcelToPDF(result, world.custconfig.exportaspdf);
                         }
                         else
                         {
-                          beginingrow = beginingrow + 1;
-                          beginingindex ++;
-                          //global.ConsoleLog("no merge, the next beining row " + beginingrow);
+                          resolve (result);
                         }
-                        
-                      }
-                    }
-                      
-                  });
-                  //global.ConsoleLog("the total number of rows: " + worksheet.rowCount);
-                  workbook.xlsx.writeFile(path).then(function(){
-                      global.ConsoleLog("write file succeed,reset variables");
-                      
-                      totalOrderList = [];
-                      orderProductTotal = 0;
-                      accumulatedOrders = 0;
-                      order_productstotal = [];
-
-                      let result = {orderno: header.orderno, invoiceno: header.invoiceno,quoteno: header.quoteno, basename: filename, fullpath: foldername + '/' + filename,completed:1};
-                      // resolve({orderno: header.orderno, invoiceno: header.invoiceno, basename: filename, fullpath: foldername + '/' + filename});
-
-                      if (world.custconfig.exportaspdf)
-                      {
-                        world.spark.emit(global.eventinfo, {rc: global.errcode_none, msg: 'Output generated, now converting to PDF', pdata: world.pdata});
-                        return doExcelToPDF(result, world.custconfig.exportaspdf);
-                      }
-                      else
-                      {
-                        resolve (result);
-                      }
-  
-                  });
-                 }
-               else
-                 reject(err);
-             }
-             
-           );
+    
+                    });
+                  }
+                else
+                  reject(err);
+              }
+              
+            );
          }
          else
          {
@@ -1416,186 +1413,186 @@ function doSendFile(res, custid, no, folder, exportaspdf)
 
 function doPrintOrders(tx, type, templateid, orders, world)
 {
-  var promise = new global.rsvp.Promise
-  (
-    function(resolve, reject)
+var promise = new global.rsvp.Promise
+(
+  function(resolve, reject)
+  {
+    var calls = [];
+    var count = orders.length;
+    global.ConsoleLog("the number of orders/quotes/invoices need to pring is: " + count);  
+    if(count == 1)
     {
-      var calls = [];
-      var count = orders.length;
-      global.ConsoleLog("the number of orders/quotes/invoices need to pring is: " + count);  
-      if(count == 1)
-      {
-        global.ConsoleLog("pring one orders/quotes/invoices, use the standard one");
-        orders.forEach
-        (
-          function(orderid)
-          {
-            calls.push
-            (
-              function(callback)
-              {
-                var header = null;
-                var details = null;
-                var print = null;
-  
-                doGetOrderHeader(tx, world.cn.custid, orderid).then
-                (
-                  function(result)
-                  {
-                    header = result;
-                    return doGetOrderDetails(tx, world.cn.custid, header);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    details = result;
-                    return doGetLastPrintNo(tx, world.cn.custid, orderid);
-                  }
-                ).then
-                (
-                  function(copyno)
-                  {
-                    world.copyno = copyno;
-                    return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    print = result;
-                    return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    return doGenOrder(tx, type, world.cn.custid, header, details, result, world.cn.uname);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    if (world.custconfig.exportaspdf)
-                      world.spark.emit(global.eventinfo, {rc: global.errcode_none, msg: 'Output generated, now converting to PDF', pdata: world.pdata});
-  
-                    return doExcelToPDF(result, world.custconfig.exportaspdf);
-                  }
-                ).then
-                (
-                  function(xlsx)
-                  {
-                    callback(null, xlsx);
-                  }
-                ).then
-                (
-                  null,
-                  function(err)
-                  {
-                    callback(err);
-                  }
-                )
-              }
-            );
-          }
-        );
-
-      }
-      else
-      {
-        global.ConsoleLog("pring more than one orders/quotes/invoices, use the other one");
-        orders.forEach
-        (
-          function(orderid)
-          {
-            calls.push
-            (
-              function(callback)
-              {
-                var header = null;
-                var details = null;
-                var print = null;
-  
-                doGetOrderHeader(tx, world.cn.custid, orderid).then
-                (
-                  function(result)
-                  {
-                    header = result;
-                    return doGetOrderDetails(tx, world.cn.custid, header);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    details = result;
-                    return doGetLastPrintNo(tx, world.cn.custid, orderid);
-                  }
-                ).then
-                (
-                  function(copyno)
-                  {
-                    world.copyno = copyno;
-                    return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
-                  }
-                ).then
-                // (
-                //   function(result)
-                //   {
-                //     print = result;
-                //     return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
-                //   }
-                // ).then
-                (
-                  function(result)
-                  {
-                    return doGenOrders(tx, type, world.cn.custid, header, details, world.cn.uname,count,world);
-                  }
-                ).then
-                (
-                  function(result)
-                  {
-                    global.ConsoleLog(result.completed);
-                    //global.ConsoleLog(callback);
-                    if(result.completed == 0)
-                    {
-                      callback(null, result);
-                    }
-                    else
-                    {
-                      resolve (result);
-                    }
-                    //return result;
-                  }
-                ).then
-                (
-                  null,
-                  function(err)
-                  {
-                    callback(err);
-                    return err;
-                  }
-                )
-              }
-            );
-          }
-        );
-      }
-
-
-      global.async.series
+      global.ConsoleLog("pring one orders/quotes/invoices, use the standard one");
+      orders.forEach
       (
-        calls,
-        function(err, results)
+        function(orderid)
         {
-          if (!err)
-            resolve(results);
-          else
-            reject(err);
+          calls.push
+          (
+            function(callback)
+            {
+              var header = null;
+              var details = null;
+              var print = null;
+
+              doGetOrderHeader(tx, world.cn.custid, orderid).then
+              (
+                function(result)
+                {
+                  header = result;
+                  return doGetOrderDetails(tx, world.cn.custid, header);
+                }
+              ).then
+              (
+                function(result)
+                {
+                  details = result;
+                  return doGetLastPrintNo(tx, world.cn.custid, orderid);
+                }
+              ).then
+              (
+                function(copyno)
+                {
+                  world.copyno = copyno;
+                  return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
+                }
+              ).then
+              (
+                function(result)
+                {
+                  print = result;
+                  return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
+                }
+              ).then
+              (
+                function(result)
+                {
+                  return doGenOrder(tx, type, world.cn.custid, header, details, result, world.cn.uname);
+                }
+              ).then
+              (
+                function(result)
+                {
+                  if (world.custconfig.exportaspdf)
+                    world.spark.emit(global.eventinfo, {rc: global.errcode_none, msg: 'Output generated, now converting to PDF', pdata: world.pdata});
+
+                  return doExcelToPDF(result, world.custconfig.exportaspdf);
+                }
+              ).then
+              (
+                function(xlsx)
+                {
+                  callback(null, xlsx);
+                }
+              ).then
+              (
+                null,
+                function(err)
+                {
+                  callback(err);
+                }
+              )
+            }
+          );
+        }
+      );
+
+    }
+    else
+    {
+      global.ConsoleLog("pring more than one orders/quotes/invoices, use the other one");
+      orders.forEach
+      (
+        function(orderid)
+        {
+          calls.push
+          (
+            function(callback)
+            {
+              var header = null;
+              var details = null;
+              var print = null;
+
+              doGetOrderHeader(tx, world.cn.custid, orderid).then
+              (
+                function(result)
+                {
+                  header = result;
+                  return doGetOrderDetails(tx, world.cn.custid, header);
+                }
+              ).then
+              (
+                function(result)
+                {
+                  details = result;
+                  return doGetLastPrintNo(tx, world.cn.custid, orderid);
+                }
+              ).then
+              (
+                function(copyno)
+                {
+                  world.copyno = copyno;
+                  return doSetLastPrintNo(tx, world.cn.custid, world.cn.userid, orderid, copyno);
+                }
+              ).then
+              // (
+              //   function(result)
+              //   {
+              //     print = result;
+              //     return doGetPrintTemplate(tx, type, world.cn.custid, header.orderid, header.clientid, templateid);
+              //   }
+              // ).then
+              (
+                function(result)
+                {
+                  return doGenOrders(tx, type, world.cn.custid, header, details, world.cn.uname,count,world);
+                }
+              ).then
+              (
+                function(result)
+                {
+                  global.ConsoleLog(result.completed);
+                  //global.ConsoleLog(callback);
+                  if(result.completed == 0)
+                  {
+                    callback(null, result);
+                  }
+                  else
+                  {
+                    resolve (result);
+                  }
+                  //return result;
+                }
+              ).then
+              (
+                null,
+                function(err)
+                {
+                  callback(err);
+                  return err;
+                }
+              )
+            }
+          );
         }
       );
     }
-  );
-  return promise;
+
+
+    global.async.series
+    (
+      calls,
+      function(err, results)
+      {
+        if (!err)
+          resolve(results);
+        else
+          reject(err);
+      }
+    );
+  }
+);
+return promise;
 }  
 
 function doEmailOrder(tx, type, templateid, world)
@@ -1683,6 +1680,153 @@ function doEmailOrder(tx, type, templateid, world)
     }
   );
   return promise;
+}
+
+function doGetAllProducts(client,world)
+{
+	return new Promise((resolve, reject) => {
+
+		const shouldAbort = err => {
+			if (err) {
+				console.error('Error in transaction', err.stack);
+				client.query('ROLLBACK', err => {
+					if (err) {
+						console.error('Error rolling back client', err.stack);
+					}
+					// release the client back to the pool
+					//done();
+				});
+
+				reject(err.message);
+			}
+			return !!err;
+		};
+
+		client.query('BEGIN', err => {
+			if (shouldAbort(err)) return;
+			let selectsql =
+					'SELECT p1.id product_id, p1.name productname,p1.barcode productbarcode,p1.serial_number,p1.comments,p1.description, ' +
+					's1.name status,l1.name locations,c1.name category '+
+					'FROM scanapp_testing_products p1 '+
+					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=p1.status_id) ' +
+					'LEFT JOIN scanapp_testing_locations l1 on (l1.id=p1.locations1_id) '+
+					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
+					'WHERE p1.dateexpired IS NULL AND p1.customers_id=$1 ORDER BY p1.id  '
+			let params = [
+				__.sanitiseAsBigInt(world.cn.custid),
+			];
+			client.query(selectsql,params, (err, result) => {
+				global.ConsoleLog(selectsql);
+				global.ConsoleLog(params);
+				global.ConsoleLog(err);
+				global.ConsoleLog(result);
+				if (shouldAbort(err)) return;
+
+				client.query('COMMIT', err => {
+					if (err) {
+						console.error('Error committing transaction', err.stack);
+					} else {
+						resolve(result.rows);
+					}
+				});
+			});
+		});
+	});
+}
+
+function doPrintProducts(client,products,world)
+{
+	return new Promise((resolve, reject) => {
+
+		var now =  moment().format("MM-DD-YYYY");
+		let filename = "AllProducts_"+now+ global.config.defaults.defaultXLExtension;
+		// let filename = "AllProducts_"+now+ global.config.defaults.defaultCSVExtension;
+
+    let foldername = global.path.join(__dirname, "../../../../Downloads");
+    // let foldername = "../../../../Downloads";
+
+    var path = foldername + '/' + filename;
+		//global.ConsoleLog(products);
+
+		ensureFolderExists
+		(
+		   foldername,
+		   0775,
+		   function(err)
+		   {
+        if (!err)
+        {
+          
+          //need to create the order xlsx first
+          var workbook = new global.exceljs.Workbook();
+          var worksheet = workbook.addWorksheet('All Products');
+          worksheet.views = [{state:'normal'}];
+          worksheet.pageSetup.orientation = 'landscape';
+          worksheet.pageSetup.fitToPage = true;
+          worksheet.pageSetup.pageOrder = 'overThenDown';
+          worksheet.pageSetup.printTitlesRow = '1:37';
+          worksheet.pageSetup.fitToPage = true;
+          worksheet.pageSetup.fitToHeight = 5;
+          worksheet.pageSetup.fitToWidth = 4;
+          worksheet.pageSetup.paperSize = 9;
+          //worksheet.properties.defaultRowHeight = 34;
+          //  worksheet.pageSetup.showGridLines = true;
+          //  worksheet.views.showGridLines = true;
+          worksheet.views = [{state: 'frozen', xSplit: 1, ySplit: 1}];
+          
+          worksheet.columns = [
+            {header: 'ID',key:'product_id',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Name',key:'productname',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Barcode',key:'productbarcode',width:30,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Status',key:'status',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Location',key:'locations',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Category',key:'category',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Serial Number',key:'serial_number',width:20,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Comments',key:'comments',width:40,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            {header: 'Description',key:'description',width:40,style: { font: { name: 'Arial Black' },alignment:{wrapText:true,vertical:'middle',horizontal:'center'}}},
+            ];
+          worksheet.getRow(1).eachCell({includeEmpty:true},function(cell,colNumber){
+              //console.log('Column ' + colNumber + ' = ' + JSON.stringify(cell.value));
+              cell.font = {name: 'Arial Black' };
+              cell.alignment = {wrapText:true,vertical:'middle',horizontal:'center'};
+          });
+
+                       
+          worksheet.addRows(products);
+          worksheet.eachRow({ includeEmpty: true }, function(row, rowNumber) {
+            //console.log('Row ' + rowNumber + ' = ' + JSON.stringify(row.values));
+            row.height = 34;
+            if(rowNumber > 1)
+            {
+              row.font = {name:'Comic Sans MS',family:2,size:10,bold:false};
+              row.alignment = {wrapText:true,vertical:'middle',horizontal:'center'};
+              // row.style = {font: {name:'Comic Sans MS',family:2,size:10,bold:false},alignment:{wrapText:true,vertical:'middle',horizontal:'center'}};
+            }              
+          });
+
+            //global.ConsoleLog("the total number of rows: " + worksheet.rowCount);
+          workbook.xlsx.writeFile(path).then(function(){
+            global.ConsoleLog("write file succeed,reset variables");
+            let result = {basename: filename, fullpath: foldername + '/' + filename,folder:foldername};
+            // resolve({orderno: header.orderno, invoiceno: header.invoiceno, basename: filename, fullpath: foldername + '/' + filename});
+              resolve (result);
+          });
+          // workbook.csv.writeFile(path).then(function(){
+          //   global.ConsoleLog("write file succeed,reset variables");
+          //   let result = {basename: filename, fullpath: foldername + '/' + filename,folder:foldername};
+          //   // resolve({orderno: header.orderno, invoiceno: header.invoiceno, basename: filename, fullpath: foldername + '/' + filename});
+          //     resolve (result);
+          // });
+        }
+        else
+        {
+          reject(err);
+        }
+		   }
+		   
+		 );
+
+	});
 }
 
 // *******************************************************************************************************************************************************************************************
@@ -2685,6 +2829,46 @@ function EmailRfidTaps()
   );
 }
 
+function DownloadCurrentProducts(world)
+{
+	var msg = '[' + world.eventname + '] ';
+	//
+	return new Promise((resolve, reject) => {
+		global.pg.connect(
+			global.cs,
+			(err, client, done) => {
+				if (err) {
+					done();
+					reject('Unable to connect server.');
+				} else {
+					doGetAllProducts(client,world).then(result =>
+					{
+            let products = result;
+            
+						doPrintProducts(client,products,world).then(result =>
+						{
+              done();
+              global.ConsoleLog(result)
+              world.spark.emit(world.eventname, {rc: global.errcode_none, msg: global.text_success, rs: result, pdata: world.pdata});
+
+						})
+						.catch(err =>
+						{
+							done();
+							reject(err);
+						})
+					})
+					.catch(err =>
+					{
+						done();
+						reject(err);
+					});
+				}
+			}
+		);
+	});
+}
+
 // *******************************************************************************************************************************************************************************************
 // Internal functions
 module.exports.doGetOrderHeader = doGetOrderHeader;
@@ -2709,4 +2893,5 @@ module.exports.EmailInvoice = EmailInvoice;
 module.exports.GetRfidTaps = GetRfidTaps;
 module.exports.GetRfidTapPeriod = GetRfidTapPeriod;
 module.exports.EmailRfidTaps = EmailRfidTaps;
+module.exports.DownloadCurrentProducts = DownloadCurrentProducts;
 
