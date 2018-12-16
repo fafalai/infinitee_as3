@@ -2603,7 +2603,8 @@ function main()
         categoryid: req.body.categoryid,
         statusid:req.body.statusid,
         comments:req.body.comments,
-        user_id:req.body.userid
+        user_id:req.body.userid,
+        customers_id:''
       }
 
       scanappserver.Product_Register(newproduct).then(
@@ -3015,6 +3016,7 @@ function main()
       status_id:req.body.selectedStatus,
       comments:req.body.comments,
       description:req.body.description,
+      customers_id:''
     };
 
     scanappserver.Audit_RegisterProduct(product)
@@ -3723,7 +3725,7 @@ function main()
       addListener('subfinish',                            'subfinish',                            global.modsubway.SubwayFinished,                       []);
       addListener('subdelivered',                         'subdelivered',                         global.modsubway.SubwayDelivered,                      []);
 
-      addListener('downloadproductscurrent',              'downloadproductscurrent',              global.scanappserver.DownloadCurrentProducts,          ['*productexports']);
+      addListener('downloadproductscurrent',              'downloadproductscurrent',              global.modprinting.DownloadCurrentProducts,            []);
 
       // *******************************************************************************************************************************************************************************************
       // MDM events...
