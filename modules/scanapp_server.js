@@ -919,7 +919,7 @@ function GetAllProducts() {
 
 function Product_Search_Barcode(data) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(data)) {
+		if (__.isUNB(data.barcode)) {
 			reject('Barcode can not be empty.');
 			return;
 		}
@@ -931,12 +931,16 @@ function Product_Search_Barcode(data) {
 					done();
 					reject('Unable to connect server. ');
 				} else {
-					let barcode = __.sanitiseAsString(data, 200).toUpperCase();
+					let barcode = __.sanitiseAsString(data.barcode, 200).toUpperCase();
 					let sql =
 						'SELECT p1.id,p1.name,p1.barcode,p1.description,p1.serial_number,p1.locations1_id,p1.status_id,p1.productcategories_id,p1.comments ' +
 						'FROM scanapp_testing_products p1 ' +
-						'WHERE p1.barcode=$1';
-					let params = [barcode];
+						'WHERE p1.barcode=$1 and ' + 
+						'p1.customers_id = $2';
+					let params = [
+						barcode,
+						__.sanitiseAsBigInt(data.customers_id)
+					];
 
 					client.query(sql, params, (err, result) => {
 						// global.ConsoleLog(sql);

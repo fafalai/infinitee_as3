@@ -2633,11 +2633,16 @@ function main()
     //  )
   })
 
-  app.get('/scanapp_productsearchbarcode/:barcode', function (req, res) {
+  app.post('/scanapp_productsearchbarcode', function (req, res) {
     'use strict';
 
-    let barcode = req.params.barcode;
-    scanappserver.Product_Search_Barcode(barcode).then(
+    let detail = {
+      barcode: req.body.barcode,
+      userid: req.body.userid,
+      customers_id:req.body.custid
+    };
+
+    scanappserver.Product_Search_Barcode(detail).then(
       result => res.send(result)
     ).catch(err => {
       res.status(500).send(err);
