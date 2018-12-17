@@ -1537,8 +1537,8 @@ function CategoryEdit(cat) {
 					if (shouldAbort(err)) return;
 
 					let sql =
-						'UPDATE scanapp_testing_productcategories SET name=$1 WHERE id=$2 AND dateexpired is null';
-					let params = [__.sanitiseAsString(cat.name, 50), __.sanitiseAsBigInt(cat.id)];
+						'UPDATE scanapp_testing_productcategories SET name=$1 WHERE id=$2 AND dateexpired is null AND customers_id=$3 ';
+					let params = [__.sanitiseAsString(cat.name, 50), __.sanitiseAsBigInt(cat.id),__.sanitiseAsBigInt(cat.customers_id)];
 					client.query(sql, params, (err, result) => {
 						if (shouldAbort(err)) return;
 
