@@ -2797,12 +2797,16 @@ function main()
       });
   });
 
-  app.get('/scanapp_caregorydelete/:categoryid', function(req, res) {
+  app.post('/scanapp_caregorydelete', function(req, res) {
     'use strict';
     // if (_.isNil(req.params.categoryid)) res.status(500).send('ID is empty.');
-
-    let categoryid = req.params.categoryid;
-    scanappserver.CategoryDelete(categoryid)
+    let cat = {
+      customers_id: req.body.custid,
+      user_id: req.body.userid,
+      categoryid: req.body.categoryid
+    }
+    
+    scanappserver.CategoryDelete(cat)
       .then(result => {
         res.send(result);
       })
@@ -2816,7 +2820,9 @@ function main()
     // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
     let cat = {
       id: req.body.id,
-      name: req.body.name
+      name: req.body.name,
+      customers_id: req.body.custid,
+      user_id: req.body.userid
     };
 
     scanappserver.CategoryEdit(cat)

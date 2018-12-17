@@ -1441,9 +1441,9 @@ function CategoryNew(cat) {
 	});
 }
 
-function CategoryDelete(id) {
+function CategoryDelete(cat) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(id)){
+		if (__.isUNB(cat.categoryid)){
 			reject('ID can not be empty');
 			return;
 		} 
@@ -1477,8 +1477,8 @@ function CategoryDelete(id) {
 					if (shouldAbort(err)) return;
 
 					let sql =
-						'Update scanapp_testing_productcategories SET dateexpired=now() WHERE dateexpired is null AND id=$1 returning name';
-					let params = [__.sanitiseAsBigInt(id)];
+						'Update scanapp_testing_productcategories SET dateexpired=now() WHERE dateexpired is null AND id=$1 AND customers_id=$2 returning name';
+					let params = [__.sanitiseAsBigInt(cat.categoryid), __.sanitiseAsBigInt(cat.customers_id)];
 
 					client.query(sql, params, (err, result) => {
 						if (shouldAbort(err)) return;
