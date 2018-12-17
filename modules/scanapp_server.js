@@ -1421,8 +1421,8 @@ function CategoryNew(cat) {
 					if (shouldAbort(err)) return;
 
 					let sql =
-						'INSERT INTO scanapp_testing_productcategories (name,datecreated) VALUES ($1, now())';
-					let params = [__.sanitiseAsString(cat.name, 100)];
+						'INSERT INTO scanapp_testing_productcategories (name,datecreated,customers_id,userscreated_id) VALUES ($1, now(),$2,$3)';
+					let params = [__.sanitiseAsString(cat.name, 100),__.sanitiseAsBigInt(cat.customers_id),__.sanitiseAsBigInt(cat.user_id)];
 					client.query(sql, params, (err, result) => {
 						if (shouldAbort(err)) return;
 

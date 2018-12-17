@@ -2784,7 +2784,9 @@ function main()
     'use strict';
     // if (_.isNil(req.body.name)) res.status(500).send('Empty name.');
     let cat = {
-      name: req.body.name
+      name: req.body.name,
+      customers_id: req.body.custid,
+      user_id: req.body.userid
     };
     scanappserver.CategoryNew(cat)
       .then(result => {
