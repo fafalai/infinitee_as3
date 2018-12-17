@@ -1220,11 +1220,11 @@ function LocationNew(location) {
 						if (shouldAbort(err)) return;
 
 						let insertSql =
-							'INSERT INTO scanapp_testing_locations (name,customsers_id,userscreated_id, datecreated) VALUES($1,$2,$3,now()) returning id';
+							'INSERT INTO scanapp_testing_locations (name,customers_id,userscreated_id, datecreated) VALUES($1,$2,$3,now()) returning id';
 						let insertParameters = [
 							__.sanitiseAsString(location.name),
-							__.sanitiseAsBigInt(data.customers_id),
-							__.sanitiseAsBigInt(data.userid)
+							__.sanitiseAsBigInt(location.customers_id),
+							__.sanitiseAsBigInt(location.user_id)
 
 						];
 
