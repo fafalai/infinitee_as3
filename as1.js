@@ -2664,6 +2664,7 @@ function main()
         statusid:req.body.statusid,
         comments:req.body.comments,
         description:req.body.description,
+        customers_id:req.body.custid
       }
 
       scanappserver.Product_Update(product).then(
@@ -2678,24 +2679,42 @@ function main()
     }
   );
 
-  app.get('/scanapp_locationgetall', function (req, res) {
+  // app.get('/scanapp_locationgetall', function (req, res) {
+  //   'use strict';
+
+  //   scanappserver.LocationGetAll()
+  //   .then(results => {
+  //     res.send(results);
+  //   })
+  //   .catch(err => {
+  //     res.status(500).send(err);
+  //   });
+  // })
+
+  app.post('/scanapp_locationgetall', function (req, res) {
     'use strict';
 
-    scanappserver.LocationGetAll()
+    let detail = {
+      user_id:req.body.userid,
+      customers_id:req.body.custid
+    }
+    scanappserver.LocationGetAll(detail)
     .then(results => {
       res.send(results);
     })
     .catch(err => {
       res.status(500).send(err);
     });
-  })
+  });
 
   app.post('/scanapp_locationnew', function(req, res) {
     'use strict';
-    let location = {
-      name: req.body.name
+    let detail = {
+      name: req.body.name,
+      customers_id:req.body.custid,
+      user_id:req.body.userid
     };
-    scanappserver.LocationNew(location)
+    scanappserver.LocationNew(detail)
       .then(result => {
         res.send(result)
       })

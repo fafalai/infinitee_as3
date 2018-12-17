@@ -1129,7 +1129,7 @@ function Product_Update(data) {
 	});
 }
 
-function LocationGetAll() {
+function LocationGetAll(data) {
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
 			global.cs,
@@ -1139,14 +1139,47 @@ function LocationGetAll() {
 					reject('Unable to connect server. ');
 					return;
 				}
+				const shouldAbort = err => {
+					if (err) {
+						console.error('Error in transaction', err.stack);
+						client.query('ROLLBACK', err => {
+							if (err) {
+								console.error('Error rolling back client', err.stack);
+							}
+							// release the client back to the pool
+							done();
+						});
 
-				client.query(
-					'SELECT l1.id,l1.name FROM scanapp_testing_locations l1 where dateexpired is null order by id desc',
-					(err, results) => {
-						done();
-						err ? reject(err.message) : resolve(results.rows);
+						reject(err.message);
 					}
-				);
+					return !!err;
+				};
+				client.query('BEGIN', err => {
+					if (shouldAbort(err)) return;
+
+					let selectquery = 
+							'SELECT l1.id,l1.name FROM scanapp_testing_locations l1 ' + 
+							'where dateexpired is null ' +  
+							'and customers_id = $1 ' + 
+							'order by id desc ' ;
+					let params = [
+						__.sanitiseAsBigInt(data.customers_id)
+					];
+
+					client.query(selectquery, params, (err, results) => {
+						if (shouldAbort(err)) return;
+
+						client.query('COMMIT', err => {
+							done();
+							if (err) {
+								console.error('Error committing transaction', err.stack);
+								reject(err.message)
+							} else {
+								resolve(results.rows);
+							}
+						});
+					});
+				});
 			}
 		);
 	});
@@ -1187,8 +1220,13 @@ function LocationNew(location) {
 						if (shouldAbort(err)) return;
 
 						let insertSql =
-							'INSERT INTO scanapp_testing_locations (name, datecreated) VALUES($1, now()) returning id';
-						let insertParameters = [__.sanitiseAsString(location.name)];
+							'INSERT INTO scanapp_testing_locations (name,customsers_id,userscreated_id, datecreated) VALUES($1,$2,$3,now()) returning id';
+						let insertParameters = [
+							__.sanitiseAsString(location.name),
+							__.sanitiseAsBigInt(data.customers_id),
+							__.sanitiseAsBigInt(data.userid)
+
+						];
 
 						client.query(insertSql, insertParameters, (err, result) => {
 							if (shouldAbort(err)) return;
