@@ -1247,9 +1247,9 @@ function LocationNew(location) {
 	});
 }
 
-function LocationDelete(locationid) {
+function LocationDelete(location) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(locationid)){
+		if (__.isUNB(location.locationid)){
 			reject('locationid can not be empty.');
 			return;
 		} 
@@ -1283,8 +1283,8 @@ function LocationDelete(locationid) {
 					if (shouldAbort(err)) return;
 
 					let sql =
-						'Update scanapp_testing_locations SET dateexpired=now() where id=$1 returning name';
-					let param = [__.sanitiseAsBigInt(locationid)];
+						'Update scanapp_testing_locations SET dateexpired=now() where id=$1 AND customers_id=$2 returning name';
+					let param = [__.sanitiseAsBigInt(location.locationid),__.sanitiseAsBigInt(location.customers_id)];
 
 					client.query(sql, param, (err, result) => {
 						if (shouldAbort(err)) return;

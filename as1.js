@@ -2723,10 +2723,15 @@ function main()
       });
 });
 
-  app.get('/scanapp_locationdelete/:locationid', function(req, res) {
+  app.post('/scanapp_locationdelete', function(req, res) {
     'use strict';
-    let locationid = req.params.locationid;
-    scanappserver.LocationDelete(locationid)
+    let location = {
+      locationid : req.body.locationid,
+      customers_id : req.body.custid,
+      user_id : req.body.userid
+    }
+
+    scanappserver.LocationDelete(location)
       .then(result => {
         // res.send(result + ' has been deleted. ')
         res.send(result)

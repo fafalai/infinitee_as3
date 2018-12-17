@@ -1285,12 +1285,21 @@ function doDlgOrderNew(isquote, orderid)
             [
               [
                 {title: 'Product',     field: 'productid',  width: 200, align: 'left',   resizable: true, editor: {type: 'combobox',  options: {valueField: 'id', textField: 'code', groupField: 'productcategoryname', data: cache_products, onSelect: function(record) {doProductChanged(record);}}}, formatter: function(value, row) {return doGetCodeFromIdInObjArray(cache_products, value);}},
-                {title: 'Price',       field: 'price',      width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 4}}, formatter: function(value, row, index) {if (!_.isUndefined(row.id)) return _.niceformatnumber(value); return value;}},
-                {title: 'Qty',         field: 'qty',        width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 4, onChange: function(newValue, oldValue) {if (!_.isNull(oldValue) && (newValue != oldValue)) doQtyChanged(newValue);}}}, formatter: function(value, row, index) {if (!_.isUndefined(row.id)) return _.niceformatqty(value); return value;}},
-                {title: 'Discount',    field: 'discount',   width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 2, onChange: function(newValue, oldValue) {doDiscountChanged(newValue);}}}, formatter: function(value, row, index) {if (!_.isUndefined(row.id)) return _.niceformatnumber(value); return value;}},
-                {title: 'Express Fee', field: 'expressfee', width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 2, onChange: function(newValue, oldValue) {doExpressFeeChanged(newValue);}}}, formatter: function(value, row, index) {if (!_.isUndefined(row.id)) return _.niceformatnumber(value); return value;}},
-                {title: 'Tax Code',    field: 'taxcodeid',  width: 100, align: 'right',  resizable: true, editor: {type: 'combobox',  options: {valueField: 'id', textField: 'code', data: cache_taxcodes}}, formatter: function(value, row) {return doGetCodeFromIdInObjArray(cache_taxcodes, value);}},
-                {title: 'Repeat?',     field: 'isrepeat',   width: 80,  align: 'center', resizable: true, editor: {type: 'checkbox',  options: {on: 1, off: 0}}, formatter: function(value, row) {if (!_.isUndefined(value)) return mapBoolToImage(value);}}
+                {title: 'Price',       field: 'price',      width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 4}}, 
+                formatter: function(value, row, index) {
+                  if (!_.isUndefined(row.id)) return _.niceformatnumber(value); return value;}},
+                {title: 'Qty',         field: 'qty',        width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 4, 
+                onChange: function(newValue, oldValue) {if (!_.isNull(oldValue) && (newValue != oldValue)) doQtyChanged(newValue);}}}, 
+                formatter: function(value, row, index) {if (!_.isUndefined(row.id)) return _.niceformatqty(value); return value;}},
+                {title: 'Discount',    field: 'discount',   width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 2, 
+                onChange: function(newValue, oldValue) {doDiscountChanged(newValue);}}}, 
+                formatter: function(value, row, index) {if (!_.isUndefined(row.id)) return _.niceformatnumber(value); return value;}},
+                {title: 'Express Fee', field: 'expressfee', width: 100, align: 'right',  resizable: true, editor: {type: 'numberbox', options: {groupSeparator: ',', precision: 2, 
+                onChange: function(newValue, oldValue) {doExpressFeeChanged(newValue);}}}, formatter: function(value, row, index) {if (!_.isUndefined(row.id)) return _.niceformatnumber(value); return value;}},
+                {title: 'Tax Code',    field: 'taxcodeid',  width: 100, align: 'right',  resizable: true, editor: {type: 'combobox',  options: {valueField: 'id', textField: 'code', data: cache_taxcodes}}, 
+                formatter: function(value, row) {return doGetCodeFromIdInObjArray(cache_taxcodes, value);}},
+                {title: 'Repeat?',     field: 'isrepeat',   width: 80,  align: 'center', resizable: true, editor: {type: 'checkbox',  options: {on: 1, off: 0}}, 
+                formatter: function(value, row) {if (!_.isUndefined(value)) return mapBoolToImage(value);}}
               ]
             ],
             onRowContextMenu: function(e, index, row)
@@ -1315,15 +1324,16 @@ function doDlgOrderNew(isquote, orderid)
                       if (['modified', 'by'].indexOf(field) != -1)
                         field = 'price';
 
-                      doGridGetEditor
-                      (
-                        'divOrderNewProductsG',
-                        editingIndex,
-                        field,
-                        function(ed)
-                        {
-                        }
-                      );
+                      // doGridGetEditor
+                      // (
+                      //   'divOrderNewProductsG',
+                      //   editingIndex,
+                      //   field,
+                      //   function(ed)
+                      //   {
+                      //     console.log(ed);
+                      //   }
+                      // );
                     }
                   );
                 }
