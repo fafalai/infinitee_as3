@@ -1362,7 +1362,7 @@ function LocationEdit(location) {
 	});
 }
 
-function CategoryGetAll() {
+function CategoryGetAll(category) {
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
 			global.cs,
@@ -1374,8 +1374,9 @@ function CategoryGetAll() {
 				}
 
 				let sql =
-					'SELECT c1.id,c1.name FROM scanapp_testing_productcategories c1 where dateexpired is null order by id desc';
-				client.query(sql, (err, result) => {
+					'SELECT c1.id,c1.name FROM scanapp_testing_productcategories c1 where dateexpired is null AND customers_id=$1 order by id desc';
+				let params = [__.sanitiseAsBigInt(category.customers_id)];
+				client.query(sql, params, (err, result) => {
 					done();
 					err ? reject(err.message) : resolve(result.rows);
 				});

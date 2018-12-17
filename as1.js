@@ -2762,9 +2762,14 @@ function main()
       });
   });
 
-  app.get('/scanapp_categorygetall', function(req, res) {
+  app.post('/scanapp_categorygetall', function(req, res) {
     'use strict';
-    scanappserver.CategoryGetAll()
+    
+    let category = {
+      customers_id:req.body.custid,
+      user_id: req.body.userid,
+    }
+    scanappserver.CategoryGetAll(category)
       .then(result => {
         // console.log(result.length);
         res.send(result);
