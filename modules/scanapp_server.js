@@ -278,10 +278,12 @@ function doGetAuditScanned(client,data)
 					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
 					'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
 					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
-					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is not null ORDER BY a1.id  ' +
-					'LIMIT $2 OFFSET $3';
+					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is not null AND a1.customers_id = $2'+
+					' ORDER BY a1.id  ' +
+					'LIMIT $3 OFFSET $4';
 			let params = [
 				__.sanitiseAsBigInt(data.user_id),
+				__.sanitiseAsBigInt(data.customers_id),
 				!__.isUNB(data.length) ? data.length : '10', 
 				!__.isUNB(data.offset) ? data.offset : '0'
 			];
@@ -469,8 +471,8 @@ function doInsertAuditList(client,data)
 			else
 			{
 				let insertSql =
-						'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished,userscreated_id) ' +
-						'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+data.audit_nameid+', ' + data.audit_typeid +',now(),$2 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+						'INSERT INTO scanapp_testing_audit(products_id,customers_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,datefinished,userscreated_id) ' +
+						'SELECT p1.id,p1.customers_id,p1.locations1_id,p1.status_id,productcategories_id,'+data.audit_nameid+', ' + data.audit_typeid +',now(),$2 FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 						' AND p1.id = $1 '+
 						'returning id';
 	
@@ -1010,45 +1012,35 @@ function Product_Register(data) {
 									}
 									return !!err;
 								};
+								client.query('BEGIN', err => {
+									if (shouldAbort(err)) return;
 
-								doGetCustomerID(client,data.user_id).then(result =>{
-									global.ConsoleLog(result.custid);
-									client.query('BEGIN', err => {
+									let sql =
+										'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id,customers_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9,$10) returning id';
+									let params = [
+										__.sanitiseAsString(data.name, 50),
+										data.barcode.toUpperCase(),
+										__.sanitiseAsString(data.serial_number, 50),
+										__.sanitiseAsString(data.description),
+										__.sanitiseAsBigInt(data.locationid),
+										__.sanitiseAsBigInt(data.categoryid),
+										__.sanitiseAsBigInt(data.statusid),
+										__.sanitiseAsString(data.comments),
+										__.sanitiseAsString(data.user_id),
+										__.sanitiseAsString(data.customers_id),
+									];
+									client.query(sql, params, (err, result) => {
 										if (shouldAbort(err)) return;
-	
-										let sql =
-											'INSERT INTO scanapp_testing_products (name,barcode,serial_number,description,locations1_id,productcategories_id,status_id,datecreated,comments,userscreated_id,customers_id) VALUES($1,$2,$3,$4,$5,$6,$7,now(),$8,$9,$10) returning id';
-										let params = [
-											__.sanitiseAsString(data.name, 50),
-											data.barcode.toUpperCase(),
-											__.sanitiseAsString(data.serial_number, 50),
-											__.sanitiseAsString(data.description),
-											__.sanitiseAsBigInt(data.locationid),
-											__.sanitiseAsBigInt(data.categoryid),
-											__.sanitiseAsBigInt(data.statusid),
-											__.sanitiseAsString(data.comments),
-											__.sanitiseAsString(data.user_id),
-											__.sanitiseAsString(result.custid),
-										];
-										client.query(sql, params, (err, result) => {
-											if (shouldAbort(err)) return;
-											client.query('COMMIT', err => {
-												done();
-												if (err) {
-													console.error('Error committing transaction', err.stack);
-												} else {
-													resolve(data.name + ' saved. ');
-												}
-											});
+										client.query('COMMIT', err => {
+											done();
+											if (err) {
+												console.error('Error committing transaction', err.stack);
+											} else {
+												resolve(data.name + ' saved. ');
+											}
 										});
 									});
-
-								}).catch(err =>
-								{
-									done();
-									reject(err);
-								}) 
-								
+								});
 							}
 						}
 					);
@@ -1699,8 +1691,11 @@ function AuditDiscardList(data) {
 					};
 
 					let sql =
-						'UPDATE scanapp_testing_audit SET dateexpired=now() WHERE dateexpired IS NULL AND userscreated_id=$1 returning id';
-					let params = [data.userid];
+						'UPDATE scanapp_testing_audit SET dateexpired=now() WHERE dateexpired IS NULL AND userscreated_id=$1 AND customers_id = $2 returning id';
+					let params = [
+						data.userid,
+						data.custid
+					];
 					client.query(sql, params, (err, result) => {
 						if (shouldAbort(err)) return;
 
@@ -2232,60 +2227,52 @@ function Audit_RegisterProduct(data)
 					done();
 					reject('Unable to connect server.');
 				} else {
-					doGetCustomerID(client,data.user_id).then(result =>{
-						data.customers_id = result.custid;
-						doRegisterProduct(client,data).then(result =>
+					doRegisterProduct(client,data).then(result =>
+					{
+						data.productid = result.id;
+						global.ConsoleLog(data.productid);
+						let insert = false;
+						if(data.audit_nameid == 0)
 						{
-							data.productid = result.id;
-							global.ConsoleLog(data.productid);
-							let insert = false;
-							if(data.audit_nameid == 0)
-							{
-								insert = true;
-							}
-							else if(data.audit_nameid == 1 && data.audit_typeid == data.locations1_id)
-							{
-								insert = true;
-							}
-							else if(data.audit_nameid == 2 && data.audit_typeid == data.categoryid)
-							{
-								insert = true;
-							}
-	
-							if(insert)
-							{
-								doInsertAuditList(client,data).then(result => 
-								{
-									done();
-									//let unscannedList = result;
-									global.ConsoleLog(result);
-									resolve({errorcode:0,message:'register product successfully',data:result});
-								})
-								.catch(err => 
-								{
-									done();
-									reject(err);
-								});
-							}
-							else
+							insert = true;
+						}
+						else if(data.audit_nameid == 1 && data.audit_typeid == data.locations1_id)
+						{
+							insert = true;
+						}
+						else if(data.audit_nameid == 2 && data.audit_typeid == data.categoryid)
+						{
+							insert = true;
+						}
+
+						if(insert)
+						{
+							doInsertAuditList(client,data).then(result => 
 							{
 								done();
 								//let unscannedList = result;
 								global.ConsoleLog(result);
 								resolve({errorcode:0,message:'register product successfully',data:result});
-							}
-						})
-						.catch(err =>
+							})
+							.catch(err => 
+							{
+								done();
+								reject(err);
+							});
+						}
+						else
 						{
 							done();
-							reject(err);
-						});
+							//let unscannedList = result;
+							global.ConsoleLog(result);
+							resolve({errorcode:0,message:'register product successfully',data:result});
+						}
 					})
 					.catch(err =>
 					{
 						done();
 						reject(err);
-					})
+					});
 				}
 			}
 		);

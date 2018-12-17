@@ -2597,14 +2597,14 @@ function main()
       let newproduct = {
         name : req.body.name,
         barcode: req.body.barcode,
-        serial_number: req.body.serial_number,
+        serial_number: req.body.serial,
         description:req.body.description,
-        locationid: req.body.locationid,
-        categoryid: req.body.categoryid,
-        statusid:req.body.statusid,
+        locationid: req.body.selectedLocation,
+        categoryid: req.body.selectedCategory,
+        statusid:req.body.selectedStatus,
         comments:req.body.comments,
         user_id:req.body.userid,
-        customers_id:''
+        customers_id:req.body.custid,
       }
 
       scanappserver.Product_Register(newproduct).then(
@@ -2872,7 +2872,8 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      user_id:req.body.userid
+      user_id:req.body.userid,
+      customers_id:req.body.custid
     };
 
     scanappserver.AuditGetAll(audit).then(
@@ -2890,7 +2891,8 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      user_id:req.body.userid
+      user_id:req.body.userid,
+      customers_id:req.body.custid
 
     };
 
@@ -2909,8 +2911,8 @@ function main()
     let audit = {
       length: req.body.length,
       offset: req.body.offset,
-      user_id:req.body.userid
-
+      user_id:req.body.userid,
+      customers_id:req.body.custid
     };
 
     scanappserver.AuditGetUnscanned(audit).then(
@@ -3054,7 +3056,7 @@ function main()
       status_id:req.body.selectedStatus,
       comments:req.body.comments,
       description:req.body.description,
-      customers_id:''
+      customers_id:req.body.custid
     };
 
     scanappserver.Audit_RegisterProduct(product)
