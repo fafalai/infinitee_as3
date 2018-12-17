@@ -2746,7 +2746,9 @@ function main()
     'use strict';
     let location = {
       id: req.body.id,
-      name: req.body.name
+      name: req.body.name,
+      customers_id: req.body.custid,
+      user_id : req.body.userid
     };
     // console.log(location, 'Location');
     scanappserver.LocationEdit(location)
