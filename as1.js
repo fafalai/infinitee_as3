@@ -2679,17 +2679,6 @@ function main()
     }
   );
 
-  // app.get('/scanapp_locationgetall', function (req, res) {
-  //   'use strict';
-
-  //   scanappserver.LocationGetAll()
-  //   .then(results => {
-  //     res.send(results);
-  //   })
-  //   .catch(err => {
-  //     res.status(500).send(err);
-  //   });
-  // })
 
   app.post('/scanapp_locationgetall', function (req, res) {
     'use strict';
@@ -2797,16 +2786,35 @@ function main()
       });
   });
 
-  app.get('/scanapp_caregorydelete/:categoryid', function(req, res) {
-    'use strict';
-    // if (_.isNil(req.params.categoryid)) res.status(500).send('ID is empty.');
+  // app.get('/scanapp_caregorydelete/:categoryid', function(req, res) {
+  //   'use strict';
+  //   // if (_.isNil(req.params.categoryid)) res.status(500).send('ID is empty.');
 
-    let categoryid = req.params.categoryid;
-    scanappserver.CategoryDelete(categoryid)
+  //   let categoryid = req.params.categoryid;
+  //   scanappserver.CategoryDelete(categoryid)
+  //     .then(result => {
+  //       res.send(result);
+  //     })
+  //     .catch(err => {
+  //       res.status(500).send(err);
+  //     });
+  // });
+
+  app.post('/scanapp_caregorydelete', function(req, res) {
+    'use strict';
+    let category = {
+      categoryid : req.body.categoryid,
+      customers_id : req.body.custid,
+      user_id : req.body.userid
+    }
+
+    scanappserver.CategoryDelete(category)
       .then(result => {
-        res.send(result);
+        // res.send(result + ' has been deleted. ')
+        res.send(result)
       })
       .catch(err => {
+        console.log(err);
         res.status(500).send(err);
       });
   });
@@ -2816,7 +2824,9 @@ function main()
     // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
     let cat = {
       id: req.body.id,
-      name: req.body.name
+      name: req.body.name,
+      customers_id: req.body.custid,
+      user_id : req.body.userid
     };
 
     scanappserver.CategoryEdit(cat)
@@ -2840,20 +2850,13 @@ function main()
     });
   })
   
-  // app.get('/scanapp_auditontype/:type/:typeid?', function(req, res){
     app.post('/scanapp_auditontype', function(req, res) {
     'use strict';
-    // let type = req.params.type;
-    // let typeid = req.params.typeid;
-    // let data = {
-    //   type:req.params.type,
-    //   typeid:req.params.typeid,
-    //   userscreated_id:999
-    // }
     let data = {
       type:req.body.name,
       typeid:req.body.typeid,
-      user_id:req.body.userid
+      user_id:req.body.userid,
+      customers_id:req.body.custid
     }
     scanappserver.AuditOnType(data).then(
       result => {
@@ -2868,22 +2871,21 @@ function main()
 
   app.post('/scanapp_auditgetall', function(req, res) {
     'use strict';
-    // if (_.isNil(req.body.id) && _.isNil(req.body.name)) res.status(500).send('id, name Empty.');
-    let audit = {
-      length: req.body.length,
-      offset: req.body.offset,
-      user_id:req.body.userid,
-      customers_id:req.body.custid
-    };
+      let audit = {
+        length: req.body.length,
+        offset: req.body.offset,
+        user_id:req.body.userid,
+        customers_id:req.body.custid
+      };
 
     scanappserver.AuditGetAll(audit).then(
       result => {
         res.send(result);
       }
-    ).catch(err => {
-      res.status(500).send(err);
-    })
-  });
+      ).catch(err => {
+        res.status(500).send(err);
+      })
+    });
 
   app.post('/scanapp_auditgetscanned', function(req, res) {
     'use strict';
@@ -2924,41 +2926,17 @@ function main()
     })
   });
 
-  
-  // app.get('/scanapp_auditgetlist/:offset/:length?', function (req, res) {
-  //   'use strict';
-  //   let audit = {
-  //     length:req.params.length,
-  //     offset:req.params.offset,
-  //     userscreated_id:999
-  //   };
-  //   let length = req.params.length;
-  //   let offset = req.params.offset;
-  //   scanappserver.AuditGetList(audit).then(
-  //     result => {
-  //       res.send(result);
-  //     }
-  //   ).catch(err => {
-  //     res.status(500).send(err);
-  //   })
-  // })
-
-  // app.get('/scanapp_auditscanbarcode/:barcode', function (req, res) {
-  //   'use strict';
-
-  //   let barcode = req.params.barcode;
-  //   let userscreated_id = 999;
-  //   scanappserver.Audit_Scan_Barcode(barcode,userscreated_id).then(
-  //     result => res.send(result)
-  //   ).catch(err => {
-  //     res.status(500).send(err);
-  //   })
-  // })
   app.post('/scanapp_auditscanbarcode', function (req, res) {
     'use strict'
+      let data = {
+        barcode : req.body.barcode,
+        user_id : req.body.userid,
+        customers_id:req.body.custid
+      }
+
     let barcode = req.body.barcode;
     let user_id = req.body.userid;
-    scanappserver.Audit_Scan_Barcode(barcode,user_id).then(
+    scanappserver.Audit_Scan_Barcode(data).then(
           result => res.send(result)
         ).catch(err => {
           res.status(500).send(err);
