@@ -2786,20 +2786,6 @@ function main()
       });
   });
 
-  // app.get('/scanapp_caregorydelete/:categoryid', function(req, res) {
-  //   'use strict';
-  //   // if (_.isNil(req.params.categoryid)) res.status(500).send('ID is empty.');
-
-  //   let categoryid = req.params.categoryid;
-  //   scanappserver.CategoryDelete(categoryid)
-  //     .then(result => {
-  //       res.send(result);
-  //     })
-  //     .catch(err => {
-  //       res.status(500).send(err);
-  //     });
-  // });
-
   app.post('/scanapp_caregorydelete', function(req, res) {
     'use strict';
     let category = {
