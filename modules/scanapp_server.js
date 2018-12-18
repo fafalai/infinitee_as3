@@ -69,7 +69,7 @@ function doRegisterProduct(client,data)
 /**
  * This is the function to check whether the scanned barcode is in the audit list
  */
-function doCheckAuditList(client,barcode,user_id)
+function doCheckAuditList(client,data)
 {
 	global.ConsoleLog("doCheckAuditList");
 	return new Promise((resolve, reject) => {
@@ -104,10 +104,12 @@ function doCheckAuditList(client,barcode,user_id)
 				'where p1.barcode = $1 '+
 				'and a1.dateexpired is null ' +
 				// 'and a1.datefinished is null ' +
-				'and a1.userscreated_id =$2';
+				'and a1.userscreated_id =$2' + 
+				'and a1.customers_id =$3';
 			let params = [
-				__.sanitiseAsString(barcode, 50),
-				user_id,	
+				__.sanitiseAsString(data.barcode, 50),
+				data.user_id,	
+				data.customers_id
 			];
 			client.query(selectsql, params, (err, result) => {
 				// global.ConsoleLog(selectsql);
@@ -189,7 +191,7 @@ function doUpdateAuditList(client,auditid)
 /**
  * This is the function used when the scanned barcode is not in the to-be-audit list, and hasn't been audited before. Use it to get the product detail for next move. 
  */
-function doGetBarcodeDetails(client,barcode)
+function doGetBarcodeDetails(client,data)
 {
 	global.ConsoleLog("doGetBarcodeDetails");
 	return new Promise((resolve, reject) => {
@@ -219,9 +221,11 @@ function doGetBarcodeDetails(client,barcode)
 					'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
 					'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
 					'left join scanapp_testing_productcategories c1 on(c1.id = p1.productcategories_id) '+
-					'where barcode = $1'
+					'where p1.barcode = $1' + 
+					'p1.customers_id = $2';
 			let params = [
-				barcode	
+				data.barcode,
+				data.customers_id	
 			];
 			client.query(selectsql, params, (err, result) => {
 				global.ConsoleLog(selectsql);
@@ -347,10 +351,12 @@ function doGetAuditUnscanned(client,data)
 					'LEFT JOIN scanapp_testing_statuses s1 on (s1.id=a1.status_id) '+
 					'LEFT JOIN scanapp_testing_locations l1 on (l1.id=a1.locations_id) '+
 					'LEFT JOIN scanapp_testing_productcategories c1 on (c1.id=p1.productcategories_id) '+
-					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is null ORDER BY a1.id  ' +
-					'LIMIT $2 OFFSET $3';
+					'WHERE a1.dateexpired IS NULL AND a1.userscreated_id=$1 AND a1.datefinished is null AND a1.customers_id = $2'+
+					' ORDER BY a1.id  ' +
+					'LIMIT $3 OFFSET $4';
 			let params = [
 				__.sanitiseAsBigInt(data.user_id),
+				__.sanitiseAsBigInt(data.customers_id),
 				!__.isUNB(data.length) ? data.length : '10', 
 				!__.isUNB(data.offset) ? data.offset : '0'
 			];
@@ -1433,9 +1439,9 @@ function CategoryNew(cat) {
 	});
 }
 
-function CategoryDelete(cat) {
+function CategoryDelete(data) {
 	return new Promise((resolve, reject) => {
-		if (__.isUNB(cat.categoryid)){
+		if (__.isUNB(data.categoryid)){
 			reject('ID can not be empty');
 			return;
 		} 
@@ -1469,8 +1475,8 @@ function CategoryDelete(cat) {
 					if (shouldAbort(err)) return;
 
 					let sql =
-						'Update scanapp_testing_productcategories SET dateexpired=now() WHERE dateexpired is null AND id=$1 AND customers_id=$2 returning name';
-					let params = [__.sanitiseAsBigInt(cat.categoryid), __.sanitiseAsBigInt(cat.customers_id)];
+						'Update scanapp_testing_productcategories SET dateexpired=now() WHERE dateexpired is null AND id=$1 returning name';
+					let params = [__.sanitiseAsBigInt(data.categoryid)];
 
 					client.query(sql, params, (err, result) => {
 						if (shouldAbort(err)) return;
@@ -1603,8 +1609,8 @@ function AuditOnType(data) {
 								? ' AND locations1_id=' + data.typeid
 								: '';
 						let insertSql =
-							'INSERT INTO scanapp_testing_audit(products_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,userscreated_id) ' +
-							'SELECT p1.id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +', '+data.user_id + 
+							'INSERT INTO scanapp_testing_audit(products_id,customers_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,userscreated_id) ' +
+							'SELECT p1.id,p1.customers_id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +', '+data.user_id + 
 							' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
 							condition +
 							' returning id';
@@ -1918,7 +1924,7 @@ function AuditGetUnscanned(data)
 }
 
 
-function Audit_Scan_Barcode(barcode,user_id){
+function Audit_Scan_Barcode(data){
 	global.ConsoleLog("Audit Scan barcode");
 	return new Promise((resolve, reject) => {
 		global.pg.connect(
@@ -1930,7 +1936,7 @@ function Audit_Scan_Barcode(barcode,user_id){
 				} 
 				else 
 				{
-					doCheckAuditList(client,barcode,user_id).then(result => 
+					doCheckAuditList(client,data).then(result => 
 					{
 						// global.ConsoleLog(result);
 						if(result.length == 1)
@@ -1977,7 +1983,7 @@ function Audit_Scan_Barcode(barcode,user_id){
 							global.ConsoleLog("the scanned barcode is not in the list");
 							// resolve({errorcode:1,message:'The scanned barcode is not in the to-be-audit list'});	
 							// resolve("The scanned barcode is not in the to-be-audit list");
-							doGetBarcodeDetails(client,barcode).then(result => 
+							doGetBarcodeDetails(data).then(result => 
 							{
 								done();
 								// global.ConsoleLog(result);
