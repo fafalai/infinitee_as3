@@ -221,8 +221,8 @@ function doGetBarcodeDetails(client,data)
 					'left join scanapp_testing_statuses s1 on(s1.id = p1.status_id) '+
 					'left join scanapp_testing_locations l1 on(l1.id = p1.locations1_id) '+
 					'left join scanapp_testing_productcategories c1 on(c1.id = p1.productcategories_id) '+
-					'where p1.barcode = $1' + 
-					'p1.customers_id = $2';
+					'where p1.barcode = $1 ' + 
+					'AND p1.customers_id = $2';
 			let params = [
 				data.barcode,
 				data.customers_id	
@@ -1611,7 +1611,7 @@ function AuditOnType(data) {
 						let insertSql =
 							'INSERT INTO scanapp_testing_audit(products_id,customers_id,locations_id,status_id,productcategories_id,audit_nameid,audit_typeid,userscreated_id) ' +
 							'SELECT p1.id,p1.customers_id,p1.locations1_id,p1.status_id,productcategories_id,'+audit_nameid+', ' +audit_typeid +', '+data.user_id + 
-							' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL' +
+							' FROM scanapp_testing_products p1 WHERE p1.dateexpired IS NULL AND p1.customers_id = ' +data.customers_id + 
 							condition +
 							' returning id';
 						global.ConsoleLog(insertSql);
@@ -1983,10 +1983,10 @@ function Audit_Scan_Barcode(data){
 							global.ConsoleLog("the scanned barcode is not in the list");
 							// resolve({errorcode:1,message:'The scanned barcode is not in the to-be-audit list'});	
 							// resolve("The scanned barcode is not in the to-be-audit list");
-							doGetBarcodeDetails(data).then(result => 
+							doGetBarcodeDetails(client,data).then(result => 
 							{
 								done();
-								// global.ConsoleLog(result);
+								global.ConsoleLog(result);
 								if(result.length > 0)
 								{
 									if(result[0].status_id == 3)
