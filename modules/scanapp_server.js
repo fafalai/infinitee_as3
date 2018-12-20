@@ -2334,6 +2334,30 @@ function Audit_EditProduct(data)
 								reject(err);
 							});
 						}
+						else if (data.errorcode == 4 && data.status_id == 3)
+						{
+							doExpiredAuditProduct(client,data).then(result =>
+							{
+								global.ConsoleLog(result);
+								doInsertAuditList(client,data).then(result => 
+								{
+									done();
+									//let unscannedList = result;
+									global.ConsoleLog(result);
+									resolve({errorcode:0,message:'update successfully',data:result});
+								})
+								.catch(err => 
+								{
+									done();
+									reject(err);
+								});
+							})
+							.catch(err =>
+							{
+								done();
+								reject(err);
+							});
+						}
 						else if(data.errorcode == 1 || data.errorcode == 5)
 						{
 							let insert = false;
