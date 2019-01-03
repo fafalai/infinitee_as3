@@ -704,7 +704,7 @@ function doDlgOrderNew(isquote, orderid)
                 var qty = $(edqty.target).numberbox('getValue');
 
                 // Check if this has a min qty...
-                if (!_.isNull(args.data.price.minqty))
+                if (!_.isUNB(args.data.price.minqty))
                 {
                   var m = _.toBigNum(args.data.price.minqty);
 
@@ -713,7 +713,6 @@ function doDlgOrderNew(isquote, orderid)
                   if (_.isBlank(qty) || m.greaterThan(qty))
                     $(edqty.target).numberbox('setValue', args.data.price.minqty);
                 }
-
                 $(edprice.target).numberbox('setValue', args.data.price.price);
                 $(edtc.target).combobox('setValue', args.data.price.selltaxcodes_id);
               }
