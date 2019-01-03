@@ -53,9 +53,37 @@ function doGetTaxForProductPrice(tx, custid, productid, price)
   return promise;
 }
 
-function selectPrice(world, prices)
+//check whether the product is in the pricing table. 
+function doCheckPricingTable(client,world)
 {
-  // global.ConsoleLog("selectPrice");
+  var promise = new global.rsvp.Promise
+  (
+    function(resolve, reject)
+    {
+      client.query
+      (
+        'select id,customers_id,products_id,price from public.pricing where products_id = $1',
+        [
+          __.sanitiseAsBigInt(world.productid)
+        ],
+        function(err, result)
+        {
+          if (!err)
+          {
+            global.ConsoleLog(result.rows);
+            resolve({pricing: result.rows});
+          }
+          else
+            reject(err);
+        }
+      );
+    }
+  );
+  return promise;
+}
+function selectPrice(world, prices,pricingTableCheck)
+{
+  global.ConsoleLog(pricingTableCheck);
   global.ConsoleLog(prices);
   global.ConsoleLog(prices.length);
   global.ConsoleLog("the product discount code is: " + world.discountcode);
@@ -84,9 +112,8 @@ function selectPrice(world, prices)
   });
   global.ConsoleLog(nullPrices.length); 
 
-  if(prices.length > 0)
+  if(pricingTableCheck > 0)
   {
-    global.ConsoleLog("pricing table has matching rows with the product id, so have results");
     if(__.isNull(world.discountcode))
     {
       global.ConsoleLog("product does not have a discount code, use the traditonal way to select the price, match client id, or default, match qty, and not expired");
@@ -269,8 +296,24 @@ function selectPrice(world, prices)
   }
   else
   {
-    global.ConsoleLog("pricing table doesn't have matching rows with the product id, so no have result");
-
+    global.ConsoleLog("pricing table doesn't have matching rows with the product id,use price level right away");
+    global.ConsoleLog(prices[0]);
+      var selectedprice = prices[0];
+      global.ConsoleLog(selectedprice);
+      if(world.pricelevel == 0)
+      {
+        world.pricelevel = 1;
+      }
+      var uselevel = 'price' + world.pricelevel;
+      global.ConsoleLog(uselevel);
+      var useprice = selectedprice[uselevel];
+      global.ConsoleLog(useprice);
+      result.price = useprice;
+      result.costprice = prices[0].costprice;
+      result.discountcode_id = prices[0].discountcode_id;
+      result.minqty = prices[0].minqty;
+      result.maxqty = prices[0].maxqty;
+      result.selltaxcodes_id = prices[0].selltaxcodes_id;
   }
 
   // var result =
@@ -7952,163 +7995,172 @@ function GetPrice(world)
       if (!err)
       {
         // Order with client pricing first...
-        var selectedquery = 'select ' +
-        'p1.id,' +
-        'p1.clients_id clientid,' +
-        'p1.price,' +
-        'p1.gst,' +
-        'p1.datefrom,' +
-        'p1.dateto,' + 
-        'p2.costprice,' +
-        'p2.costgst,' +
-        'p2.selltaxcodes_id,' +
-        'p2.price1,' +
-        'p2.price2,' +
-        'p2.price3,' +
-        'p2.price4,' +
-        'p2.price5,' +
-        'p2.price6,' +
-        'p2.price7,' +
-        'p2.price8,' +
-        'p2.price9,' +
-        'p2.price10,' +
-        'p2.price11,' +
-        'p2.price12,' +
-        'p2.price13,' +
-        'p2.price14,' +
-        'p2.price15,' +
-        'p2.uomsize,' +
-        'p2.discountcode_id,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.price / p2.uomsize) end unitprice,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst / p2.uomsize) end unitgst,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.price1 / p2.uomsize) end unitprice1,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst1 / p2.uomsize) end unitgst1,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.price2 / p2.uomsize) end unitprice2,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst2 / p2.uomsize) end unitgst2,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.price3 / p2.uomsize) end unitprice3,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst3 / p2.uomsize) end unitgst3,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.price4 / p2.uomsize) end unitprice4,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst4 / p2.uomsize) end unitgst4,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.price5 / p2.uomsize) end unitprice5,' +
-        'case when (p2.uomsize=0.0) then 0.0 else (p1.gst5 / p2.uomsize) end unitgst5,' +
-        'case when p1.minqty=0.0000 then null else p1.minqty end,' +
-        'case when p1.maxqty=0.0000 then null else p1.maxqty end ' +
-        'from ' +
-        'products p2 left join pricing p1 on (p2.id=p1.products_id)' +
-        'where ' +
-        '(p2.customers_id=$1 ' +
-        'and ' +
-        'p2.id=$2 ' +
-        'and ' +
-        ' p1.dateto > (NOW() :: TIMESTAMP)' + 
-        'and ' +
-        'p1.dateexpired is null )' +
-        'OR ' + 
-        '(p1.customers_id=$1 ' + 
-        'and ' +
-        'p2.id=$2 ' + 
-        'and ' +
-        'p1.dateto is null ' + 
-        'and ' +
-        'p1.dateexpired is null )' + 
-        'order by ' +
-        'p1.clients_id desc,' +
-        'p1.minqty,' +
-        'p1.maxqty,' +
-        'p1.price';
-        global.ConsoleLog(selectedquery);
-        client.query
+        doCheckPricingTable(client,world).then
         (
-          'select ' +
-          'p1.id,' +
-          'p1.clients_id clientid,' +
-          'p1.price,' +
-          'p1.gst,' +
-          'p1.datefrom,' +
-          'p1.dateto,' + 
-          'p2.costprice,' +
-          'p2.costgst,' +
-          'p2.selltaxcodes_id,' +
-          'p2.price1,' +
-          'p2.price2,' +
-          'p2.price3,' +
-          'p2.price4,' +
-          'p2.price5,' +
-          'p2.price6,' +
-          'p2.price7,' +
-          'p2.price8,' +
-          'p2.price9,' +
-          'p2.price10,' +
-          'p2.price11,' +
-          'p2.price12,' +
-          'p2.price13,' +
-          'p2.price14,' +
-          'p2.price15,' +
-          'p2.uomsize,' +
-          'p2.discountcode_id,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.price / p2.uomsize) end unitprice,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.gst / p2.uomsize) end unitgst,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.price1 / p2.uomsize) end unitprice1,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.gst1 / p2.uomsize) end unitgst1,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.price2 / p2.uomsize) end unitprice2,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.gst2 / p2.uomsize) end unitgst2,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.price3 / p2.uomsize) end unitprice3,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.gst3 / p2.uomsize) end unitgst3,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.price4 / p2.uomsize) end unitprice4,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.gst4 / p2.uomsize) end unitgst4,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.price5 / p2.uomsize) end unitprice5,' +
-          'case when (p2.uomsize=0.0) then 0.0 else (p1.gst5 / p2.uomsize) end unitgst5,' +
-          'case when p1.minqty=0.0000 then null else p1.minqty end,' +
-          'case when p1.maxqty=0.0000 then null else p1.maxqty end ' +
-          'from ' +
-          'products p2 left join pricing p1 on (p2.id=p1.products_id)' +
-          'where ' +
-          '(p2.customers_id=$1 ' +
-          'and ' +
-          'p2.id=$2 ' +
-          'and ' +
-          ' p1.dateto > (NOW() :: TIMESTAMP)' + 
-          'and ' +
-          'p1.dateexpired is null )' +
-          'OR ' + 
-          '(p1.customers_id=$1 ' + 
-          'and ' +
-          'p2.id=$2 ' + 
-          'and ' +
-          'p1.dateto is null ' + 
-          'and ' +
-          'p1.dateexpired is null )' + 
-          'order by ' +
-          'p1.clients_id desc,' +
-          'p1.minqty,' +
-          'p1.maxqty,' +
-          'p1.price',
-          [
-            world.cn.custid,
-            __.sanitiseAsBigInt(world.productid)
-          ],
-          function(err, result)
+          function(result)
           {
-            done();
-
-            if (!err)
+            var pricingTableCheck = result.pricing.length;
+            global.ConsoleLog(result.pricing);
+            if(result.pricing.length > 0)
             {
-              // global.ConsoleLog(world.discountcode);
-              // global.ConsoleLog(world.pricelevel);
-              var price = selectPrice(world, result.rows);
-              global.ConsoleLog(price);
-              global.ConsoleLog("the event name is " + world.eventname);
+              global.ConsoleLog("pricing table has this product");
+              client.query
+              (
+                'select ' +
+                'p1.id,' +
+                'p1.clients_id clientid,' +
+                'p1.price,' +
+                'p1.gst,' +
+                'p1.datefrom,' +
+                'p1.dateto,' + 
+                'p2.costprice,' +
+                'p2.costgst,' +
+                'p2.selltaxcodes_id,' +
+                'p2.price1,' +
+                'p2.price2,' +
+                'p2.price3,' +
+                'p2.price4,' +
+                'p2.price5,' +
+                'p2.price6,' +
+                'p2.price7,' +
+                'p2.price8,' +
+                'p2.price9,' +
+                'p2.price10,' +
+                'p2.price11,' +
+                'p2.price12,' +
+                'p2.price13,' +
+                'p2.price14,' +
+                'p2.price15,' +
+                'p2.uomsize,' +
+                'p2.discountcode_id,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.price / p2.uomsize) end unitprice,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.gst / p2.uomsize) end unitgst,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.price1 / p2.uomsize) end unitprice1,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.gst1 / p2.uomsize) end unitgst1,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.price2 / p2.uomsize) end unitprice2,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.gst2 / p2.uomsize) end unitgst2,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.price3 / p2.uomsize) end unitprice3,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.gst3 / p2.uomsize) end unitgst3,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.price4 / p2.uomsize) end unitprice4,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.gst4 / p2.uomsize) end unitgst4,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.price5 / p2.uomsize) end unitprice5,' +
+                'case when (p2.uomsize=0.0) then 0.0 else (p1.gst5 / p2.uomsize) end unitgst5,' +
+                'case when p1.minqty=0.0000 then null else p1.minqty end,' +
+                'case when p1.maxqty=0.0000 then null else p1.maxqty end ' +
+                'from ' +
+                'products p2 left join pricing p1 on (p2.id=p1.products_id)' +
+                'where ' +
+                '(p2.customers_id=$1 ' +
+                'and ' +
+                'p2.id=$2 ' +
+                'and ' +
+                ' p1.dateto > (NOW() :: TIMESTAMP)' + 
+                'and ' +
+                'p1.dateexpired is null )' +
+                'OR ' + 
+                '(p1.customers_id=$1 ' + 
+                'and ' +
+                'p2.id=$2 ' + 
+                'and ' +
+                'p1.dateto is null ' + 
+                'and ' +
+                'p1.dateexpired is null )' + 
+                'order by ' +
+                'p1.clients_id desc,' +
+                'p1.minqty,' +
+                'p1.maxqty,' +
+                'p1.price',
+                [
+                  world.cn.custid,
+                  __.sanitiseAsBigInt(world.productid)
+                ],
+                function(err, result)
+                {
+                  done();
 
-              world.spark.emit(world.eventname, {rc: global.errcode_none, msg: global.text_success, fguid: world.fguid, price: price, pdata: world.pdata});
+                  if (!err)
+                  {
+                    // global.ConsoleLog(world.discountcode);
+                    // global.ConsoleLog(world.pricelevel);
+                    var price = selectPrice(world, result.rows,pricingTableCheck);
+                    global.ConsoleLog(price);
+                    global.ConsoleLog("the event name is " + world.eventname);
+
+                    world.spark.emit(world.eventname, {rc: global.errcode_none, msg: global.text_success, fguid: world.fguid, price: price, pdata: world.pdata});
+                  }
+                  else
+                  {
+                    msg += global.text_generalexception + ' ' + err.message;
+                    global.log.error({getprice: true}, msg);
+                    world.spark.emit(global.eventerror, {rc: global.errcode_fatal, msg: msg, pdata: world.pdata});
+                  }
+                }
+              );
             }
             else
             {
-              msg += global.text_generalexception + ' ' + err.message;
-              global.log.error({getprice: true}, msg);
-              world.spark.emit(global.eventerror, {rc: global.errcode_fatal, msg: msg, pdata: world.pdata});
+              global.ConsoleLog("pricing table does not have  this product,no need to join the pricing table");
+              client.query
+              (
+                'select ' +
+                'p2.costprice,' +
+                'p2.costgst,' +
+                'p2.selltaxcodes_id,' +
+                'p2.price1,' +
+                'p2.price2,' +
+                'p2.price3,' +
+                'p2.price4,' +
+                'p2.price5,' +
+                'p2.price6,' +
+                'p2.price7,' +
+                'p2.price8,' +
+                'p2.price9,' +
+                'p2.price10,' +
+                'p2.price11,' +
+                'p2.price12,' +
+                'p2.price13,' +
+                'p2.price14,' +
+                'p2.price15,' +
+                'p2.uomsize,' +
+                'p2.discountcode_id ' +
+                'from ' +
+                'products p2 ' +
+                'where ' +
+                'p2.customers_id=$1 ' +
+                'and ' +
+                'p2.id=$2 ' +
+                'order by ' +
+                'p2.price1',
+                [
+                  world.cn.custid,
+                  __.sanitiseAsBigInt(world.productid)
+                ],
+                function(err, result)
+                {
+                  done();
+                  if (!err)
+                  {
+                    global.ConsoleLog(result.rows);
+                    //global.ConsoleLog(world.discountcode);
+                    //global.ConsoleLog(world.pricelevel);
+                    var price = selectPrice(world, result.rows,pricingTableCheck);
+                    global.ConsoleLog(price);
+                    global.ConsoleLog("the event name is " + world.eventname);
+
+                    world.spark.emit(world.eventname, {rc: global.errcode_none, msg: global.text_success, fguid: world.fguid, price: price, pdata: world.pdata});
+                  }
+                  else
+                  {
+                    msg += global.text_generalexception + ' ' + err.message;
+                    global.log.error({getprice: true}, msg);
+                    world.spark.emit(global.eventerror, {rc: global.errcode_fatal, msg: msg, pdata: world.pdata});
+                  }
+                }
+              );
             }
           }
-        );
+        )
+        
       }
       else
       {
